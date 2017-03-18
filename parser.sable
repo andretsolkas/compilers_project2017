@@ -32,6 +32,9 @@ Tokens
 	divide = 'div';
 	do = 'do';
 	else = 'else';
+	fun = 'fun';
+	if = 'if';
+	integer = 'int';
 	mod = 'mod';
 	not = 'not';
 	nothing = 'nothing';
