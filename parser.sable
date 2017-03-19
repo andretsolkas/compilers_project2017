@@ -8,7 +8,7 @@ Helpers
   	cr = 0x000d;											//carriage return
   	ff = 0x000c;											//form feed
   	ht = 0x0009; 											//horizontal tab
-
+	
 	all = [0 .. 0xffff];
 	letter = [['a'..'z'] + ['A'..'Z']];
 	digit = ['0'..'9'];
@@ -17,12 +17,15 @@ Helpers
 	
 	escape = '\' ('n' | 't' | 'r' | '\' | ''' | '"' | hex_num);
 
+
+
 	line_comment = '$' [all - [lf + cr]]* (lf | cr | lf cr);
 	lterminator = lf | cr | cr lf;
   	white_space = (sp | ht | ff | lterminator)*;
 
-
-
+	a = [all - '$'];
+	middle = a* ('$' a a*)* ;									// a* ('$'? a)*
+	multiline_comment =  '$' '$' middle '$' '$' ;
 
 
 Tokens
@@ -76,7 +79,8 @@ Tokens
 	dots = ':';
 	arrow = '<-';
 
-	line_comment = line_comment;							//To be Ignored
+	multiline_comment = multiline_comment;
+	line_comment = line_comment;
 	white_space = white_space;
 
 
@@ -85,8 +89,8 @@ Tokens
 Ignored Tokens
 	
 	white_space,
-	line_comment;
-	//multiline  comments
+	line_comment,
+	multiline_comment;
 	
 	
 	

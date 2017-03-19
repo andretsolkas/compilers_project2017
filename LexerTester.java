@@ -40,6 +40,9 @@ System.out.println("start\n");
 					public void caseTLineComment(TLineComment node)
 					{	System.out.println("Sexy comment" + "			" + node.getText());	}
 					
+					public void caseTMultilineComment(TMultilineComment node)
+					{	System.out.println("Sexy multiline comment" + "			" + node.getText());	}
+					
 					public void caseTStrings(TStrings node)
 					{	System.out.println("Sexy string" + "			" + node.getText());	}
 					
@@ -79,15 +82,11 @@ System.out.println("start\n");
 					public void caseTDots(TDots node)
 					{	System.out.println("Sexy Separator" + "			" + node.getText());	}
 					
-					public void caseEOF(EOF node)
-					{	System.out.println("Bye");
-					}
-					
 					public void defaultCase(Node node)
 					{	System.out.println("boom boom");	}
 				});
 
-//				System.out.println(token.getText());
+
 			}
 
 System.out.println("end\n");
