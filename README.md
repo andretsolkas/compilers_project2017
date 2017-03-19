@@ -12,6 +12,8 @@ Preparation instructions:
 How to run the programm:
 
 -> sablecc parser.sable
+
 -> javac LexerTester.java
+
 -> java LexerTester ./sexytest.txt
 
