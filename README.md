@@ -5,9 +5,9 @@ Preparation instructions:
 
 ->install SableCC following these directions :
 
-	http://www.cs.mcgill.ca/~smanja2/sablecc/sablecc-3.2/README.html
+	http://www.cs.mcgill.ca/~smanja2/sablecc/sablecc-3.7/README.html
 
-(add /sablecc/<ur_folder>/bin location in your PATH )
+(add /home/<username>/directory/to/file/with/the/abovementioned/docs location in your PATH )
 
 How to run the programm:
 
