@@ -17,12 +17,10 @@ Helpers
 	
 	escape = '\' ('n' | 't' | 'r' | '\' | ''' | '"' | hex_num);
 
-
-
-	line_comment = '$' [all - [lf + cr + '$']] [all - [lf + cr]]* (lf | cr | lf cr);
-	lterminator = lf | cr | cr lf;
-  	white_space = (sp | ht | ff | lterminator)*;
-
+  lterminator = lf | cr | cr lf;
+	line_comment = '$' ([all - [lf + cr + '$']] [all - [lf + cr]]* (lterminator) | (lterminator));
+  white_space = (sp | ht | ff | lterminator)*;
+    
 	a = [all - '$'];
 	middle = ('$'? a)* ;									// a* ('$' a a*)*
 	multiline_comment =  '$' '$' middle '$' '$' ;
@@ -48,14 +46,14 @@ Tokens
 	var = 'var';
 	while = 'while';	
 	
-	id = letter (letter | digit | '_')*;					//Identifiers
+	id = letter (letter | digit | '_')*;			//Identifiers
 	
-	number = digit+;										//Integer Numbers
+	number = digit+;        									//Integer Numbers
 	
-	conchars = ''' (all | escape) ''';						//Constant Characters
+	conchars = ''' (all | escape) ''';				//Constant Characters
 	
 	strings = '"' ([all - '"'] | '\"')* '"';
-	
+  
 	plus = '+';												//Symbolic operators
 	minus = '-';
 	mult = '*';
@@ -89,12 +87,10 @@ Ignored Tokens
 	
 	white_space,
 	line_comment,
-	multiline_comment;
+	multiline_comment;	
 	
-	
-	
-	
-	
+  
+  
 Productions
 
 	program = {func} func_def;
