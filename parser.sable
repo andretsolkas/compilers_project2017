@@ -19,12 +19,12 @@ Helpers
 
 
 
-	line_comment = '$' [all - [lf + cr]]* (lf | cr | lf cr);
+	line_comment = '$' [all - [lf + cr + '$']] [all - [lf + cr]]* (lf | cr | lf cr);
 	lterminator = lf | cr | cr lf;
   	white_space = (sp | ht | ff | lterminator)*;
 
 	a = [all - '$'];
-	middle = a* ('$' a a*)* ;									// a* ('$'? a)*
+	middle = ('$'? a)* ;									// a* ('$' a a*)*
 	multiline_comment =  '$' '$' middle '$' '$' ;
 
 
@@ -52,17 +52,16 @@ Tokens
 	
 	number = digit+;										//Integer Numbers
 	
-	conchars = ''' (letter | digit | escape) ''';			//Constant Characters
+	conchars = ''' (all | escape) ''';						//Constant Characters
 	
-	strings = '"' [all - '"']* '"';
+	strings = '"' ([all - '"'] | '\"')* '"';
 	
 	plus = '+';												//Symbolic operators
 	minus = '-';
 	mult = '*';
 	div = '/';
-	hash = '#';
+	nequal = '#';
 	equal = '=';
-	tags = '<>';
 	less = '<';
 	greater = '>';
 	lesseq = '<=';
@@ -76,7 +75,7 @@ Tokens
 	right_brace = '}';
 	comma = ',';
 	semicolon = ';';
-	dots = ':';
+	colon = ':';
 	arrow = '<-';
 
 	multiline_comment = multiline_comment;
@@ -96,7 +95,93 @@ Ignored Tokens
 	
 	
 	
-//Productions
+Productions
 
-//Abstract Syntax Tree
+	program = {func} func_def;
+
+
+
+	func_def = {func_def} (header⟩ (⟨local_def⟩)∗ ⟨block⟩;
+
+	header = {header} [fun]:fun [identifier]:⟨id⟩ [lp]:left_par (⟨fpar_def⟩ ([semi]:semicolon ⟨fpar_def⟩)∗)? [rp]:right_par [colon]:colon ⟨ret_type⟩;
+
+
+	fpar_def = {fparameters} [ref]:ref? [identifier]:⟨id⟩ ([comma]:comma ⟨[identifier]:(id)⟩)∗ [colon]:colon ⟨fpar_type⟩;
+
+	data_type = {datatype} [int]:integer | [char]:char ;
+
+	type = {type} ⟨data-type⟩ ([lbrck]:left_bracket ⟨[num]:number⟩ [rbrck]:right_bracket)∗ ;
+
+	ret_type = {return} ⟨data_type⟩ | [nothing]:nothing ; 
 	
+	fpar_type = {fparam_type} ⟨data_type⟩ ([lbrck]:left_bracket [rbrck]:right_bracket)? ([lbrck]:left_bracket ⟨[num]:number⟩ [rbrck]:right_bracket )∗ ;
+
+
+
+	local_def = {local} ⟨func_def⟩ | ⟨func_decl⟩ | ⟨var_def⟩ ;
+
+	var_def = {var} [var]:var [identifier]:⟨id⟩ ([comma]:comma [identifier]:⟨id⟩)∗ [colon]:colon ⟨type⟩ [semi]:semicolon ;
+
+	func_decl = {func_decl} ⟨header⟩ [semi]:semicolon ;
+
+
+
+	block = {block} [lb]:left_brace (⟨stmt⟩)∗ [rb]:right_brace ;
+
+	stmt = {none} [semi]:semicolon
+			| {assignment} ⟨l_value⟩ [arrow]:arrow ⟨expr⟩ [semi]:semicolon
+			| {anblock} ⟨block⟩ 
+			| {funcall} ⟨func_call⟩ [semi]:semicolon
+
+			| {ifcase} ifcase
+
+			| “while” ⟨cond⟩ “do” ⟨stmt⟩ | “return” [ ⟨expr⟩ ] “;”
+
+
+	ifcase =  {if} “if” ⟨cond⟩ “then” ⟨stmt⟩
+			| 'if' (cond) 'then' (withelse) “else” ⟨stmt⟩
+			
+	withelse = 
+
+	
+
+	l_value = {l_value} [identifier]:id | [string]:string | ⟨l_value⟩ [lb]:left_brace ⟨expr⟩ [rb]:right_brace ;
+
+
+⟨func-call⟩ ::= ⟨id⟩ “(” [ ⟨expr⟩ ( “,” ⟨expr⟩ ) ∗ ] “)”
+
+⟨expr⟩ ::= ⟨int-const⟩ | ⟨char-const⟩ | ⟨l-value⟩ | ⟨func-call⟩ | “(” ⟨expr⟩ “)”
+| ( “+” | “-” ) ⟨expr⟩ | ⟨expr⟩ ( “+” | “-” | “ * ” | “div” | “mod” ) ⟨expr⟩
+⟨cond⟩ ::= “(” ⟨cond⟩ “)” | “not” ⟨cond⟩ | ⟨cond⟩ ( “and” | “or” ) ⟨cond⟩
+| ⟨expr⟩ ( “=” | “#” | “<” | “>” | “<=” | “>=” ) ⟨expr⟩
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
