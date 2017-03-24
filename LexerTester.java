@@ -1,4 +1,4 @@
-//package comp;
+//package compiler;
 
 //import compiler.parser.*;
 import compiler.lexer.*;
@@ -38,10 +38,12 @@ System.out.println("start\n");
 					{	System.out.println("Sexy constant" + "			" + node.getText());	}
 					
 					public void caseTLineComment(TLineComment node)
-					{	System.out.println("Sexy comment" + "			" + node.getText());	}
+					{	//System.out.println("Sexy comment" + "			" + node.getText());	
+					}
 					
 					public void caseTMultilineComment(TMultilineComment node)
-					{	System.out.println("Sexy multiline comment" + "			" + node.getText());	}
+					{	//System.out.println("Sexy multiline comment" + "		" + node.getText());	
+					}
 					
 					public void caseTStrings(TStrings node)
 					{	System.out.println("Sexy string" + "			" + node.getText());	}
@@ -51,7 +53,10 @@ System.out.println("start\n");
 					
 					public void caseTLess(TLess node)
 					{	System.out.println("Sexy Operator" + "			" + node.getText());	}
-					
+
+					public void caseTGreater(TGreater node)
+					{	System.out.println("Sexy Operator" + "			" + node.getText());	}
+
 					public void caseTInteger(TInteger node)
 					{	System.out.println("Sexy Key" + "			" + node.getText());	}
 					
@@ -73,13 +78,10 @@ System.out.println("start\n");
 					public void caseTRightPar(TRightPar node)
 					{	System.out.println("Sexy Separator" + "			" + node.getText());	}
 					
-					public void caseTTags(TTags node)
-					{	System.out.println("Sexy Separator" + "			" + node.getText());	}
-					
 					public void caseTMinus(TMinus node)
 					{	System.out.println("Sexy Operator" + "			" + node.getText());	}
 					
-					public void caseTDots(TDots node)
+					public void caseTColon(TColon node)
 					{	System.out.println("Sexy Separator" + "			" + node.getText());	}
 					
 					public void defaultCase(Node node)

@@ -15,10 +15,13 @@ Helpers
 	hex_digit = (digit | 'a' | 'b' | 'c' | 'd' | 'e' | 'f');
 	hex_num = 'x' hex_digit hex_digit;
 	
+
+
 	escape = '\' ('n' | 't' | 'r' | '\' | ''' | '"' | hex_num);
 
-  lterminator = lf | cr | cr lf;
-	line_comment = '$' ([all - [lf + cr + '$']] [all - [lf + cr]]* (lterminator) | (lterminator));
+  lterminator = (lf | cr | cr lf);
+  comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]* lterminator);
+  line_comment = '$' ( comment | lterminator);
   white_space = (sp | ht | ff | lterminator)*;
     
 	a = [all - '$'];
@@ -28,7 +31,7 @@ Helpers
 
 Tokens
 	
-	and = 'and';											//keys
+	and = 'and';									//keys
 	char = 'char';
 	divide = 'div';
 	do = 'do';
@@ -48,13 +51,13 @@ Tokens
 	
 	id = letter (letter | digit | '_')*;			//Identifiers
 	
-	number = digit+;        									//Integer Numbers
+	number = digit+;        						//Integer Numbers
 	
 	conchars = ''' (all | escape) ''';				//Constant Characters
 	
 	strings = '"' ([all - '"'] | '\"')* '"';
   
-	plus = '+';												//Symbolic operators
+	plus = '+';										//Symbolic operators
 	minus = '-';
 	mult = '*';
 	div = '/';
@@ -65,7 +68,7 @@ Tokens
 	lesseq = '<=';
 	greatereq = '>=';
 	
-	left_par = '(';											//Separators 
+	left_par = '(';									//Separators 
 	right_par = ')';
 	left_bracket = '[';
 	right_bracket = ']';
@@ -90,12 +93,9 @@ Ignored Tokens
 	multiline_comment;	
 	
   
-  
 Productions
 
 	program = {func} func_def;
-
-
 
 	func_def = {func_def} (header⟩ (⟨local_def⟩)∗ ⟨block⟩;
 
@@ -124,24 +124,36 @@ Productions
 
 	block = {block} [lb]:left_brace (⟨stmt⟩)∗ [rb]:right_brace ;
 
-	stmt = {none} [semi]:semicolon
+/////////////////// STMTS ///////////////////////
+
+	stmt =	lilstmt 
+			| if;
+
+
+	partstmt = {none} [semi]:semicolon
 			| {assignment} ⟨l_value⟩ [arrow]:arrow ⟨expr⟩ [semi]:semicolon
 			| {anblock} ⟨block⟩ 
 			| {funcall} ⟨func_call⟩ [semi]:semicolon
-
-			| {ifcase} ifcase
-
 			| “while” ⟨cond⟩ “do” ⟨stmt⟩ | “return” [ ⟨expr⟩ ] “;”
 
+	ifstmt = {ifcase} ifcase;
 
-	ifcase =  {if} “if” ⟨cond⟩ “then” ⟨stmt⟩
-			| 'if' (cond) 'then' (withelse) “else” ⟨stmt⟩
-			
-	withelse = 
 
-	
 
-	l_value = {l_value} [identifier]:id | [string]:string | ⟨l_value⟩ [lb]:left_brace ⟨expr⟩ [rb]:right_brace ;
+	ifcase = if cond then ifstmt
+			| if cond then partstmt
+			| if cond then withelse else stmt
+			; 
+
+
+	withelse = if cond then withelse else withelse 
+			| partstmt
+			;
+
+/////////////////////////////////////////////////////////////////////
+
+
+l_value = {l_value} [identifier]:id | [string]:string | ⟨l_value⟩ [lb]:left_brace ⟨expr⟩ [rb]:right_brace ;
 
 
 ⟨func-call⟩ ::= ⟨id⟩ “(” [ ⟨expr⟩ ( “,” ⟨expr⟩ ) ∗ ] “)”
@@ -150,8 +162,6 @@ Productions
 | ( “+” | “-” ) ⟨expr⟩ | ⟨expr⟩ ( “+” | “-” | “ * ” | “div” | “mod” ) ⟨expr⟩
 ⟨cond⟩ ::= “(” ⟨cond⟩ “)” | “not” ⟨cond⟩ | ⟨cond⟩ ( “and” | “or” ) ⟨cond⟩
 | ⟨expr⟩ ( “=” | “#” | “<” | “>” | “<=” | “>=” ) ⟨expr⟩
-
-
 
 
 
