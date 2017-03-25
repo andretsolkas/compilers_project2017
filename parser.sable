@@ -20,8 +20,8 @@ Helpers
 	escape = '\' ('n' | 't' | 'r' | '\' | ''' | '"' | hex_num);
 
   lterminator = (lf | cr | cr lf);
-  comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]* lterminator);
-  line_comment = '$' ( comment | lterminator);
+  comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]* lterminator?);
+  line_comment = '$' ( comment | lterminator?);
   white_space = (sp | ht | ff | lterminator)*;
     
 	a = [all - '$'];
@@ -95,69 +95,73 @@ Ignored Tokens
   
 Productions
 
-	program = {func} func_def;
+	program = {program} func_def;
 
 	func_def = {func_def} (header⟩ (⟨local_def⟩)∗ ⟨block⟩;
 
-	header = {header} [fun]:fun [identifier]:⟨id⟩ [lp]:left_par (⟨fpar_def⟩ ([semi]:semicolon ⟨fpar_def⟩)∗)? [rp]:right_par [colon]:colon ⟨ret_type⟩;
+	header = {header} fun id [left]:left_par (⟨fpar_def⟩ (semicolon ⟨fpar_def⟩)∗)? [right]:right_par colon ⟨ret_type⟩;
 
 
-	fpar_def = {fparameters} [ref]:ref? [identifier]:⟨id⟩ ([comma]:comma ⟨[identifier]:(id)⟩)∗ [colon]:colon ⟨fpar_type⟩;
+	fpar_def = {fparameters} ref? [left]:⟨id⟩ (comma ⟨[right]:(id)⟩)∗ colon ⟨fpar_type⟩;
 
-	data_type = {datatype} [int]:integer | [char]:char ;
+	data_type = {intype} integer | {chartype} char ;
 
-	type = {type} ⟨data-type⟩ ([lbrck]:left_bracket ⟨[num]:number⟩ [rbrck]:right_bracket)∗ ;
+	type = {type} ⟨data-type⟩ (left_bracket number right_bracket)∗ ;
 
-	ret_type = {return} ⟨data_type⟩ | [nothing]:nothing ; 
+	ret_type = {retdata} ⟨data_type⟩ | {retnone} nothing ; 
 	
-	fpar_type = {fparam_type} ⟨data_type⟩ ([lbrck]:left_bracket [rbrck]:right_bracket)? ([lbrck]:left_bracket ⟨[num]:number⟩ [rbrck]:right_bracket )∗ ;
+	fpar_type = {fparam_type} ⟨data_type⟩ ([left1]:left_bracket [right1]:right_bracket)? ([left2]:left_bracket number [right2]:right_bracket)∗ ;
 
 
+	local_def = {locfuncdef} ⟨func_def⟩ | {locfuncdecl} ⟨func_decl⟩ | {locvardef} ⟨var_def⟩ ;
 
-	local_def = {local} ⟨func_def⟩ | ⟨func_decl⟩ | ⟨var_def⟩ ;
+	var_def = {vardef} var [left]:id (comma [right]:id)∗ colon ⟨type⟩ semicolon ;
 
-	var_def = {var} [var]:var [identifier]:⟨id⟩ ([comma]:comma [identifier]:⟨id⟩)∗ [colon]:colon ⟨type⟩ [semi]:semicolon ;
-
-	func_decl = {func_decl} ⟨header⟩ [semi]:semicolon ;
-
+	func_decl = {func_decl} ⟨header⟩ semicolon ;
 
 
-	block = {block} [lb]:left_brace (⟨stmt⟩)∗ [rb]:right_brace ;
+	block = {block} left_brace (⟨stmt⟩)∗ right_brace ;
 
 /////////////////// STMTS ///////////////////////
 
-	stmt =	lilstmt 
-			| if;
+	stmt = {partstmt} partstmt 
+		| {ifstmt} ifstmt;
 
 
-	partstmt = {none} [semi]:semicolon
-			| {assignment} ⟨l_value⟩ [arrow]:arrow ⟨expr⟩ [semi]:semicolon
+	partstmt = {none} semicolon
+			| {assignment} ⟨l_value⟩ arrow ⟨expr⟩ semicolon
 			| {anblock} ⟨block⟩ 
-			| {funcall} ⟨func_call⟩ [semi]:semicolon
-			| “while” ⟨cond⟩ “do” ⟨stmt⟩ | “return” [ ⟨expr⟩ ] “;”
-
+			| {funcall} ⟨func_call⟩ semicolon
+			| while ⟨cond⟩ do ⟨stmt⟩
+			| return ⟨expr⟩? semicolon
+			;
+			
 	ifstmt = {ifcase} ifcase;
 
 
 
-	ifcase = if cond then ifstmt
-			| if cond then partstmt
-			| if cond then withelse else stmt
+	ifcase = {nested} if (cond) then (ifstmt)
+			| {ifexit} if (cond) then (partstmt)
+			| {ifelse} if (cond) then (withelse) else (stmt)
 			; 
 
 
-	withelse = if cond then withelse else withelse 
-			| partstmt
+	withelse = {withelse} if (cond) then ([left]:withelse) else ([right]:withelse)
+			| {ifterminal} partstmt
 			;
 
 /////////////////////////////////////////////////////////////////////
 
 
-l_value = {l_value} [identifier]:id | [string]:string | ⟨l_value⟩ [lb]:left_brace ⟨expr⟩ [rb]:right_brace ;
+	l_value = {lval_id} id 
+			| {lval_str} string 
+			| {lval_expr} ⟨l_value⟩ left_bracket ⟨expr⟩ right_bracket
+			;
 
-
-⟨func-call⟩ ::= ⟨id⟩ “(” [ ⟨expr⟩ ( “,” ⟨expr⟩ ) ∗ ] “)”
-
+	
+	func_call = {funcall} id left_par (⟨[left]:expr⟩ (comma ⟨[right]:expr⟩)∗)? right_par
+	
+	
 ⟨expr⟩ ::= ⟨int-const⟩ | ⟨char-const⟩ | ⟨l-value⟩ | ⟨func-call⟩ | “(” ⟨expr⟩ “)”
 | ( “+” | “-” ) ⟨expr⟩ | ⟨expr⟩ ( “+” | “-” | “ * ” | “div” | “mod” ) ⟨expr⟩
 ⟨cond⟩ ::= “(” ⟨cond⟩ “)” | “not” ⟨cond⟩ | ⟨cond⟩ ( “and” | “or” ) ⟨cond⟩
