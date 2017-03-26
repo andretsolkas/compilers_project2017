@@ -20,8 +20,10 @@ Helpers
 	escape = '\' ('n' | 't' | 'r' | '\' | ''' | '"' | hex_num);
 
   lterminator = (lf | cr | cr lf);
+
   comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]* lterminator?);
   line_comment = '$' ( comment | lterminator?);
+
   white_space = (sp | ht | ff | lterminator)*;
     
 	a = [all - '$'];
@@ -95,7 +97,9 @@ Ignored Tokens
   
 Productions
 
+
 	program = {program} func_def;
+
 
 	func_def = {func_def} (header⟩ (⟨local_def⟩)∗ ⟨block⟩;
 
@@ -127,7 +131,6 @@ Productions
 	stmt = {partstmt} partstmt 
 		| {ifstmt} ifstmt;
 
-
 	partstmt = {none} semicolon
 			| {assignment} ⟨l_value⟩ arrow ⟨expr⟩ semicolon
 			| {anblock} ⟨block⟩ 
@@ -138,19 +141,17 @@ Productions
 			
 	ifstmt = {ifcase} ifcase;
 
-
-
 	ifcase = {nested} if (cond) then (ifstmt)
 			| {ifexit} if (cond) then (partstmt)
 			| {ifelse} if (cond) then (withelse) else (stmt)
 			; 
-
 
 	withelse = {withelse} if (cond) then ([left]:withelse) else ([right]:withelse)
 			| {ifterminal} partstmt
 			;
 
 /////////////////////////////////////////////////////////////////////
+
 
 
 	l_value = {lval_id} id 
