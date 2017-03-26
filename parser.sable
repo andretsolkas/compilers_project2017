@@ -153,6 +153,38 @@ Productions
 /////////////////////////////////////////////////////////////////////
 
 
+/////////////////// STMTS NEW ///////////////////////
+
+	stmt = {partstmt} partstmt 
+		| {ifstmt} ifstmt;
+		| {whilestmt} whilestmt;
+
+	partstmt = {none} semicolon
+			| {assignment} ⟨l_value⟩ arrow ⟨expr⟩ semicolon
+			| {anblock} ⟨block⟩ 
+			| {funcall} ⟨func_call⟩ semicolon
+			| return ⟨expr⟩? semicolon
+			;
+			
+	ifstmt = {ifcase} ifcase;
+
+	ifcase = {nested} if (cond) then (ifstmt)
+			| {ifexit} if (cond) then (partstmt)
+			| {ifelse} if (cond) then (withelse) else (stmt)
+			; 
+
+	withelse = {withelse} if (cond) then ([left]:withelse) else ([right]:withelse)
+			| {ifterminal} partstmt
+			| {while_ifelse} while_ifelse
+			;
+			
+	whilestmt = {while} while ⟨cond⟩ do ⟨stmt⟩
+	
+	while_ifelse = {while_ifelse} while (cond) do (withelse)
+
+/////////////////////////////////////////////////////////////////////
+
+
 
 	l_value = {lval_id} id 
 			| {lval_str} string 
