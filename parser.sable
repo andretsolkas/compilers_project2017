@@ -130,25 +130,25 @@ Productions
 
 	stmt = {partstmt} partstmt 
 		| {ifstmt} ifstmt;
+		| {whilestmt} whilestmt;
 
 	partstmt = {none} semicolon
 			| {assignment} ⟨l_value⟩ arrow ⟨expr⟩ semicolon
 			| {anblock} ⟨block⟩ 
 			| {funcall} ⟨func_call⟩ semicolon
-			| while ⟨cond⟩ do ⟨stmt⟩
 			| return ⟨expr⟩? semicolon
 			;
-			
-	ifstmt = {ifcase} ifcase;
-
-	ifcase = {nested} if (cond) then (ifstmt)
-			| {ifexit} if (cond) then (partstmt)
+	
+	ifstmt =  {ifnoelse} if (cond) then (stmt)
 			| {ifelse} if (cond) then (withelse) else (stmt)
 			; 
 
 	withelse = {withelse} if (cond) then ([left]:withelse) else ([right]:withelse)
-			| {ifterminal} partstmt
+			| {withelse_while} while (cond) do (withelse)
+			| {terminal} (partstmt)
 			;
+			
+	whilestmt = {while} while ⟨cond⟩ do ⟨stmt⟩ ;
 
 /////////////////////////////////////////////////////////////////////
 
@@ -165,6 +165,7 @@ Productions
 	
 ⟨expr⟩ ::= ⟨int-const⟩ | ⟨char-const⟩ | ⟨l-value⟩ | ⟨func-call⟩ | “(” ⟨expr⟩ “)”
 | ( “+” | “-” ) ⟨expr⟩ | ⟨expr⟩ ( “+” | “-” | “ * ” | “div” | “mod” ) ⟨expr⟩
+
 ⟨cond⟩ ::= “(” ⟨cond⟩ “)” | “not” ⟨cond⟩ | ⟨cond⟩ ( “and” | “or” ) ⟨cond⟩
 | ⟨expr⟩ ( “=” | “#” | “<” | “>” | “<=” | “>=” ) ⟨expr⟩
 
