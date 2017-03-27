@@ -165,22 +165,28 @@ Productions
 			| {funcall} ⟨func_call⟩ semicolon
 			| return ⟨expr⟩? semicolon
 			;
+	whilestmt = {while} while ⟨cond⟩ do ⟨stmt⟩ ;
+	
+	ifstmt = {ifnested} if (cond) then (ifstmt)
+			| {exitnest} if (cond) then (partstmt)
+			| {exitnest_while} if (cond) then (whilestmt)
 			
-	ifstmt = {ifcase} ifcase;
-
-	ifcase = {nested} if (cond) then (ifstmt)
-			| {ifexit} if (cond) then (partstmt)
 			| {ifelse} if (cond) then (withelse) else (stmt)
 			; 
 
 	withelse = {withelse} if (cond) then ([left]:withelse) else ([right]:withelse)
-			| {ifterminal} partstmt
-			| {while_ifelse} while_ifelse
+			| {withelse_while} withelse_while
+			| {terminal} (partstmt)
 			;
 			
-	whilestmt = {while} while ⟨cond⟩ do ⟨stmt⟩
+	withelse_while = {ww_nested} while (cond) do (withelse_while)
+			| {wwif_nested} while (cond) do (withelse)
+			| {exitwhile} (partstmt)
+			;
 	
-	while_ifelse = {while_ifelse} while (cond) do (withelse)
+	
+
+
 
 /////////////////////////////////////////////////////////////////////
 
