@@ -130,33 +130,6 @@ Productions
 
 	stmt = {partstmt} partstmt 
 		| {ifstmt} ifstmt;
-
-	partstmt = {none} semicolon
-			| {assignment} ⟨l_value⟩ arrow ⟨expr⟩ semicolon
-			| {anblock} ⟨block⟩ 
-			| {funcall} ⟨func_call⟩ semicolon
-			| while ⟨cond⟩ do ⟨stmt⟩
-			| return ⟨expr⟩? semicolon
-			;
-			
-	ifstmt = {ifcase} ifcase;
-
-	ifcase = {nested} if (cond) then (ifstmt)
-			| {ifexit} if (cond) then (partstmt)
-			| {ifelse} if (cond) then (withelse) else (stmt)
-			; 
-
-	withelse = {withelse} if (cond) then ([left]:withelse) else ([right]:withelse)
-			| {ifterminal} partstmt
-			;
-
-/////////////////////////////////////////////////////////////////////
-
-
-/////////////////// STMTS NEW ///////////////////////
-
-	stmt = {partstmt} partstmt 
-		| {ifstmt} ifstmt;
 		| {whilestmt} whilestmt;
 
 	partstmt = {none} semicolon
@@ -165,28 +138,17 @@ Productions
 			| {funcall} ⟨func_call⟩ semicolon
 			| return ⟨expr⟩? semicolon
 			;
-	whilestmt = {while} while ⟨cond⟩ do ⟨stmt⟩ ;
 	
-	ifstmt = {ifnested} if (cond) then (ifstmt)
-			| {exitnest} if (cond) then (partstmt)
-			| {exitnest_while} if (cond) then (whilestmt)
-			
+	ifstmt =  {ifnoelse} if (cond) then (stmt)
 			| {ifelse} if (cond) then (withelse) else (stmt)
 			; 
 
 	withelse = {withelse} if (cond) then ([left]:withelse) else ([right]:withelse)
-			| {withelse_while} withelse_while //does it need parenthesis?
+			| {withelse_while} while (cond) do (withelse)
 			| {terminal} (partstmt)
 			;
 			
-	withelse_while = {ww_nested} while (cond) do (withelse_while)
-			| {wwif_nested} while (cond) do (withelse) //are these 2
-			| {exitwhile} (partstmt)		   //even necessary?
-			;
-	
-	
-
-
+	whilestmt = {while} while ⟨cond⟩ do ⟨stmt⟩ ;
 
 /////////////////////////////////////////////////////////////////////
 
@@ -203,6 +165,7 @@ Productions
 	
 ⟨expr⟩ ::= ⟨int-const⟩ | ⟨char-const⟩ | ⟨l-value⟩ | ⟨func-call⟩ | “(” ⟨expr⟩ “)”
 | ( “+” | “-” ) ⟨expr⟩ | ⟨expr⟩ ( “+” | “-” | “ * ” | “div” | “mod” ) ⟨expr⟩
+
 ⟨cond⟩ ::= “(” ⟨cond⟩ “)” | “not” ⟨cond⟩ | ⟨cond⟩ ( “and” | “or” ) ⟨cond⟩
 | ⟨expr⟩ ( “=” | “#” | “<” | “>” | “<=” | “>=” ) ⟨expr⟩
 
