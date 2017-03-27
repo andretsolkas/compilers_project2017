@@ -175,13 +175,13 @@ Productions
 			; 
 
 	withelse = {withelse} if (cond) then ([left]:withelse) else ([right]:withelse)
-			| {withelse_while} withelse_while
+			| {withelse_while} withelse_while //does it need parenthesis?
 			| {terminal} (partstmt)
 			;
 			
 	withelse_while = {ww_nested} while (cond) do (withelse_while)
-			| {wwif_nested} while (cond) do (withelse)
-			| {exitwhile} (partstmt)
+			| {wwif_nested} while (cond) do (withelse) //are these 2
+			| {exitwhile} (partstmt)		   //even necessary?
 			;
 	
 	
