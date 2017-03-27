@@ -55,7 +55,7 @@ Tokens
 	
 	number = digit+;        						//Integer Numbers
 	
-	conchars = ''' (all | escape) ''';				//Constant Characters
+	conchar = ''' (all | escape) ''';				//Constant Characters
 	
 	strings = '"' ([all - '"'] | '\"')* '"';
   
@@ -163,13 +163,35 @@ Productions
 	func_call = {funcall} id left_par (⟨[left]:expr⟩ (comma ⟨[right]:expr⟩)∗)? right_par
 	
 	
-⟨expr⟩ ::= ⟨int-const⟩ | ⟨char-const⟩ | ⟨l-value⟩ | ⟨func-call⟩ | “(” ⟨expr⟩ “)”
+expr =  + (expr)
+	| - (expr)
+	| (expr) + (expr)
+	| (expr) - (expr)
+	| (factor)
+	;
+	
+factor = (factor) * (factor)
+	| (factor) div (factor)
+	| (lowest_priority)
+	;
+	
+lowestpr = (lowestpr) mod (lowestpr)
+	| ⟨l_value⟩
+	| (func_call)
+	| left_par (expr) right_par
+	| number
+	| conchar
+	;
+
+
+/*
+⟨int-const⟩ | ⟨char-const⟩ | ⟨l-value⟩ | ⟨func-call⟩ | “(” ⟨expr⟩ “)”
 | ( “+” | “-” ) ⟨expr⟩ | ⟨expr⟩ ( “+” | “-” | “ * ” | “div” | “mod” ) ⟨expr⟩
 
 ⟨cond⟩ ::= “(” ⟨cond⟩ “)” | “not” ⟨cond⟩ | ⟨cond⟩ ( “and” | “or” ) ⟨cond⟩
 | ⟨expr⟩ ( “=” | “#” | “<” | “>” | “<=” | “>=” ) ⟨expr⟩
 
-
+*/
 
 
 
