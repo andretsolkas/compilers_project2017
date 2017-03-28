@@ -126,11 +126,13 @@ Productions
 
 	block = {block} left_brace (⟨stmt⟩)∗ right_brace ;
 
+
 /////////////////// STMTS ///////////////////////
 
 	stmt = {partstmt} partstmt 
-		| {ifstmt} ifstmt;
-		| {whilestmt} whilestmt;
+			| {ifstmt} ifstmt;
+			| {whilestmt} whilestmt;
+			;
 
 	partstmt = {none} semicolon
 			| {assignment} ⟨l_value⟩ arrow ⟨expr⟩ semicolon
@@ -162,43 +164,54 @@ Productions
 	
 	func_call = {funcall} id left_par (⟨[left]:expr⟩ (comma ⟨[right]:expr⟩)∗)? right_par
 	
+
+////////// EXRPESSIONS ///////////
+
+	expr = {plus} (expr) + (term)
+			| {minus} (expr) - (term)
+			| {term} (term)
+			;
+
+
+	term = {mult} (term) * (factor)
+		| {div} (term) div (factor)
+		| {mod} (term) mod (factor)
+		| {factor} (factor)
+		;
+
 	
-expr = (expr) + (term)
-	| (expr) - (term)
-	| (term)
-	;
+	factor =  {pos} + (factor)
+		| {neg} - (factor)
+		| {lvalue} ⟨l_value⟩
+		| {fun_call} (func_call)
+		| {num} number
+		| {conchar} conchar
+		
+		| {par} left_par (expr) right_par
+		;
+		
+		
 
-3-2*4 + 5mod2*2
+////////// CONDITIONS ///////////
 
-term = (term) * (factor)
-	| (term) div (factor)
-	| (term) mod (factor)
-	| (factor)
-	;
-	(8mod3)*2
-	8mod(3*2)
-
-factor = 
-	| + (factor)
-	| - (factor)
-	| ⟨l_value⟩
-	| (func_call)
-	| left_par (expr) right_par
-	| number
-	| conchar
-	;
-
-
-
-/*
-⟨int-const⟩ | ⟨char-const⟩ | ⟨l-value⟩ | ⟨func-call⟩ | “(” ⟨expr⟩ “)”
-| ( “+” | “-” ) ⟨expr⟩ | ⟨expr⟩ ( “+” | “-” | “ * ” | “div” | “mod” ) ⟨expr⟩
-
-⟨cond⟩ ::= “(” ⟨cond⟩ “)” | “not” ⟨cond⟩ | ⟨cond⟩ ( “and” | “or” ) ⟨cond⟩
-| ⟨expr⟩ ( “=” | “#” | “<” | “>” | “<=” | “>=” ) ⟨expr⟩
-
-*/
-
+	cond = {not} not (cond)
+		| {condexit} condterm
+		;
+		
+	condterm = {and} (condterm) and (condrest)
+		| {or} (condterm) or (condrest)	
+		| {condtermexit} condrest
+		;
+		
+	condrest = {equal} (expr) equal (expr)
+		| {nequal} (expr) nequal (expr)
+		| {less} (expr) less (expr)
+		| {greater} (expr) greater (expr)
+		| {lesseq} (expr) lesseq (expr)
+		| {greatereq} (expr) greatereq (expr)
+		
+		| {nest} left_par (cond) right_par
+		;
 
 
 
