@@ -3,11 +3,11 @@ Package compiler;
 
 Helpers
 
-	sp = ' ';												//space
-  	lf = 0x000a; 											//line feed
-  	cr = 0x000d;											//carriage return
-  	ff = 0x000c;											//form feed
-  	ht = 0x0009; 											//horizontal tab
+	sp = ' ';								//space
+  	lf = 0x000a; 								//line feed
+  	cr = 0x000d;								//carriage return
+  	ff = 0x000c;								//form feed
+  	ht = 0x0009; 								//horizontal tab
 	
 	all = [0 .. 0xffff];
 	letter = [['a'..'z'] + ['A'..'Z']];
@@ -27,13 +27,13 @@ Helpers
   white_space = (sp | ht | ff | lterminator)*;
     
 	a = [all - '$'];
-	middle = ('$'? a)* ;									// a* ('$' a a*)*
+	middle = ('$'? a)* ;							// a* ('$' a a*)*
 	multiline_comment =  '$' '$' middle '$' '$' ;
 
 
 Tokens
 	
-	and = 'and';									//keys
+	and = 'and';								//keys
 	char = 'char';
 	divide = 'div';
 	do = 'do';
@@ -51,15 +51,15 @@ Tokens
 	var = 'var';
 	while = 'while';	
 	
-	id = letter (letter | digit | '_')*;			//Identifiers
+	id = letter (letter | digit | '_')*;					//Identifiers
 	
 	number = digit+;        						//Integer Numbers
 	
-	conchar = ''' (all | escape) ''';				//Constant Characters
+	conchar = ''' (all | escape) ''';					//Constant Characters
 	
 	string = '"' ([all - '"'] | '\"')* '"';
   
-	plus = '+';										//Symbolic operators
+	plus = '+';								//Symbolic operators
 	minus = '-';
 	mult = '*';
 	div = '/';
@@ -70,7 +70,7 @@ Tokens
 	lesseq = '<=';
 	greatereq = '>=';
 	
-	left_par = '(';									//Separators 
+	left_par = '(';								//Separators 
 	right_par = ')';
 	left_bracket = '[';
 	right_bracket = ']';
