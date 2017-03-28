@@ -163,25 +163,31 @@ Productions
 	func_call = {funcall} id left_par (⟨[left]:expr⟩ (comma ⟨[right]:expr⟩)∗)? right_par
 	
 	
-expr =  + (expr)
-	| - (expr)
-	| (expr) + (expr)
-	| (expr) - (expr)
+expr = (expr) + (term)
+	| (expr) - (term)
+	| (term)
+	;
+
+3-2*4 + 5mod2*2
+
+term = (term) * (factor)
+	| (term) div (factor)
+	| (term) mod (factor)
 	| (factor)
 	;
-	
-factor = (factor) * (factor)
-	| (factor) div (factor)
-	| (lowest_priority)
-	;
-	
-lowestpr = (lowestpr) mod (lowestpr)
+	(8mod3)*2
+	8mod(3*2)
+
+factor = 
+	| + (factor)
+	| - (factor)
 	| ⟨l_value⟩
 	| (func_call)
 	| left_par (expr) right_par
 	| number
 	| conchar
 	;
+
 
 
 /*
