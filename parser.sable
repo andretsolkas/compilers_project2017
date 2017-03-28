@@ -57,7 +57,7 @@ Tokens
 	
 	conchar = ''' (all | escape) ''';				//Constant Characters
 	
-	strings = '"' ([all - '"'] | '\"')* '"';
+	string = '"' ([all - '"'] | '\"')* '"';
   
 	plus = '+';										//Symbolic operators
 	minus = '-';
@@ -101,57 +101,64 @@ Productions
 	program = {program} func_def;
 
 
-	func_def = {func_def} (header⟩ (⟨local_def⟩)∗ ⟨block⟩;
-
-	header = {header} fun id [left]:left_par (⟨fpar_def⟩ (semicolon ⟨fpar_def⟩)∗)? [right]:right_par colon ⟨ret_type⟩;
+	func_def = {func_def} header local_def* block ;
 
 
-	fpar_def = {fparameters} ref? [left]:⟨id⟩ (comma ⟨[right]:(id)⟩)∗ colon ⟨fpar_type⟩;
+	header = {header} fun id left_par helper? right_par colon ret_type;
+
+	helper = {helper} fpar_def helper0* ;
+	helper0 = {helper0} semicolon fpar_def ;
+
+
+	fpar_def = {fparameters} ref? id helper1* colon fpar_type;
+	helper1 = {fhelper1} comma id ;
+
 
 	data_type = {intype} integer | {chartype} char ;
-
-	type = {type} ⟨data-type⟩ (left_bracket number right_bracket)∗ ;
-
-	ret_type = {retdata} ⟨data_type⟩ | {retnone} nothing ; 
 	
-	fpar_type = {fparam_type} ⟨data_type⟩ ([left1]:left_bracket [right1]:right_bracket)? ([left2]:left_bracket number [right2]:right_bracket)∗ ;
+	type = {type} data_type helper2* ;
+	helper2 = {helper2} left_bracket number right_bracket ; 
+
+	ret_type = {retdata} data_type | {retnone} nothing ; 
+	
+	fpar_type = {fparam_type} data_type helper3? helper4* ;
+	helper3 = {helper3} left_bracket right_bracket ;
+	helper4 = {helper4} left_bracket number right_bracket ;
+
+	local_def = {locfuncdef} func_def | {locfuncdecl} func_decl | {locvardef} var_def ;
+
+	var_def = {vardef} var id helper1* colon type semicolon ;
+
+	func_decl = {func_decl} header semicolon ;
 
 
-	local_def = {locfuncdef} ⟨func_def⟩ | {locfuncdecl} ⟨func_decl⟩ | {locvardef} ⟨var_def⟩ ;
-
-	var_def = {vardef} var [left]:id (comma [right]:id)∗ colon ⟨type⟩ semicolon ;
-
-	func_decl = {func_decl} ⟨header⟩ semicolon ;
-
-
-	block = {block} left_brace (⟨stmt⟩)∗ right_brace ;
+	block = {block} left_brace stmt* right_brace ;
 
 
 /////////////////// STMTS ///////////////////////
 
 	stmt = {partstmt} partstmt 
-			| {ifstmt} ifstmt;
-			| {whilestmt} whilestmt;
+			| {ifstmt} ifstmt
+			| {whilestmt} whilestmt
 			;
-
 
 	partstmt = {none} semicolon
-			| {assignment} ⟨l_value⟩ arrow ⟨expr⟩ semicolon
-			| {anblock} ⟨block⟩ 
-			| {funcall} ⟨func_call⟩ semicolon
-			| return ⟨expr⟩? semicolon
+			| {assignment} l_value arrow expr semicolon
+			| {anblock} block 
+			| {funcall} func_call semicolon
+			| return expr? semicolon
 			;
 	
-	ifstmt =  {ifnoelse} if (cond) then (stmt)
-			| {ifelse} if (cond) then (withelse) else (stmt)
+	ifstmt =  {ifnoelse} if cond then stmt
+			| {ifelse} if cond then withelse else stmt
 			; 
 
-	withelse = {withelse} if (cond) then ([left]:withelse) else ([right]:withelse)
-			| {withelse_while} while (cond) do (withelse)
-			| {terminal} (partstmt)
+	withelse = {withelse} if cond then [left]:withelse else [right]:withelse
+			| {withelse_while} while cond do withelse
+			| {terminal} partstmt
 			;
 			
-	whilestmt = {while} while ⟨cond⟩ do ⟨stmt⟩ ;
+	whilestmt = {while} while cond do stmt ;
 
 /////////////////////////////////////////////////////////////////////
 
@@ -159,59 +166,61 @@ Productions
 
 	l_value = {lval_id} id 
 			| {lval_str} string 
-			| {lval_expr} ⟨l_value⟩ left_bracket ⟨expr⟩ right_bracket
+			| {lval_expr} l_value left_bracket expr right_bracket
 			;
 
 	
-	func_call = {funcall} id left_par (⟨[left]:expr⟩ (comma ⟨[right]:expr⟩)∗)? right_par
-
-
+	func_call = {funcall} id left_par helper6? right_par ;
+	
+	helper5 = {helper5} comma expr ;
+	helper6 = {helper6} expr helper5* ;
+	
 ////////// EXRPESSIONS ///////////
 
-	expr = {plus} (expr) + (term)
-			| {minus} (expr) - (term)
-			| {term} (term)
+	expr = {plus} expr plus term
+			| {minus} expr minus term
+			| {term} term
 			;
 
 
-	term = {mult} (term) * (factor)
-		| {div} (term) div (factor)
-		| {mod} (term) mod (factor)
-		| {factor} (factor)
+	term = {mult} term mult factor
+		| {div} term div factor
+		| {mod} term mod factor
+		| {factor} factor
 		;
 
 	
-	factor =  {pos} + (factor)
-		| {neg} - (factor)
-		| {lvalue} ⟨l_value⟩
-		| {fun_call} (func_call)
+	factor =  {pos} plus factor
+		| {neg} minus factor
+		| {lvalue} l_value
+		| {fun_call} func_call
 		| {num} number
 		| {conchar} conchar
 		
-		| {par} left_par (expr) right_par
+		| {par} left_par expr right_par
 		;
 		
 		
 
 ////////// CONDITIONS ///////////
 
-	cond = {not} not (cond)
+	cond = {not} not cond
 		| {condexit} condterm
 		;
 		
-	condterm = {and} (condterm) and (condrest)
-		| {or} (condterm) or (condrest)	
+	condterm = {and} condterm and condrest
+		| {or} condterm or condrest
 		| {condtermexit} condrest
 		;
 		
-	condrest = {equal} (expr) equal (expr)
-		| {nequal} (expr) nequal (expr)
-		| {less} (expr) less (expr)
-		| {greater} (expr) greater (expr)
-		| {lesseq} (expr) lesseq (expr)
-		| {greatereq} (expr) greatereq (expr)
+	condrest = {equal} [left]:expr equal [right]:expr
+		| {nequal} [left]:expr nequal [right]:expr
+		| {less} [left]:expr less [right]:expr
+		| {greater} [left]:expr greater [right]:expr
+		| {lesseq} [left]:expr lesseq [right]:expr
+		| {greatereq} [left]:expr greatereq [right]:expr
 		
-		| {nest} left_par (cond) right_par
+		| {nest} left_par cond right_par
 		;
 
 
