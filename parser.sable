@@ -55,7 +55,7 @@ Tokens
 	
 	number = digit+;        						//Integer Numbers
 	
-	conchars = ''' (all | escape) ''';				//Constant Characters
+	conchar = ''' (all | escape) ''';				//Constant Characters
 	
 	strings = '"' ([all - '"'] | '\"')* '"';
   
@@ -126,11 +126,14 @@ Productions
 
 	block = {block} left_brace (⟨stmt⟩)∗ right_brace ;
 
+
 /////////////////// STMTS ///////////////////////
 
 	stmt = {partstmt} partstmt 
-		| {ifstmt} ifstmt;
-		| {whilestmt} whilestmt;
+			| {ifstmt} ifstmt;
+			| {whilestmt} whilestmt;
+			;
+
 
 	partstmt = {none} semicolon
 			| {assignment} ⟨l_value⟩ arrow ⟨expr⟩ semicolon
@@ -161,16 +164,55 @@ Productions
 
 	
 	func_call = {funcall} id left_par (⟨[left]:expr⟩ (comma ⟨[right]:expr⟩)∗)? right_par
+
+
+////////// EXRPESSIONS ///////////
+
+	expr = {plus} (expr) + (term)
+			| {minus} (expr) - (term)
+			| {term} (term)
+			;
+
+
+	term = {mult} (term) * (factor)
+		| {div} (term) div (factor)
+		| {mod} (term) mod (factor)
+		| {factor} (factor)
+		;
+
 	
-	
-⟨expr⟩ ::= ⟨int-const⟩ | ⟨char-const⟩ | ⟨l-value⟩ | ⟨func-call⟩ | “(” ⟨expr⟩ “)”
-| ( “+” | “-” ) ⟨expr⟩ | ⟨expr⟩ ( “+” | “-” | “ * ” | “div” | “mod” ) ⟨expr⟩
+	factor =  {pos} + (factor)
+		| {neg} - (factor)
+		| {lvalue} ⟨l_value⟩
+		| {fun_call} (func_call)
+		| {num} number
+		| {conchar} conchar
+		
+		| {par} left_par (expr) right_par
+		;
+		
+		
 
-⟨cond⟩ ::= “(” ⟨cond⟩ “)” | “not” ⟨cond⟩ | ⟨cond⟩ ( “and” | “or” ) ⟨cond⟩
-| ⟨expr⟩ ( “=” | “#” | “<” | “>” | “<=” | “>=” ) ⟨expr⟩
+////////// CONDITIONS ///////////
 
-
-
+	cond = {not} not (cond)
+		| {condexit} condterm
+		;
+		
+	condterm = {and} (condterm) and (condrest)
+		| {or} (condterm) or (condrest)	
+		| {condtermexit} condrest
+		;
+		
+	condrest = {equal} (expr) equal (expr)
+		| {nequal} (expr) nequal (expr)
+		| {less} (expr) less (expr)
+		| {greater} (expr) greater (expr)
+		| {lesseq} (expr) lesseq (expr)
+		| {greatereq} (expr) greatereq (expr)
+		
+		| {nest} left_par (cond) right_par
+		;
 
 
 
