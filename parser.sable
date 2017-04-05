@@ -17,7 +17,7 @@ Helpers
 	
 
 
-	escape = '\' ('n' | 't' | 'r' | '\' | ''' | '"' | hex_num);
+	escape = '\' ('n' | 't' | 'r' | '0' | '\' | ''' | '"' | hex_num);
 	
 	lterminator = (lf | cr | cr lf);
 	
@@ -185,7 +185,7 @@ Productions
 
 
 	term = {mult} term mult factor
-			| {div} term div factor
+			| {div} term divide factor
 			| {mod} term mod factor
 			| {factor} factor
 			;
