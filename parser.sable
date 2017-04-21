@@ -164,71 +164,165 @@ Productions
 
 
 
-	l_value = {id} id 
-			| {str} string 
-			| {expr} l_value left_bracket expr right_bracket
-			;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 	
-	func_call = id left_par helper6? right_par ;
 	
-	helper5 = comma expr ;
-	helper6 = expr helper5* ;
+	
+	
 	
 	
 ////////// EXRPESSIONS ///////////
 
-	expr = {plus} expr plus term
-			| {minus} expr minus term
-			| {term} term
-			;
+	expr {-> expr} = 
+			
+			{plus} expr plus term 				{-> New expr.plus(expr.expr, term.expr)}
+		|	{minus} expr minus term 			{-> New expr.minus(expr.expr, term.expr)}
+		|	{term} term 						{-> term.expr} 
+		;
 
 
-	term = {mult} term mult factor
-			| {div} term divide factor
-			| {mod} term mod factor
-			| {factor} factor
-			;
+	term {-> expr} =
+	
+			{mult} term mult factor				{-> New expr.mult(term.expr, factor.expr)}
+		|	{div} term divide factor			{-> New expr.div(term.expr, factor.expr)}
+		|	{mod} term mod factor				{-> New expr.mod(term.expr, factor.expr)}
+		|	{factor} factor						{-> factor.expr}
+		;
 
 	
-	factor =  {pos} plus factor
-			| {neg} minus factor
-			| {lvalue} l_value
-			| {fun_call} func_call
-			| {num} number
-			| {conchar} conchar
+	factor {-> expr} =
 			
-			| {par} left_par expr right_par
-			;
+			{pos} plus factor							{-> New expr.pos(factor.expr)}
+		|	{neg} minus factor							{-> New expr.neg(factor.expr)}
 		
+		|	{num} number								{-> New expr.num(number)}
+		|	{conchar} conchar							{-> New expr.conchar(conchar)}
 		
+		|	{lvalue} l_value							{-> l_value.expr}
+		|	{fun_call} func_call						{-> fun_call.expr}
+			
+		|	{par} left_par expr right_par				{-> expr.expr}
+		;
+	
+ 
+	l_value {-> expr} = 
+		
+			{id} id													{-> expr.id(id)} 
+		|	{str} string	 										{-> expr.str(string)}
+		|	{expr} l_value left_bracket expr right_bracket			{-> New expr.array(l_value.expr, expr.expr)}
+		;
 
+	
+	func_call {-> expr} = id left_par expr_list? right_par 			{-> expr.fun_call(id, [expr_list.expr])} ;
+	
+	expr_list {-> expr*} = expr expr_list_tail* 					{-> [expr, expr_list_tail]} ;
+	expr_list_tail {-> expr} = comma expr 							{-> expr} ;
+	
+	
 ////////// CONDITIONS ///////////
 
-	cond = {not} not cond
-			| {condexit} condterm
-			;
+	cond {-> cond} = 
+	
+			{not} not cond										{-> cond.not(cond.cond)}		
+		|	{condexit} condterm									{-> condterm.cond}
+		;
 		
-	condterm = {and} condterm and condrest
-			| {or} condterm or condrest
-			| {exit} condrest
-			;
+	condterm {-> cond} = 
+	
+			{and} condterm and condrest							{-> cond.and(condterm.cond, condrest.cond)}
+		|	{or} condterm or condrest							{-> cond.or(condterm.cond, condrest.cond)}
+		|	{exit} condrest										{-> condrest.cond}
+		;
 		
-	condrest = {equal} [left]:expr equal [right]:expr
-			| {nequal} [left]:expr nequal [right]:expr
-			| {less} [left]:expr less [right]:expr
-			| {greater} [left]:expr greater [right]:expr
-			| {lesseq} [left]:expr lesseq [right]:expr
-			| {greatereq} [left]:expr greatereq [right]:expr
+	condrest {-> cond} = 
 			
-			| {nest} left_par cond right_par
-			;
+			{equal} [left]:expr equal [right]:expr				{-> cond.equal(left.expr, right.expr)}
+		|	{nequal} [left]:expr nequal [right]:expr			{-> cond.nequal(left.expr, right.expr)}
+		|	{less} [left]:expr less [right]:expr				{-> cond.less(left.expr, right.expr)}
+		|	{greater} [left]:expr greater [right]:expr			{-> cond.greater(left.expr, right.expr)}
+		|	{lesseq} [left]:expr lesseq [right]:expr			{-> cond.lesseq(left.expr, right.expr)}
+		|	{greatereq} [left]:expr greatereq [right]:expr		{-> cond.greatereq(left.expr, right.expr)}
+			
+		|	{nest} left_par cond right_par						{-> cond.cond}
+		;
 
 
 
 
 
 
+
+
+
+
+
+
+
+
+Abstract Syntax Tree
+
+
+
+
+
+
+
+////////// EXRPESSIONS ///////////
+
+expr = 
+		{plus} [left]:expr [right]:expr
+	|	{minus} [left]:expr [right]:expr
+	|	{mult} [left]:expr [right]:expr
+	|	{div} [left]:expr [right]:expr
+	|	{mod} [left]:expr [right]:expr
+	
+ 	|	{pos} expr
+	|	{neg} expr
+	
+	|	{conchar} conchar
+ 	|	{num} number
+	
+	|	{id} id
+	|	{str} string
+	|	{array} [left]:expr [right]:expr
+	
+	|	{fun_call} id expr*
+	
+	;
+     
+ ////////// CONDITIONS ///////////
+ 
+ cond =
+ 		{not} cond
+ 	|	{and} [left]:cond [right]:cond
+ 	|	{or} [left]:cond [right]:cond
+	
+	|	{equal} [left]:expr [right]:expr	
+ 	|	{nequal} [left]:expr [right]:expr
+ 	|	{less} [left]:expr [right]:expr
+ 	|	{greater} [left]:expr [right]:expr
+	|	{lesseq} [left]:expr [right]:expr
+	|	{greatereq} [left]:expr [right]:expr
+   
 
 
 
