@@ -118,7 +118,7 @@ Productions
 		;
 	
 	idlist {-> id*} = id idlist_tail*											{-> [id, idlist_tail.id]} ;
-	idlist_tail {id} = comma id													{-> id} ;
+	idlist_tail {-> id} = comma id												{-> id} ;
 
 
 	data_type {-> data_type} = 
@@ -127,17 +127,17 @@ Productions
 		;
 
 	ret_type {-> ret_type} = 
-			{data} data_type													{-> New ret_type.data(data_type_data_type)}
+			{data} data_type													{-> New ret_type.data(data_type.data_type)}
 		|	{none} nothing														{-> New ret_type.none(nothing)}
 		; 
 	
 	
 	fpar_type {-> fpar_type} =
 			
-			{noarray} data_type 												{-> New fpar_type.noarray(data_type.data_type};						
-		|	{array_first} data_type helper										{-> New fpar_type.array_first(data_type.data_type, helper.helper)};
-		|	{array_firstsec} data_type helper numlist							{-> New fpar_type.array_firstsec(data_type.data_type, helper.helper, [numlist.number])};
-		|	{array_sec} data_type numlist										{-> New fpar_type.array_sec(data_type.data_type, [numlist.num])};
+			{noarray} data_type 												{-> New fpar_type.noarray(data_type.data_type)}					
+		|	{array_first} data_type helper										{-> New fpar_type.array_first(data_type.data_type, helper.helper)}
+		|	{array_firstsec} data_type helper numlist							{-> New fpar_type.array_firstsec(data_type.data_type, helper.helper, [numlist.number])}
+		|	{array_sec} data_type numlist										{-> New fpar_type.array_sec(data_type.data_type, [numlist.number])}
 		;
 	
 	helper {-> helper} = left_bracket right_bracket								{-> New helper(left_bracket, right_bracket)} ;
@@ -152,17 +152,17 @@ Productions
 	
 			{funcdef} func_def									{-> New local_def.funcdef(func_def.func_def)}
 		|	{funcdecl} func_decl								{-> New local_def.funcdecl(func_decl.func_decl)}
-		|	{vardef} var_def ;									{-> New local_def.vardef(var_def.var_def)}
+		|	{vardef} var_def									{-> New local_def.vardef(var_def.var_def)}
 		;
 
 
 	type {-> type} =
-			{array} data_type numlist							{-> New type(data_type.data_type, [numlist.number])} 
-		|	{noarray} data_type									{-> New type(data_type.data_type)} 
+			{array} data_type numlist							{-> New type.array(data_type.data_type, [numlist.number])} 
+		|	{noarray} data_type									{-> New type.noarray(data_type.data_type)} 
 		;
 
 
-	var_def {-> var_def} = var idlist colon type semicolon		{-> New var_def([idlist.number], type.type)} ;
+	var_def {-> var_def} = var idlist colon type semicolon		{-> New var_def([idlist.id], type.type)} ;
 
 	func_decl {-> func_decl} = header semicolon 				{-> New func_decl(header.header)} ;
 
@@ -185,7 +185,7 @@ Productions
 			{none} semicolon									{-> New stmt.none(semicolon)}
 		|	{assignment} l_value arrow expr semicolon			{-> New stmt.assignment(l_value.expr, expr.expr)}
 		|	{block} block 										{-> New stmt.block(block.block)}
-		|	{funcall} func_call semicolon						{-> func_call.expr}
+		|	{funcall} func_call semicolon						{-> New stmt.func_call(func_call.expr)}
 		|	{returnepxr} return expr semicolon					{-> New stmt.returnexpr(expr.expr)}
 		|	{return} return semicolon							{-> New stmt.return(semicolon)}
 		;
@@ -198,12 +198,12 @@ Productions
 
 	withelse {-> stmt} =
 			
-			if cond then [left]:withelse else [right]:withelse	{-> New stmt.ifelse(cond.cond, withelse.stmt, withelse.stmt)}
+			if cond then [left]:withelse else [right]:withelse	{-> New stmt.ifelse(cond.cond, left.stmt, right.stmt)}
 		|	{while} while cond do withelse						{-> New stmt.while(cond.cond, withelse.stmt)}
 		|	{partstmt} partstmt									{-> partstmt.stmt}
 		;
 			
-	whilestmt {-> stmt} = while cond do stmt ;					{-> New stmt.while(cond.cond, stmt.stmt)}
+	whilestmt {-> stmt} = while cond do stmt					{-> New stmt.while(cond.cond, stmt.stmt)} ;
 
 /////////////////////////////////////////////////////////////////////
 
@@ -237,7 +237,7 @@ Productions
 		|	{conchar} conchar							{-> New expr.conchar(conchar)}
 		
 		|	{lvalue} l_value							{-> l_value.expr}
-		|	{fun_call} func_call						{-> fun_call.expr}
+		|	{func_call} func_call						{-> func_call.expr}
 			
 		|	{par} left_par expr right_par				{-> expr.expr}
 		;
@@ -245,16 +245,16 @@ Productions
  
 	l_value {-> expr} = 
 		
-			{id} id													{-> expr.id(id)} 
-		|	{str} string	 										{-> expr.str(string)}
+			{id} id													{-> New expr.id(id)}
+		|	{str} string	 										{-> New expr.str(string)}
 		|	{expr} l_value left_bracket expr right_bracket			{-> New expr.array(l_value.expr, expr.expr)}
 		;
 
 	
 	func_call {-> expr} = 
 			{withpars} id left_par expr_list right_par 				{-> New expr.fun_call(id, [expr_list.expr])}
-			{withoutpars} id left_par right_par			 			{-> New expr.fun_call(id, [])}
-			;
+		|	{withoutpars} id left_par right_par			 			{-> New expr.fun_call(id, [])}
+		;
 	
 	expr_list {-> expr*} = expr expr_list_tail* 					{-> [expr.expr, expr_list_tail.expr]} ;
 	expr_list_tail {-> expr} = comma expr 							{-> expr.expr} ;
@@ -327,12 +327,12 @@ Abstract Syntax Tree
 	
 	ret_type = 
 			{data} data_type
-		|	(none) nothing
+		|	{none} nothing
 		;
 		
 	data_type =
 			{int} integer
-		|	(char) char
+		|	{char} char
 		;
 	
 	
@@ -350,14 +350,14 @@ Abstract Syntax Tree
 	
 	
 	
-	var_def = number* type;
+	var_def = id* type;
 	
 	func_decl = header;
 	
 	
 	/////////////////// STMTS ///////////////////////
 	
-	block = stmt*
+	block = stmt* ;
 			
 	
 	stmt = 
@@ -369,7 +369,7 @@ Abstract Syntax Tree
 		|	{return} semicolon
 		
 		|	{if} cond stmt
-		|	{ifelse} cond stmt stmt
+		|	{ifelse} cond [left]:stmt [right]:stmt
 		
 		|	{while} cond stmt
 		|	
@@ -416,28 +416,6 @@ Abstract Syntax Tree
 		|	{lesseq} [left]:expr [right]:expr
 		|	{greatereq} [left]:expr [right]:expr
 		
-		
-	
-	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+		;
 
 
