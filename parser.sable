@@ -98,10 +98,10 @@ Ignored Tokens
 Productions
 
 
-	program = func_def;
+	program {-> program} = func_def			{-> New program(func_def.func_def)} ;
 
 
-	func_def = header local_def* block ;
+	func_def {-> func_def} = header local_def* block 		{-> New func_def(header.header, [local_def.local_def], block.block)} ;
 
 
 	header = fun id left_par helper? right_par colon ret_type;
@@ -132,63 +132,48 @@ Productions
 	func_decl = header semicolon ;
 
 
-	block = left_brace stmt* right_brace ;
+
+
+
+	block {-> block} = left_brace stmt* right_brace 		{-> New block([stmt.stmt])} ;
 
 
 /////////////////// STMTS ///////////////////////
 
-	stmt = {part} partstmt
-			| {if} ifstmt
-			| {while} whilestmt
-			;
+	stmt {-> stmt} =
+		
+			{part} partstmt										{-> partstmt.stmt}
+		|	{if} ifstmt											{-> ifstmt.stmt}
+		|	{while} whilestmt									{-> whilestmt.stmt}
+		;
 
-	partstmt = {none} semicolon
-			| {assignment} l_value arrow expr semicolon
-			| {block} block 
-			| {funcall} func_call semicolon
-			| {return} return expr? semicolon
-			;
+	partstmt {-> stmt} = 
 	
-	ifstmt =  {noelse} if cond then stmt
-			| {else} if cond then withelse else stmt
-			; 
-
-	withelse = if cond then [left]:withelse else [right]:withelse
-			| {while} while cond do withelse
-			| {partstmt} partstmt
-			;
+			{none} semicolon									{-> New stmt.none(semicolon)}
+		|	{assignment} l_value arrow expr semicolon			{-> New stmt.assignment(l_value.expr, expr.expr)}
+		|	{block} block 										{-> New stmt.block(block.block)}
+		|	{funcall} func_call semicolon						{-> func_call.expr}
+		|	{return} return expr? semicolon						{-> New stmt.return(return, expr.expr)}
+		;
+	
+	ifstmt {-> stmt} = 
 			
-	whilestmt = while cond do stmt ;
+			{noelse} if cond then stmt							{-> New stmt.if(cond.cond, stmt.stmt)}
+		|	{else} if cond then withelse else stmt				{-> New stmt.ifelse(cond.cond, withelse.stmt, stmt.stmt)}
+		; 
+
+	withelse {-> stmt} =
+			
+			if cond then [left]:withelse else [right]:withelse	{-> New stmt.ifelse(cond.cond, withelse.stmt, withelse.stmt)}
+		|	{while} while cond do withelse						{-> New stmt.while(cond.cond, withelse.stmt)}
+		|	{partstmt} partstmt									{-> partstmt.stmt}
+		;
+			
+	whilestmt {-> stmt} = while cond do stmt ;					{-> New stmt.while(cond.cond, stmt.stmt)}
 
 /////////////////////////////////////////////////////////////////////
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-	
-	
-	
-	
 	
 ////////// EXRPESSIONS ///////////
 
@@ -232,35 +217,36 @@ Productions
 		;
 
 	
-	func_call {-> expr} = id left_par expr_list? right_par 			{-> expr.fun_call(id, [expr_list.expr])} ;
+	func_call {-> expr} = id left_par expr_list? right_par 			{-> New expr.fun_call(id, [expr_list.expr])} ;
 	
 	expr_list {-> expr*} = expr expr_list_tail* 					{-> [expr, expr_list_tail]} ;
 	expr_list_tail {-> expr} = comma expr 							{-> expr} ;
-	
-	
+
+
+
 ////////// CONDITIONS ///////////
 
 	cond {-> cond} = 
 	
-			{not} not cond										{-> cond.not(cond.cond)}		
+			{not} not cond										{-> New cond.not(cond.cond)}		
 		|	{condexit} condterm									{-> condterm.cond}
 		;
 		
 	condterm {-> cond} = 
 	
-			{and} condterm and condrest							{-> cond.and(condterm.cond, condrest.cond)}
-		|	{or} condterm or condrest							{-> cond.or(condterm.cond, condrest.cond)}
+			{and} condterm and condrest							{-> New cond.and(condterm.cond, condrest.cond)}
+		|	{or} condterm or condrest							{-> New cond.or(condterm.cond, condrest.cond)}
 		|	{exit} condrest										{-> condrest.cond}
 		;
 		
 	condrest {-> cond} = 
 			
-			{equal} [left]:expr equal [right]:expr				{-> cond.equal(left.expr, right.expr)}
-		|	{nequal} [left]:expr nequal [right]:expr			{-> cond.nequal(left.expr, right.expr)}
-		|	{less} [left]:expr less [right]:expr				{-> cond.less(left.expr, right.expr)}
-		|	{greater} [left]:expr greater [right]:expr			{-> cond.greater(left.expr, right.expr)}
-		|	{lesseq} [left]:expr lesseq [right]:expr			{-> cond.lesseq(left.expr, right.expr)}
-		|	{greatereq} [left]:expr greatereq [right]:expr		{-> cond.greatereq(left.expr, right.expr)}
+			{equal} [left]:expr equal [right]:expr				{-> New cond.equal(left.expr, right.expr)}
+		|	{nequal} [left]:expr nequal [right]:expr			{-> New cond.nequal(left.expr, right.expr)}
+		|	{less} [left]:expr less [right]:expr				{-> New cond.less(left.expr, right.expr)}
+		|	{greater} [left]:expr greater [right]:expr			{-> New cond.greater(left.expr, right.expr)}
+		|	{lesseq} [left]:expr lesseq [right]:expr			{-> New cond.lesseq(left.expr, right.expr)}
+		|	{greatereq} [left]:expr greatereq [right]:expr		{-> New cond.greatereq(left.expr, right.expr)}
 			
 		|	{nest} left_par cond right_par						{-> cond.cond}
 		;
@@ -281,10 +267,26 @@ Productions
 Abstract Syntax Tree
 
 
+/////////////////// STMTS ///////////////////////
 
+block = stmt*
+		
 
+stmt = 
+		{none} semicolon
+	|	{assignment} [left]:expr [right]:expr
+	|	{block} block
+	|	{func_call} expr
+	|	{return} return expr
+	
+	|	{if} cond stmt
+	|	{ifelse} cond stmt stmt
+	
+	|	{while} cond stmt
+	|	
 
-
+	;
+	
 
 ////////// EXRPESSIONS ///////////
 
@@ -323,6 +325,7 @@ expr =
 	|	{lesseq} [left]:expr [right]:expr
 	|	{greatereq} [left]:expr [right]:expr
    
+
 
 
 
