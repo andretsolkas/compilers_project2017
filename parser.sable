@@ -98,44 +98,77 @@ Ignored Tokens
 Productions
 
 
-	program {-> program} = func_def			{-> New program(func_def.func_def)} ;
+	program {-> program} = func_def												{-> New program(func_def.func_def)} ;
+
+	func_def {-> func_def} = header local_def* block 							{-> New func_def(header.header, [local_def.local_def], block.block)} ;
 
 
-	func_def {-> func_def} = header local_def* block 		{-> New func_def(header.header, [local_def.local_def], block.block)} ;
+	header {-> header} = 
+			{withpars} fun id left_par fpar_def_list right_par colon ret_type	{-> New header.withpars(id, [fpar_def_list.fpar_def], ret_type.ret_type)}
+		|	{withoutpars} fun id left_par right_par colon ret_type				{-> New header.withoutpars(id, ret_type.ret_type)}
+		;
 
+	fpar_def_list {-> fpar_def*} = fpar_def fpar_def_list_tail*					{-> [fpar_def.fpar_def, fpar_def_list_tail.fpar_def]} ;
+	fpar_def_list_tail {-> fpar_def} = semicolon fpar_def						{-> fpar_def.fpar_def} ;
 
-	header = fun id left_par helper? right_par colon ret_type;
-
-	helper = fpar_def helper0* ;
-	helper0 = semicolon fpar_def ;
-
-
-	fpar_def = ref? id helper1* colon fpar_type;
-	helper1 = comma id ;
-
-
-	data_type = {int} integer | {char} char ;
 	
-	type = data_type helper2* ;
-	helper2 = left_bracket number right_bracket ; 
-
-	ret_type = {data} data_type | {none} nothing ; 
+ 	fpar_def {-> fpar_def} = 
+			{withref} ref idlist colon fpar_type								{-> New fpar_def.withref(ref, [idlist.id], fpar_type.fpar_type)} 
+		|	{withoutref} idlist colon fpar_type									{-> New fpar_def.withoutref([idlist.id], fpar_type.fpar_type)}
+		;
 	
-	fpar_type = data_type helper3? helper4* ;
-	helper3 = left_bracket right_bracket ;
-	helper4 = left_bracket number right_bracket ;
-
-	local_def = {funcdef} func_def | {funcdecl} func_decl | {vardef} var_def ;
-
-	var_def = var id helper1* colon type semicolon ;
-
-	func_decl = header semicolon ;
+	idlist {-> id*} = id idlist_tail*											{-> [id, idlist_tail.id]} ;
+	idlist_tail {id} = comma id													{-> id} ;
 
 
+	data_type {-> data_type} = 
+			{int} integer 														{-> New data_type.int(integer)}
+		|	{char} char															{-> New data_type.char(char)}
+		;
+
+	ret_type {-> ret_type} = 
+			{data} data_type													{-> New ret_type.data(data_type_data_type)}
+		|	{none} nothing														{-> New ret_type.none(nothing)}
+		; 
+	
+	
+	fpar_type {-> fpar_type} =
+			
+			{noarray} data_type 												{-> New fpar_type.noarray(data_type.data_type};						
+		|	{array_first} data_type helper										{-> New fpar_type.array_first(data_type.data_type, helper.helper)};
+		|	{array_firstsec} data_type helper numlist							{-> New fpar_type.array_firstsec(data_type.data_type, helper.helper, [numlist.number])};
+		|	{array_sec} data_type numlist										{-> New fpar_type.array_sec(data_type.data_type, [numlist.num])};
+		;
+	
+	helper {-> helper} = left_bracket right_bracket								{-> New helper(left_bracket, right_bracket)} ;
+	
+	numlist {-> number*} = left_bracket number right_bracket numlist_tail*			{-> [number, numlist_tail.number]};
+	numlist_tail {-> number} = left_bracket number right_bracket 					{-> number} ;
 
 
 
-	block {-> block} = left_brace stmt* right_brace 		{-> New block([stmt.stmt])} ;
+
+	local_def {-> local_def} =
+	
+			{funcdef} func_def									{-> New local_def.funcdef(func_def.func_def)}
+		|	{funcdecl} func_decl								{-> New local_def.funcdecl(func_decl.func_decl)}
+		|	{vardef} var_def ;									{-> New local_def.vardef(var_def.var_def)}
+		;
+
+
+	type {-> type} =
+			{array} data_type numlist							{-> New type(data_type.data_type, [numlist.number])} 
+		|	{noarray} data_type									{-> New type(data_type.data_type)} 
+		;
+
+
+	var_def {-> var_def} = var idlist colon type semicolon		{-> New var_def([idlist.number], type.type)} ;
+
+	func_decl {-> func_decl} = header semicolon 				{-> New func_decl(header.header)} ;
+
+	block {-> block} = left_brace stmt* right_brace 			{-> New block([stmt.stmt])} ;
+
+
 
 
 /////////////////// STMTS ///////////////////////
@@ -153,7 +186,8 @@ Productions
 		|	{assignment} l_value arrow expr semicolon			{-> New stmt.assignment(l_value.expr, expr.expr)}
 		|	{block} block 										{-> New stmt.block(block.block)}
 		|	{funcall} func_call semicolon						{-> func_call.expr}
-		|	{return} return expr? semicolon						{-> New stmt.return(return, expr.expr)}
+		|	{returnepxr} return expr semicolon					{-> New stmt.returnexpr(expr.expr)}
+		|	{return} return semicolon							{-> New stmt.return(semicolon)}
 		;
 	
 	ifstmt {-> stmt} = 
@@ -217,10 +251,13 @@ Productions
 		;
 
 	
-	func_call {-> expr} = id left_par expr_list? right_par 			{-> New expr.fun_call(id, [expr_list.expr])} ;
+	func_call {-> expr} = 
+			{withpars} id left_par expr_list right_par 				{-> New expr.fun_call(id, [expr_list.expr])}
+			{withoutpars} id left_par right_par			 			{-> New expr.fun_call(id, [])}
+			;
 	
-	expr_list {-> expr*} = expr expr_list_tail* 					{-> [expr, expr_list_tail]} ;
-	expr_list_tail {-> expr} = comma expr 							{-> expr} ;
+	expr_list {-> expr*} = expr expr_list_tail* 					{-> [expr.expr, expr_list_tail.expr]} ;
+	expr_list_tail {-> expr} = comma expr 							{-> expr.expr} ;
 
 
 
@@ -261,70 +298,128 @@ Productions
 
 
 
-
-
-
 Abstract Syntax Tree
-
-
-/////////////////// STMTS ///////////////////////
-
-block = stmt*
+	
+	
+	program = func_def;
+	
+	func_def = header local_def* block;
+	
+	header = 
+			{withpars} id fpar_def* ret_type
+		|	{withoutpars} id ret_type
+		;
+	
+	
+	fpar_def = 
+			{withref} ref id* fpar_type 
+		|	{withoutref} id* fpar_type
+		;
 		
+	fpar_type = 
+			{noarray} data_type
+		|	{array_first} data_type helper
+		|	{array_firstsec} data_type helper number*
+		|	{array_sec} data_type number*
+		;
+	
+	helper = left_bracket right_bracket ;
+	
+	ret_type = 
+			{data} data_type
+		|	(none) nothing
+		;
+		
+	data_type =
+			{int} integer
+		|	(char) char
+		;
+	
+	
+	local_def =
+			{funcdef} func_def
+		|	{funcdecl} func_decl
+		|	{vardef} var_def
+		;
+	
+	
+	type = 
+			{array} data_type number*
+		|	{noarray} data_type
+		;
+	
+	
+	
+	var_def = number* type;
+	
+	func_decl = header;
+	
+	
+	/////////////////// STMTS ///////////////////////
+	
+	block = stmt*
+			
+	
+	stmt = 
+			{none} semicolon
+		|	{assignment} [left]:expr [right]:expr
+		|	{block} block
+		|	{func_call} expr
+		|	{returnexpr} expr
+		|	{return} semicolon
+		
+		|	{if} cond stmt
+		|	{ifelse} cond stmt stmt
+		
+		|	{while} cond stmt
+		|	
+	
+		;
+		
+	
+	
+	////////// EXRPESSIONS ///////////
+	
+	expr =
+			{plus} [left]:expr [right]:expr
+		|	{minus} [left]:expr [right]:expr
+		|	{mult} [left]:expr [right]:expr
+		|	{div} [left]:expr [right]:expr
+		|	{mod} [left]:expr [right]:expr
+		
+	 	|	{pos} expr
+		|	{neg} expr
+		
+		|	{conchar} conchar
+	 	|	{num} number
+		
+		|	{id} id
+		|	{str} string
+		|	{array} [left]:expr [right]:expr
+		
+		|	{fun_call} id expr*
+		
+		;
+	     
+	 
+	 ////////// CONDITIONS ///////////
+	 
+	cond =
+	 		{not} cond
+	 	|	{and} [left]:cond [right]:cond
+	 	|	{or} [left]:cond [right]:cond
+		
+		|	{equal} [left]:expr [right]:expr	
+	 	|	{nequal} [left]:expr [right]:expr
+	 	|	{less} [left]:expr [right]:expr
+	 	|	{greater} [left]:expr [right]:expr
+		|	{lesseq} [left]:expr [right]:expr
+		|	{greatereq} [left]:expr [right]:expr
+		
+		
+	
+	
 
-stmt = 
-		{none} semicolon
-	|	{assignment} [left]:expr [right]:expr
-	|	{block} block
-	|	{func_call} expr
-	|	{return} return expr
-	
-	|	{if} cond stmt
-	|	{ifelse} cond stmt stmt
-	
-	|	{while} cond stmt
-	|	
-
-	;
-	
-
-////////// EXRPESSIONS ///////////
-
-expr = 
-		{plus} [left]:expr [right]:expr
-	|	{minus} [left]:expr [right]:expr
-	|	{mult} [left]:expr [right]:expr
-	|	{div} [left]:expr [right]:expr
-	|	{mod} [left]:expr [right]:expr
-	
- 	|	{pos} expr
-	|	{neg} expr
-	
-	|	{conchar} conchar
- 	|	{num} number
-	
-	|	{id} id
-	|	{str} string
-	|	{array} [left]:expr [right]:expr
-	
-	|	{fun_call} id expr*
-	
-	;
-     
- ////////// CONDITIONS ///////////
- 
- cond =
- 		{not} cond
- 	|	{and} [left]:cond [right]:cond
- 	|	{or} [left]:cond [right]:cond
-	
-	|	{equal} [left]:expr [right]:expr	
- 	|	{nequal} [left]:expr [right]:expr
- 	|	{less} [left]:expr [right]:expr
- 	|	{greater} [left]:expr [right]:expr
-	|	{lesseq} [left]:expr [right]:expr
-	|	{greatereq} [left]:expr [right]:expr
-   
 
 
 
