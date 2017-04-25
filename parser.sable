@@ -263,29 +263,35 @@ Productions
 
 ////////// CONDITIONS ///////////
 
+	disjunctioncond {-> cond} = 
+	
+			{or} disjunctioncond or conjunctioncond				{-> New cond.or(condterm.cond, condrest.cond)}
+		|	{disjunctioncondexit} conjunctioncond				{-> condterm.cond}
+		;
+		
+	conjunctioncond {-> cond} = 
+	
+			{and} conjuntioncond and notcond				{-> New cond.and(condterm.cond, condrest.cond)}
+		|	{conjunctionexit} notcond					{-> condrest.cond}
+		;
+		
+		
+	notcond {-> cond} =
+	
+			{not} not cond							{-> New cond.not(cond.cond)}
+		|	{notexit} cond							{-> condrest.cond}
+		;
+
 	cond {-> cond} = 
-	
-			{not} not cond										{-> New cond.not(cond.cond)}		
-		|	{condexit} condterm									{-> condterm.cond}
-		;
-		
-	condterm {-> cond} = 
-	
-			{and} condterm and condrest							{-> New cond.and(condterm.cond, condrest.cond)}
-		|	{or} condterm or condrest							{-> New cond.or(condterm.cond, condrest.cond)}
-		|	{exit} condrest										{-> condrest.cond}
-		;
-		
-	condrest {-> cond} = 
 			
 			{equal} [left]:expr equal [right]:expr				{-> New cond.equal(left.expr, right.expr)}
 		|	{nequal} [left]:expr nequal [right]:expr			{-> New cond.nequal(left.expr, right.expr)}
 		|	{less} [left]:expr less [right]:expr				{-> New cond.less(left.expr, right.expr)}
 		|	{greater} [left]:expr greater [right]:expr			{-> New cond.greater(left.expr, right.expr)}
 		|	{lesseq} [left]:expr lesseq [right]:expr			{-> New cond.lesseq(left.expr, right.expr)}
-		|	{greatereq} [left]:expr greatereq [right]:expr		{-> New cond.greatereq(left.expr, right.expr)}
+		|	{greatereq} [left]:expr greatereq [right]:expr			{-> New cond.greatereq(left.expr, right.expr)}
 			
-		|	{nest} left_par cond right_par						{-> cond.cond}
+		|	{nest} left_par disjunctioncond right_par			{-> cond.cond}
 		;
 
 
