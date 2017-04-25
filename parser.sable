@@ -142,8 +142,8 @@ Productions
 	
 	helper {-> helper} = left_bracket right_bracket								{-> New helper(left_bracket, right_bracket)} ;
 	
-	numlist {-> number*} = left_bracket number right_bracket numlist_tail*			{-> [number, numlist_tail.number]};
-	numlist_tail {-> number} = left_bracket number right_bracket 					{-> number} ;
+	numlist {-> number*} = left_bracket number right_bracket numlist_tail*		{-> [number, numlist_tail.number]};
+	numlist_tail {-> number} = left_bracket number right_bracket 				{-> number} ;
 
 
 
@@ -266,7 +266,7 @@ Productions
 
 	cond {-> cond} = 
 	
-			{or} cond or condterm								  {-> New cond.or(condterm.cond, condrest.cond)}
+			{or} cond or condterm								{-> New cond.or(condterm.cond, condrest.cond)}
 		|	{exit} condterm										{-> condterm.cond}
 		;
 		
@@ -279,8 +279,8 @@ Productions
 		
 	condrest {-> cond} =
 	
-			{not} not condrest										{-> New cond.not(condrest.cond)}
-		|	{exit} condexit											{-> condexit.cond}
+			{not} not condrest									{-> New cond.not(condrest.cond)}
+		|	{exit} condexit										{-> condexit.cond}
 		;
 
 	condexit {-> cond} = 
@@ -290,7 +290,7 @@ Productions
 		|	{less} [left]:expr less [right]:expr				{-> New cond.less(left.expr, right.expr)}
 		|	{greater} [left]:expr greater [right]:expr			{-> New cond.greater(left.expr, right.expr)}
 		|	{lesseq} [left]:expr lesseq [right]:expr			{-> New cond.lesseq(left.expr, right.expr)}
-		|	{greatereq} [left]:expr greatereq [right]:expr			{-> New cond.greatereq(left.expr, right.expr)}
+		|	{greatereq} [left]:expr greatereq [right]:expr		{-> New cond.greatereq(left.expr, right.expr)}
 			
 		|	{nest} left_par discond right_par					{-> discond.cond}
 		;
