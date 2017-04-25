@@ -263,23 +263,23 @@ Productions
 
 ////////// CONDITIONS ///////////
 
-	disjunctioncond {-> cond} = 
+	discond {-> cond} = 
 	
-			{or} disjunctioncond or conjunctioncond				{-> New cond.or(condterm.cond, condrest.cond)}
-		|	{disjunctioncondexit} conjunctioncond				{-> condterm.cond}
+			{or} discond or concond						{-> New cond.or(condterm.cond, condrest.cond)}
+		|	{discondexit} concond						{-> condterm.cond}
 		;
 		
-	conjunctioncond {-> cond} = 
+	concond {-> cond} = 
 	
-			{and} conjuntioncond and notcond				{-> New cond.and(condterm.cond, condrest.cond)}
-		|	{conjunctionexit} notcond					{-> condrest.cond}
+			{and} concond and notcond					{-> New cond.and(condterm.cond, condrest.cond)}
+		|	{concondexit} notcond						{-> condrest.cond}
 		;
 		
 		
 	notcond {-> cond} =
 	
 			{not} not cond							{-> New cond.not(cond.cond)}
-		|	{notexit} cond							{-> condrest.cond}
+		|	{notcondexit} cond						{-> condrest.cond}
 		;
 
 	cond {-> cond} = 
