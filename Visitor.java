@@ -6,7 +6,9 @@ import java.util.Collections;
 
 	class Visitor extends DepthFirstAdapter
 	{
+		int i;
 		int indent;
+		String[] parts;
 
 	    private void printIndent() {
        		 System.out.print(String.join("", Collections.nCopies(indent, " ")));
@@ -15,12 +17,13 @@ import java.util.Collections;
 
 		private void printNode(Node node)
 		{
+			parts = node.getClass().getName().split("\\.");
+			System.out.printf("%s",parts[2]);
 			printIndent();
-
-			System.out.println("  " + node.toString());
+			System.out.println("  		" + node.toString());
 
 		}
-
+//-------------------------------------------
 		@Override
 		public void defaultIn(Node node)
 		{
@@ -33,5 +36,6 @@ import java.util.Collections;
 		{
 			indent--;
 		}
+
 	}
 
