@@ -263,21 +263,26 @@ Productions
 
 ////////// CONDITIONS ///////////
 
+
 	cond {-> cond} = 
-			{or} cond or condterm						{-> New cond.or(cond.cond, condterm.cond)}	
-		|	{exit} condterm							{-> condterm.cond}
+	
+			{or} cond or condterm								  {-> New cond.or(condterm.cond, condrest.cond)}
+		|	{exit} condterm										{-> condterm.cond}
 		;
 		
 	condterm {-> cond} = 
-			{and} condterm and condrest					{-> New cond.and(condterm.cond, condrest.cond)}
-		|	{exit} condrest							{-> condrest.cond}
-		;
 	
-	condrest {-> cond} = 
-			{not} not condrest						{-> New cond.not(condrest.cond)}
-		|	{exit} condexit							{-> condexit.cond}
+			{and} condterm and condrest							{-> New cond.and(condterm.cond, condrest.cond)}
+		|	{exit} condrest										{-> condrest.cond}
 		;
+		
+		
+	condrest {-> cond} =
 	
+			{not} not condrest										{-> New cond.not(condrest.cond)}
+		|	{exit} condexit											{-> condexit.cond}
+		;
+
 	condexit {-> cond} = 
 			
 			{equal} [left]:expr equal [right]:expr				{-> New cond.equal(left.expr, right.expr)}
@@ -287,7 +292,7 @@ Productions
 		|	{lesseq} [left]:expr lesseq [right]:expr			{-> New cond.lesseq(left.expr, right.expr)}
 		|	{greatereq} [left]:expr greatereq [right]:expr			{-> New cond.greatereq(left.expr, right.expr)}
 			
-		|	{nest} left_par cond right_par						{-> cond.cond}
+		|	{nest} left_par discond right_par					{-> discond.cond}
 		;
 
 
