@@ -98,10 +98,9 @@ Ignored Tokens
 Productions
 
 
-	program {-> program} = func_def												{-> New program(func_def.func_def)} ;
+	program {-> program} = func_def												{-> New program(func_def.local_def)} ;
 
-	func_def {-> func_def} = header local_def* block 							{-> New func_def(header.header, [local_def.local_def], block.stmt)} ;
-
+	func_def {-> local_def} = header local_def* block 							{-> New local_def.funcdef(header.header, [local_def.local_def], block.stmt)} ;
 
 	header {-> header} = 
 			{withpars} fun id left_par fpar_def_list right_par colon ret_type	{-> New header.withpars(id, [fpar_def_list.fpar_def], ret_type.ret_type)}
@@ -148,9 +147,9 @@ Productions
 
 	local_def {-> local_def} =
 	
-			{funcdef} func_def									{-> New local_def.funcdef(func_def.func_def)}
-		|	{funcdecl} func_decl								{-> New local_def.funcdecl(func_decl.func_decl)}
-		|	{vardef} var_def									{-> New local_def.vardef(var_def.var_def)}
+			{funcdef} func_def									{-> func_def.local_def}
+		|	{funcdecl} func_decl								{-> func_decl.local_def}
+		|	{vardef} var_def									{-> var_def.local_def}
 		;
 
 
@@ -160,9 +159,9 @@ Productions
 		;
 
 
-	var_def {-> var_def} = var idlist colon type semicolon		{-> New var_def([idlist.id], type.type)} ;
+	var_def {-> local_def} = var idlist colon type semicolon	{-> New local_def.vardef([idlist.id], type.type)} ;
 
-	func_decl {-> func_decl} = header semicolon 				{-> New func_decl(header.header)} ;
+	func_decl {-> local_def} = header semicolon 				{-> New local_def.funcdecl(header.header)} ;
 
 
 
@@ -264,7 +263,7 @@ Productions
 
 	cond {-> cond} = 
 	
-			{or} cond or condterm								{-> New cond.or(condterm.cond, condrest.cond)}
+			{or} cond or condterm								{-> New cond.or(cond.cond, condterm.cond)}
 		|	{exit} condterm										{-> condterm.cond}
 		;
 		
@@ -306,9 +305,15 @@ Productions
 Abstract Syntax Tree
 	
 	
-	program = func_def;
-	
-	func_def = header local_def* stmt;
+	program = local_def;
+
+	local_def =
+			{funcdef}  header local_def* stmt
+		|	{funcdecl} header
+		|	{vardef} id* type
+		;
+
+
 	
 	header = 
 			{withpars} id fpar_def* ret_type
@@ -340,24 +345,13 @@ Abstract Syntax Tree
 		|	{char} char
 		;
 	
-	
-	local_def =
-			{funcdef} func_def
-		|	{funcdecl} func_decl
-		|	{vardef} var_def
-		;
-	
-	
 	type = 
 			{array} data_type number*
 		|	{noarray} data_type
 		;
 	
 	
-	
-	var_def = id* type;
-	
-	func_decl = header;
+
 	
 	
 	/////////////////// STMTS ///////////////////////
