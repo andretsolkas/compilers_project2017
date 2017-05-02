@@ -6,6 +6,40 @@ import java.util.Collections;
 
 	class Visitor extends DepthFirstAdapter
 	{
+		
+		SymbolTable symtable;
+	
+		
+		public Visitor(){
+			symtable = new SymbolTable();
+		}
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+/*
 		int i;
 		int indent;
 		String[] parts;
@@ -37,5 +71,8 @@ import java.util.Collections;
 			indent--;
 		}
 
-	}
+	
+*/
 
+		
+	}
