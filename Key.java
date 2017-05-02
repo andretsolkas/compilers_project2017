@@ -4,14 +4,14 @@
 
 
 public class Key {
-	String string;
+	String name;
 	
 	public Key(String str){
 		
-		string = new String(str);
+		name = new String(str);
 	}
 
 	public String getKey(){
-		return string;
+		return name;
 	}
 }
