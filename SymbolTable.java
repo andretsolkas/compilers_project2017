@@ -1,6 +1,6 @@
 
 import java.util.*;
-
+ 
 
 public class SymbolTable {
 
@@ -20,17 +20,17 @@ public class SymbolTable {
 	}
 	
 	
-	public void insert(Key name, String type, int scope){
+	public void insert(Key name, String type, Boolean ref, LinkedList <Param> params, String retvalue){
 		
 		Node newNode, node = hashtable.get(name);
 		
-		if(node == null){									//id 's first appearance in the hashtable
-			newNode = new Node(name, type, scope, null);
+		if(node == null){											//id 's first appearance in the hashtable
+			newNode = new Node(name, type, scope, ref, params, retvalue, null);
 			hashtable.put(name, newNode);
 		}
 		
-		else{												//id will shadow an already existing one
-			newNode = new Node(name, type, scope, node);
+		else{														//id will shadow an already existing one
+			newNode = new Node(name, type, scope, ref, params, retvalue, node);
 			hashtable.replace(name, newNode);
 		}
 		
@@ -40,12 +40,12 @@ public class SymbolTable {
 	
 	
 	public Node lookup(Key name){
-		return hashtable.get(name);;
+		return hashtable.get(name);
 	}
 	
 	
 	
-	public void exit(){										//Destroy last scope
+	public void exit(){												//Destroy last scope
 		
 		Node node;
 		
@@ -64,7 +64,15 @@ public class SymbolTable {
 				}
 		}
 		
-		scope--:	
+		scope--;	
+	}
+	
+	public void increase_scope(){
+		scope++;
+	}
+	
+	public void decrease_scope(){
+		scope--;
 	}
 	
 	
