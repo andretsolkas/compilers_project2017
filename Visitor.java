@@ -8,6 +8,7 @@ import java.util.*;
 		SymbolTable symtable;
 		
 		int dataTypeMode;								//0 if parameter, 1 if return value
+		int headerMode;									//0 if fun definition, 1 if fun declaration
 		
 		Boolean reference;
 		String datatype;
@@ -26,8 +27,7 @@ import java.util.*;
 		}
 
 		public void initialize(){
-			
-			dataTypeMode = 0;
+
 			reference = null;
 			datatype = null;
 			name = null;
@@ -40,10 +40,14 @@ import java.util.*;
 		
 
 		//////////////////////////////////////
-	    @Override 
+		
+		public void outAProgram(AProgram node){
+	        symtable.print();
+		}
+
 		public void inAFuncdefLocalDef(AFuncdefLocalDef node)
 	    {
-	        defaultIn(node);
+	        headerMode = 0;
 	    }
 
 	    public void outAFuncdefLocalDef(AFuncdefLocalDef node)
@@ -51,30 +55,36 @@ import java.util.*;
 	        defaultIn(node);
 	    }		
 
-	    /////////////////////////////////////
-		
 	    public void inAFuncdeclLocalDef(AFuncdeclLocalDef node)
 	    {
-	        defaultIn(node);
+	        headerMode = 1;
 	    }
 
 	    public void outAFuncdeclLocalDef(AFuncdeclLocalDef node)
 	    {
 	        defaultOut(node);
 	    }
-		
-	    /////////////////////////////////////
 	    
 	    public void inAVardefLocalDef(AVardefLocalDef node)
 	    {
-	        defaultIn(node);
+	        initialize();
+	        dataTypeMode = 0;
 	    }
 
 	    public void outAVardefLocalDef(AVardefLocalDef node)
 	    {
-	        defaultOut(node);
+	    	Key key;
+	    	for(int i=0; i<node.getId().size(); i++){
+            	key = new Key(node.getId().get(i).getText());
+	    		symtable.insert(key, datatype, false, arraylist, null, null, null);
+	    	}
 	    }
-	    /////////////////////////////////////
+
+	    
+	    
+	    
+	    
+	    ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	    @Override
 	    public void inAWithparsHeader(AWithparsHeader node)
@@ -83,8 +93,7 @@ import java.util.*;
 	    }
 	    
 	    public void outAWithparsHeader(AWithparsHeader node)
-	    {
-	        defaultOut(node);
+	    {	//
 	    }
 
 	    @Override
@@ -92,18 +101,17 @@ import java.util.*;
 	    {
 	        inAWithparsHeader(node);
 	        
-	        funname = new Key(new String(node.getId().getText()));						//Functions' id name	        
+	        funname = new Key(new String(node.getId().getText()));										//Functions' id name	        
 	        if(node.getId() != null){
 	            node.getId().apply(this);
 	        }
 	        
-	        dataTypeMode = 1;															//Functions' return type
+	        dataTypeMode = 1;																			//Functions' return type
 	        if(node.getRetType() != null){
 	            node.getRetType().apply(this);
 	        }
 
-	        
-	        symtable.enter();
+	        symtable.increase_scope();
 	        
 	        dataTypeMode = 0;
             List<PFparDef> copy = new ArrayList<PFparDef>(node.getFparDef());
@@ -111,38 +119,61 @@ import java.util.*;
             {
                 e.apply(this);
 
-                for(int i=0; i<idlist.size(); i++){										// Insert all parameter-variables into the symbol table
-                	symtable.insert(idlist.get(i), datatype, reference, null, null);
+                if(headerMode == 0){
+	                
+                	for(int i=0; i<idlist.size(); i++){														//Insert all parameter-variables into the symbol table
+	                	symtable.insert(idlist.get(i), datatype, reference, arraylist, null, null, null);
+	                }
+	                
+	                idlist = new LinkedList<Key>();															//Initialize id list 
                 }
-                idlist = new LinkedList<Key>();											//Initialize id list 
-
-                Param param = new Param(datatype, arraylist);							//Add a parameter into the parameter list 
+                
+                Param param = new Param(datatype, arraylist);												//Add a parameter into the parameter list 
                 params.add(param);
 
             }
             
-    		symtable.decrease_scope();													//Function's prototype belongs to the previous scope
+    		symtable.decrease_scope();																		//Function's prototype belongs to the previous scope
     		
-    		symtable.insert(funname, null, null, params, retvalue);
     		
-    		symtable.increase_scope();
-
+    		
+    		if(headerMode == 0){																			//If function definition
+    			
+    			symtable.insert(funname, null, null, null, params, true, retvalue);
+    			symtable.increase_scope();
+    		
+    		}
+    		
+    		else symtable.insert(funname, null, null, null, params, false, retvalue);						//If function declaration
+    		
 	        outAWithparsHeader(node);
 	    }
 
-	    /////////////////////////////////////
-	    
 	    public void inAWithoutparsHeader(AWithoutparsHeader node)
-	    {
-	        defaultIn(node);
+	    {	
+	    	initialize();
 	    }
 
 	    public void outAWithoutparsHeader(AWithoutparsHeader node)
 	    {
-	        defaultOut(node);
-	    }
+	        funname = new Key(new String(node.getId().getText()));						//Functions' id name	        
+	        if(node.getId() != null){
+	            node.getId().apply(this);
+	        }
 
-	    /////////////////////////////////////
+	        dataTypeMode = 1;															//Functions' return type
+	        if(node.getRetType() != null){
+	            node.getRetType().apply(this);
+	        }
+	        
+	        if(headerMode == 0){
+	        	symtable.insert(funname, null, null, null, null, true, retvalue);							//If function definition
+	        	symtable.increase_scope();
+	        }
+	    
+	        else symtable.insert(funname, null, null, null, params, false, retvalue);						//If function declaration
+	        	
+	    }
 	    
 	    public void inAWithrefFparDef(AWithrefFparDef node)
 	    {
@@ -153,14 +184,11 @@ import java.util.*;
 	    	}
 	    }
 
-/*
 	    public void outAWithrefFparDef(AWithrefFparDef node)
 	    {
 	        defaultOut(node);
 	    }
-*/
-	    /////////////////////////////////////
-	    
+
 	    public void inAWithoutrefFparDef(AWithoutrefFparDef node)
 	    {
 	        reference = false;
@@ -169,13 +197,11 @@ import java.util.*;
 	    		idlist.add(new Key(node.getId().get(i).getText()));
 	    	}
 	    }
-/*
+
 	    public void outAWithoutrefFparDef(AWithoutrefFparDef node)
 	    {
 	        defaultOut(node);
 	    }
-*/
-	    /////////////////////////////////////
 	    
 	    public void inANoarrayFparType(ANoarrayFparType node)
 	    {		//array list is empty
@@ -186,19 +212,15 @@ import java.util.*;
 	        defaultOut(node);
 	    }
 	    
-	    /////////////////////////////////////
-	    
 	    public void inAArrayFirstFparType(AArrayFirstFparType node)
 	    {
 	    	arraylist.addFirst(0);
 	    }
-/*
+
 	    public void outAArrayFirstFparType(AArrayFirstFparType node)
 	    {
 	        defaultOut(node);
 	    }
-*/
-	    /////////////////////////////////////
 	    
 	    public void inAArrayFirstsecFparType(AArrayFirstsecFparType node)
 	    {
@@ -212,9 +234,6 @@ import java.util.*;
 	    {
 	        defaultOut(node);
 	    }
-
-
-	    /////////////////////////////////////
 	    
 	    public void inAArraySecFparType(AArraySecFparType node)
 	    {
@@ -228,21 +247,6 @@ import java.util.*;
 	        defaultOut(node);
 	    }
 
-/*
-	    /////////////////////////////////////
-	    
-	    public void inAHelper(AHelper node)
-	    {
-	        defaultIn(node);
-	    }
-
-	    public void outAHelper(AHelper node)
-	    {
-	        defaultOut(node);
-	    }
-*/
-	    /////////////////////////////////////
-	    
 	    public void inADataRetType(ADataRetType node)
 	    {
 	        defaultOut(node);
@@ -252,8 +256,6 @@ import java.util.*;
 	    {
 	        defaultOut(node);
 	    }
-
-	    /////////////////////////////////////
 	    
 	    public void inANoneRetType(ANoneRetType node)
 	    {
@@ -264,7 +266,6 @@ import java.util.*;
 	    {
 	        defaultOut(node);
 	    }
-	    /////////////////////////////////////
 	    
 	    public void inAIntDataType(AIntDataType node)
 	    {
@@ -272,15 +273,12 @@ import java.util.*;
 	    		datatype = new String("int");
 	    	
 	    	else retvalue = new String("int");
-	    	
 	    }
 
 	    public void outAIntDataType(AIntDataType node)
 	    {
 	        defaultOut(node);
 	    }
-
-	    /////////////////////////////////////
 	    
 	    public void inACharDataType(ACharDataType node)
 	    {
@@ -295,23 +293,13 @@ import java.util.*;
 	        defaultOut(node);
 	    }
 	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    /////////////////////////////////////
+	    //////////////////////////////////////////////////////////////////////////////////////////////////
 		
 	    public void inAArrayType(AArrayType node)
 	    {
-	        defaultIn(node);
+	    	for(int i=0; i<node.getNumber().size(); i++){
+	    		arraylist.add(Integer.parseInt(node.getNumber().get(i).getText()));
+	    	}
 	    }
 
 	    public void outAArrayType(AArrayType node)
@@ -319,9 +307,6 @@ import java.util.*;
 	        defaultOut(node);
 	    }
 
-	    
-	    /////////////////////////////////////
-	    
 	    public void inAPrimitiveType(APrimitiveType node)
 	    {
 	        defaultIn(node);
@@ -331,6 +316,21 @@ import java.util.*;
 	    {
 	        defaultOut(node);
 	    }
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+	    
+	    
 
 	    
 	    /////////////////////////////////////

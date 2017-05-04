@@ -20,17 +20,17 @@ public class SymbolTable {
 	}
 	
 	
-	public void insert(Key name, String type, Boolean ref, LinkedList <Param> params, String retvalue){
+	public void insert(Key name, String type, Boolean ref, LinkedList <Integer> arraylist, LinkedList <Param> params, Boolean defined, String retvalue){
 		
 		Node newNode, node = hashtable.get(name);
 		
-		if(node == null){											//id 's first appearance in the hashtable
-			newNode = new Node(name, type, scope, ref, params, retvalue, null);
+		if(node == null){											//id 's first appearance in the hash table
+			newNode = new Node(name, type, scope, ref, params, arraylist, retvalue, defined, null);
 			hashtable.put(name, newNode);
 		}
 		
 		else{														//id will shadow an already existing one
-			newNode = new Node(name, type, scope, ref, params, retvalue, node);
+			newNode = new Node(name, type, scope, ref, params, arraylist, retvalue, defined, node);
 			hashtable.replace(name, newNode);
 		}
 		
@@ -74,6 +74,26 @@ public class SymbolTable {
 	public void decrease_scope(){
 		scope--;
 	}
+	
+	
+	public void print(){
+		
+		System.out.println("Symbol Table:\n");
+		for(int i=0; i<list.size(); i++){
+			
+			list.get(i).print();
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 }
