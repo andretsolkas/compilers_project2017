@@ -7,8 +7,9 @@ import java.util.*;
 		
 		SymbolTable symtable;
 		
-		int dataTypeMode;								//0 if parameter, 1 if return value
+		int dataTypeMode;								//0 if parameter, 1 if return_value
 		int headerMode;									//0 if fun definition, 1 if fun declaration
+		int blockMode;									//0 if func_def changed it, 1 if block changed it
 		
 		Boolean reference;
 		String datatype;
@@ -42,17 +43,18 @@ import java.util.*;
 		//////////////////////////////////////
 		
 		public void outAProgram(AProgram node){
-	        symtable.print();
+
 		}
 
 		public void inAFuncdefLocalDef(AFuncdefLocalDef node)
 	    {
 	        headerMode = 0;
+	        blockMode = 0;
+	        symtable.enter();
 	    }
 
 	    public void outAFuncdefLocalDef(AFuncdefLocalDef node)
 	    {
-	        defaultIn(node);
 	    }		
 
 	    public void inAFuncdeclLocalDef(AFuncdeclLocalDef node)
@@ -79,10 +81,6 @@ import java.util.*;
 	    		symtable.insert(key, datatype, false, arraylist, null, null, null);
 	    	}
 	    }
-
-	    
-	    
-	    
 	    
 	    ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -101,18 +99,16 @@ import java.util.*;
 	    {
 	        inAWithparsHeader(node);
 	        
-	        funname = new Key(new String(node.getId().getText()));										//Functions' id name	        
+	        funname = new Key(new String(node.getId().getText()));											//Functions' id name	        
 	        if(node.getId() != null){
 	            node.getId().apply(this);
 	        }
 	        
-	        dataTypeMode = 1;																			//Functions' return type
+	        dataTypeMode = 1;																				//Functions' return type
 	        if(node.getRetType() != null){
 	            node.getRetType().apply(this);
 	        }
 
-	        symtable.increase_scope();
-	        
 	        dataTypeMode = 0;
             List<PFparDef> copy = new ArrayList<PFparDef>(node.getFparDef());
             for(PFparDef e : copy)
@@ -135,16 +131,12 @@ import java.util.*;
             
     		symtable.decrease_scope();																		//Function's prototype belongs to the previous scope
     		
-    		
-    		
-    		if(headerMode == 0){																			//If function definition
-    			
+    		if(headerMode == 0)																				//If function definition
     			symtable.insert(funname, null, null, null, params, true, retvalue);
-    			symtable.increase_scope();
-    		
-    		}
     		
     		else symtable.insert(funname, null, null, null, params, false, retvalue);						//If function declaration
+    		
+			symtable.increase_scope();
     		
 	        outAWithparsHeader(node);
 	    }
@@ -166,13 +158,14 @@ import java.util.*;
 	            node.getRetType().apply(this);
 	        }
 	        
-	        if(headerMode == 0){
+	        symtable.decrease_scope();
+	        
+	        if(headerMode == 0)
 	        	symtable.insert(funname, null, null, null, null, true, retvalue);							//If function definition
-	        	symtable.increase_scope();
-	        }
 	    
-	        else symtable.insert(funname, null, null, null, params, false, retvalue);						//If function declaration
-	        	
+	        else symtable.insert(funname, null, null, null, null, false, retvalue);							//If function declaration
+
+        	symtable.increase_scope();
 	    }
 	    
 	    public void inAWithrefFparDef(AWithrefFparDef node)
@@ -361,12 +354,15 @@ import java.util.*;
 	    
 	    public void inABlockStmtexpr(ABlockStmtexpr node)
 	    {
-	        defaultIn(node);
+	        if(blockMode == 1){
+	        	symtable.enter();
+	        }
+	        else blockMode = 1;
 	    }
 
 	    public void outABlockStmtexpr(ABlockStmtexpr node)
 	    {
-	        defaultOut(node);
+	        symtable.exit();
 	    }
 	    
 	    /////////////////////////////////////

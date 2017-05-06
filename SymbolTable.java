@@ -23,7 +23,7 @@ public class SymbolTable {
 	public void insert(Key name, String type, Boolean ref, LinkedList <Integer> arraylist, LinkedList <Param> params, Boolean defined, String retvalue){
 		
 		Node newNode, node = hashtable.get(name);
-		
+
 		if(node == null){											//id 's first appearance in the hash table
 			newNode = new Node(name, type, scope, ref, params, arraylist, retvalue, defined, null);
 			hashtable.put(name, newNode);
@@ -35,7 +35,7 @@ public class SymbolTable {
 		}
 		
 		list.addLast(newNode);
-		
+		hashtable.get(name).print();
 	}
 	
 	
