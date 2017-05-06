@@ -98,10 +98,9 @@ Ignored Tokens
 Productions
 
 
-	program {-> program} = func_def												{-> New program(func_def.func_def)} ;
+	program {-> program} = func_def												{-> New program(func_def.local_def)} ;
 
-	func_def {-> func_def} = header local_def* block 							{-> New func_def(header.header, [local_def.local_def], block.block)} ;
-
+	func_def {-> local_def} = header local_def* block 							{-> New local_def.funcdef(header.header, [local_def.local_def], block.stmt)} ;
 
 	header {-> header} = 
 			{withpars} fun id left_par fpar_def_list right_par colon ret_type	{-> New header.withpars(id, [fpar_def_list.fpar_def], ret_type.ret_type)}
@@ -142,17 +141,15 @@ Productions
 	
 	helper {-> helper} = left_bracket right_bracket								{-> New helper(left_bracket, right_bracket)} ;
 	
-	numlist {-> number*} = left_bracket number right_bracket numlist_tail*		{-> [number, numlist_tail.number]};
-	numlist_tail {-> number} = left_bracket number right_bracket 				{-> number} ;
-
-
+	numlist {-> number*} = left_bracket number right_bracket numlist_tail*			{-> [number, numlist_tail.number]};
+	numlist_tail {-> number} = left_bracket number right_bracket 					{-> number} ;
 
 
 	local_def {-> local_def} =
 	
-			{funcdef} func_def									{-> New local_def.funcdef(func_def.func_def)}
-		|	{funcdecl} func_decl								{-> New local_def.funcdecl(func_decl.func_decl)}
-		|	{vardef} var_def									{-> New local_def.vardef(var_def.var_def)}
+			{funcdef} func_def									{-> func_def.local_def}
+		|	{funcdecl} func_decl								{-> func_decl.local_def}
+		|	{vardef} var_def									{-> var_def.local_def}
 		;
 
 
@@ -162,16 +159,17 @@ Productions
 		;
 
 
-	var_def {-> var_def} = var idlist colon type semicolon		{-> New var_def([idlist.id], type.type)} ;
+	var_def {-> local_def} = var idlist colon type semicolon	{-> New local_def.vardef([idlist.id], type.type)} ;
 
-	func_decl {-> func_decl} = header semicolon 				{-> New func_decl(header.header)} ;
-
-	block {-> block} = left_brace stmt* right_brace 			{-> New block([stmt.stmt])} ;
-
+	func_decl {-> local_def} = header semicolon 				{-> New local_def.funcdecl(header.header)} ;
 
 
 
 /////////////////// STMTS ///////////////////////
+
+	block {-> stmt} = left_brace stmtlist right_brace 			{-> New stmt.block([stmtlist.stmt])} ;
+	stmtlist {-> stmt*} = stmt*									{-> [stmt]} ;
+
 
 	stmt {-> stmt} =
 		
@@ -184,7 +182,7 @@ Productions
 	
 			{none} semicolon									{-> New stmt.none(semicolon)}
 		|	{assignment} l_value arrow expr semicolon			{-> New stmt.assignment(l_value.expr, expr.expr)}
-		|	{block} block 										{-> New stmt.block(block.block)}
+		|	{block} block 										{-> block.stmt}
 		|	{funcall} func_call semicolon						{-> New stmt.func_call(func_call.expr)}
 		|	{returnepxr} return expr semicolon					{-> New stmt.returnexpr(expr.expr)}
 		|	{return} return semicolon							{-> New stmt.return(semicolon)}
@@ -213,33 +211,33 @@ Productions
 
 	expr {-> expr} = 
 			
-			{plus} expr plus term 				{-> New expr.plus(expr.expr, term.expr)}
-		|	{minus} expr minus term 			{-> New expr.minus(expr.expr, term.expr)}
-		|	{term} term 						{-> term.expr} 
+			{plus} expr plus term 								{-> New expr.plus(expr.expr, term.expr)}
+		|	{minus} expr minus term 							{-> New expr.minus(expr.expr, term.expr)}
+		|	{term} term 										{-> term.expr} 
 		;
 
 
 	term {-> expr} =
 	
-			{mult} term mult factor				{-> New expr.mult(term.expr, factor.expr)}
-		|	{div} term divide factor			{-> New expr.div(term.expr, factor.expr)}
-		|	{mod} term mod factor				{-> New expr.mod(term.expr, factor.expr)}
-		|	{factor} factor						{-> factor.expr}
+			{mult} term mult factor								{-> New expr.mult(term.expr, factor.expr)}
+		|	{div} term divide factor							{-> New expr.div(term.expr, factor.expr)}
+		|	{mod} term mod factor								{-> New expr.mod(term.expr, factor.expr)}
+		|	{factor} factor										{-> factor.expr}
 		;
 
 	
 	factor {-> expr} =
 			
-			{pos} plus factor							{-> New expr.pos(factor.expr)}
-		|	{neg} minus factor							{-> New expr.neg(factor.expr)}
+			{pos} plus factor									{-> New expr.pos(factor.expr)}
+		|	{neg} minus factor									{-> New expr.neg(factor.expr)}
 		
-		|	{num} number								{-> New expr.num(number)}
-		|	{conchar} conchar							{-> New expr.conchar(conchar)}
+		|	{num} number										{-> New expr.num(number)}
+		|	{conchar} conchar									{-> New expr.conchar(conchar)}
 		
-		|	{lvalue} l_value							{-> l_value.expr}
-		|	{func_call} func_call						{-> func_call.expr}
+		|	{lvalue} l_value									{-> l_value.expr}
+		|	{func_call} func_call								{-> func_call.expr}
 			
-		|	{par} left_par expr right_par				{-> expr.expr}
+		|	{par} left_par expr right_par						{-> expr.expr}
 		;
 	
  
@@ -260,13 +258,12 @@ Productions
 	expr_list_tail {-> expr} = comma expr 							{-> expr.expr} ;
 
 
-
 ////////// CONDITIONS ///////////
 
 
 	cond {-> cond} = 
 	
-			{or} cond or condterm								{-> New cond.or(condterm.cond, condrest.cond)}
+			{or} cond or condterm								{-> New cond.or(cond.cond, condterm.cond)}
 		|	{exit} condterm										{-> condterm.cond}
 		;
 		
@@ -292,10 +289,9 @@ Productions
 		|	{lesseq} [left]:expr lesseq [right]:expr			{-> New cond.lesseq(left.expr, right.expr)}
 		|	{greatereq} [left]:expr greatereq [right]:expr		{-> New cond.greatereq(left.expr, right.expr)}
 		
-		|	{nest} left_par cond right_par					{-> cond.cond}
+		|	{nest} left_par cond right_par						{-> cond.cond}
 
 		;
-
 
 
 
@@ -309,9 +305,15 @@ Productions
 Abstract Syntax Tree
 	
 	
-	program = func_def;
-	
-	func_def = header local_def* block;
+	program = local_def;
+
+	local_def =
+			{funcdef}  header local_def* stmt
+		|	{funcdecl} header
+		|	{vardef} id* type
+		;
+
+
 	
 	header = 
 			{withpars} id fpar_def* ret_type
@@ -343,35 +345,22 @@ Abstract Syntax Tree
 		|	{char} char
 		;
 	
-	
-	local_def =
-			{funcdef} func_def
-		|	{funcdecl} func_decl
-		|	{vardef} var_def
-		;
-	
-	
 	type = 
 			{array} data_type number*
 		|	{noarray} data_type
 		;
 	
 	
-	
-	var_def = id* type;
-	
-	func_decl = header;
+
 	
 	
 	/////////////////// STMTS ///////////////////////
-	
-	block = stmt* ;
 			
 	
 	stmt = 
 			{none} semicolon
 		|	{assignment} [left]:expr [right]:expr
-		|	{block} block
+		|	{block} stmt*
 		|	{func_call} expr
 		|	{returnexpr} expr
 		|	{return} semicolon
