@@ -1,14 +1,10 @@
 
-//import java.util.*;
-
-
-
 public class Key {
 	String name;
 	
 	public Key(String str){
 		
-		name = new String(str);
+		name = str;
 	}
 
 	public String getKey(){
@@ -16,6 +12,7 @@ public class Key {
 	}
 
 	
+    @Override
 	public int hashCode(){
 		int hashkey=0;
 		for(int i=0; i<name.length(); i++)
@@ -28,9 +25,7 @@ public class Key {
 	public boolean equals(Object o){
 		
 		Key key = (Key) o;
-		if(name.equals(key.name))
-			return true;
-		return false;
+		return name.equals(key.name);
 	}
 
 }

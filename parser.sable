@@ -100,7 +100,7 @@ Productions
 
 	program {-> program} = func_def												{-> New program(func_def.local_def)} ;
 
-	func_def {-> local_def} = header local_def* block 							{-> New local_def.funcdef(header.header, [local_def.local_def], block.stmt)} ;
+	func_def {-> local_def} = header local_def* fblock 							{-> New local_def.funcdef(header.header, [local_def.local_def], fblock.stmtexpr)} ;
 
 	header {-> header} = 
 			{withpars} fun id left_par fpar_def_list right_par colon ret_type	{-> New header.withpars(id, [fpar_def_list.fpar_def], ret_type.ret_type)}
@@ -155,7 +155,7 @@ Productions
 
 	type {-> type} =
 			{array} data_type numlist							{-> New type.array(data_type.data_type, [numlist.number])} 
-		|	{noarray} data_type									{-> New type.noarray(data_type.data_type)} 
+		|	{primitive} data_type									{-> New type.primitive(data_type.data_type)} 
 		;
 
 
@@ -164,98 +164,100 @@ Productions
 	func_decl {-> local_def} = header semicolon 				{-> New local_def.funcdecl(header.header)} ;
 
 
-
 /////////////////// STMTS ///////////////////////
 
-	block {-> stmt} = left_brace stmtlist right_brace 			{-> New stmt.block([stmtlist.stmt])} ;
-	stmtlist {-> stmt*} = stmt*									{-> [stmt]} ;
+	fblock {-> stmtexpr} = left_brace stmtlist right_brace 		{-> New stmtexpr.fblock([stmtlist.stmtexpr])} ;
+	
+	block {-> stmtexpr} = left_brace stmtlist right_brace 			{-> New stmtexpr.block([stmtlist.stmtexpr])} ;
+	stmtlist {-> stmtexpr*} = stmt*									{-> [stmt.stmtexpr]} ;
 
 
-	stmt {-> stmt} =
+	stmt {-> stmtexpr} =
 		
-			{part} partstmt										{-> partstmt.stmt}
-		|	{if} ifstmt											{-> ifstmt.stmt}
-		|	{while} whilestmt									{-> whilestmt.stmt}
+			{part} partstmt										{-> partstmt.stmtexpr}
+		|	{if} ifstmt											{-> ifstmt.stmtexpr}
+		|	{while} whilestmt									{-> whilestmt.stmtexpr}
 		;
 
-	partstmt {-> stmt} = 
+	partstmt {-> stmtexpr} = 
 	
-			{none} semicolon									{-> New stmt.none(semicolon)}
-		|	{assignment} l_value arrow expr semicolon			{-> New stmt.assignment(l_value.expr, expr.expr)}
-		|	{block} block 										{-> block.stmt}
-		|	{funcall} func_call semicolon						{-> New stmt.func_call(func_call.expr)}
-		|	{returnepxr} return expr semicolon					{-> New stmt.returnexpr(expr.expr)}
-		|	{return} return semicolon							{-> New stmt.return(semicolon)}
+			{none} semicolon									{-> New stmtexpr.none(semicolon)}
+		|	{assignment} l_value arrow expr semicolon			{-> New stmtexpr.assignment(l_value.stmtexpr, expr.stmtexpr)}
+		|	{block} block 										{-> block.stmtexpr}
+		|	{funcall} func_call semicolon						{-> func_call.stmtexpr}
+		|	{returnepxr} return expr semicolon					{-> New stmtexpr.returnexpr(expr.stmtexpr)}
+		|	{return} return semicolon							{-> New stmtexpr.return(semicolon)}
 		;
 	
-	ifstmt {-> stmt} = 
+	ifstmt {-> stmtexpr} = 
 			
-			{noelse} if cond then stmt							{-> New stmt.if(cond.cond, stmt.stmt)}
-		|	{else} if cond then withelse else stmt				{-> New stmt.ifelse(cond.cond, withelse.stmt, stmt.stmt)}
+			{noelse} if cond then stmt							{-> New stmtexpr.if(cond.cond, stmt.stmtexpr)}
+		|	{else} if cond then withelse else stmt				{-> New stmtexpr.ifelse(cond.cond, withelse.stmtexpr, stmt.stmtexpr)}
 		; 
 
-	withelse {-> stmt} =
+	withelse {-> stmtexpr} =
 			
-			if cond then [left]:withelse else [right]:withelse	{-> New stmt.ifelse(cond.cond, left.stmt, right.stmt)}
-		|	{while} while cond do withelse						{-> New stmt.while(cond.cond, withelse.stmt)}
-		|	{partstmt} partstmt									{-> partstmt.stmt}
+			if cond then [left]:withelse else [right]:withelse	{-> New stmtexpr.ifelse(cond.cond, left.stmtexpr, right.stmtexpr)}
+		|	{while} while cond do withelse						{-> New stmtexpr.while(cond.cond, withelse.stmtexpr)}
+		|	{partstmt} partstmt									{-> partstmt.stmtexpr}
 		;
 			
-	whilestmt {-> stmt} = while cond do stmt					{-> New stmt.while(cond.cond, stmt.stmt)} ;
+	whilestmt {-> stmtexpr} = while cond do stmt					{-> New stmtexpr.while(cond.cond, stmt.stmtexpr)} ;
 
-/////////////////////////////////////////////////////////////////////
 
 
 	
 ////////// EXRPESSIONS ///////////
 
-	expr {-> expr} = 
+	expr {-> stmtexpr} = 
 			
-			{plus} expr plus term 								{-> New expr.plus(expr.expr, term.expr)}
-		|	{minus} expr minus term 							{-> New expr.minus(expr.expr, term.expr)}
-		|	{term} term 										{-> term.expr} 
+			{plus} expr plus term 								{-> New stmtexpr.plus(expr.stmtexpr, term.stmtexpr)}
+		|	{minus} expr minus term 							{-> New stmtexpr.minus(expr.stmtexpr, term.stmtexpr)}
+		|	{term} term 										{-> term.stmtexpr} 
 		;
 
 
-	term {-> expr} =
+	term {-> stmtexpr} =
 	
-			{mult} term mult factor								{-> New expr.mult(term.expr, factor.expr)}
-		|	{div} term divide factor							{-> New expr.div(term.expr, factor.expr)}
-		|	{mod} term mod factor								{-> New expr.mod(term.expr, factor.expr)}
-		|	{factor} factor										{-> factor.expr}
+			{mult} term mult factor								{-> New stmtexpr.mult(term.stmtexpr, factor.stmtexpr)}
+		|	{div} term divide factor							{-> New stmtexpr.div(term.stmtexpr, factor.stmtexpr)}
+		|	{mod} term mod factor								{-> New stmtexpr.mod(term.stmtexpr, factor.stmtexpr)}
+		|	{factor} factor										{-> factor.stmtexpr}
 		;
 
 	
-	factor {-> expr} =
+	factor {-> stmtexpr} =
 			
-			{pos} plus factor									{-> New expr.pos(factor.expr)}
-		|	{neg} minus factor									{-> New expr.neg(factor.expr)}
+			{pos} plus factor									{-> New stmtexpr.pos(factor.stmtexpr)}
+		|	{neg} minus factor									{-> New stmtexpr.neg(factor.stmtexpr)}
 		
-		|	{num} number										{-> New expr.num(number)}
-		|	{conchar} conchar									{-> New expr.conchar(conchar)}
+		|	{num} number										{-> New stmtexpr.num(number)}
+		|	{conchar} conchar									{-> New stmtexpr.conchar(conchar)}
 		
-		|	{lvalue} l_value									{-> l_value.expr}
-		|	{func_call} func_call								{-> func_call.expr}
+		|	{lvalue} l_value									{-> l_value.stmtexpr}
+		|	{func_call} func_call								{-> func_call.stmtexpr}
 			
-		|	{par} left_par expr right_par						{-> expr.expr}
+		|	{par} left_par expr right_par						{-> expr.stmtexpr}
 		;
 	
+	
+	l_value {-> stmtexpr} = lvalue								{-> New stmtexpr.l_value(lvalue.stmtexpr)};
  
-	l_value {-> expr} = 
+	lvalue {-> stmtexpr} = 
 		
-			{id} id													{-> New expr.id(id)}
-		|	{str} string	 										{-> New expr.str(string)}
-		|	{expr} l_value left_bracket expr right_bracket			{-> New expr.array(l_value.expr, expr.expr)}
+			{id} id													{-> New stmtexpr.id(id)}
+		|	{str} string	 										{-> New stmtexpr.str(string)}
+		|	{expr} lvalue left_bracket expr right_bracket			{-> New stmtexpr.array(lvalue.stmtexpr, expr.stmtexpr)}
 		;
 
 	
-	func_call {-> expr} = 
-			{withpars} id left_par expr_list right_par 				{-> New expr.fun_call(id, [expr_list.expr])}
-		|	{withoutpars} id left_par right_par			 			{-> New expr.fun_call(id, [])}
+	func_call {-> stmtexpr} = 
+			{withpars} id left_par expr_list right_par 				{-> New stmtexpr.funcall(id, [expr_list.stmtexpr])}
+		|	{withoutpars} id left_par right_par			 			{-> New stmtexpr.funcall(id, [])}
 		;
 	
-	expr_list {-> expr*} = expr expr_list_tail* 					{-> [expr.expr, expr_list_tail.expr]} ;
-	expr_list_tail {-> expr} = comma expr 							{-> expr.expr} ;
+	expr_list {-> stmtexpr*} = expr expr_list_tail* 					{-> [expr.stmtexpr, expr_list_tail.stmtexpr]} ;
+	expr_list_tail {-> stmtexpr} = comma expr 							{-> expr.stmtexpr} ;
 
 
 ////////// CONDITIONS ///////////
@@ -282,22 +284,16 @@ Productions
 
 	condexit {-> cond} = 
 			
-			{equal} [left]:expr equal [right]:expr				{-> New cond.equal(left.expr, right.expr)}
-		|	{nequal} [left]:expr nequal [right]:expr			{-> New cond.nequal(left.expr, right.expr)}
-		|	{less} [left]:expr less [right]:expr				{-> New cond.less(left.expr, right.expr)}
-		|	{greater} [left]:expr greater [right]:expr			{-> New cond.greater(left.expr, right.expr)}
-		|	{lesseq} [left]:expr lesseq [right]:expr			{-> New cond.lesseq(left.expr, right.expr)}
-		|	{greatereq} [left]:expr greatereq [right]:expr		{-> New cond.greatereq(left.expr, right.expr)}
+			{equal} [left]:expr equal [right]:expr				{-> New cond.equal(left.stmtexpr, right.stmtexpr)}
+		|	{nequal} [left]:expr nequal [right]:expr			{-> New cond.nequal(left.stmtexpr, right.stmtexpr)}
+		|	{less} [left]:expr less [right]:expr				{-> New cond.less(left.stmtexpr, right.stmtexpr)}
+		|	{greater} [left]:expr greater [right]:expr			{-> New cond.greater(left.stmtexpr, right.stmtexpr)}
+		|	{lesseq} [left]:expr lesseq [right]:expr			{-> New cond.lesseq(left.stmtexpr, right.stmtexpr)}
+		|	{greatereq} [left]:expr greatereq [right]:expr		{-> New cond.greatereq(left.stmtexpr, right.stmtexpr)}
 		
 		|	{nest} left_par cond right_par						{-> cond.cond}
 
 		;
-
-
-
-
-
-
 
 
 
@@ -308,13 +304,11 @@ Abstract Syntax Tree
 	program = local_def;
 
 	local_def =
-			{funcdef}  header local_def* stmt
+			{funcdef}  header local_def* stmtexpr
 		|	{funcdecl} header
 		|	{vardef} id* type
 		;
 
-
-	
 	header = 
 			{withpars} id fpar_def* ret_type
 		|	{withoutpars} id ret_type
@@ -347,71 +341,58 @@ Abstract Syntax Tree
 	
 	type = 
 			{array} data_type number*
-		|	{noarray} data_type
+		|	{primitive} data_type
 		;
-	
 	
 
-	
-	
-	/////////////////// STMTS ///////////////////////
-			
-	
-	stmt = 
+	stmtexpr = 
+
 			{none} semicolon
-		|	{assignment} [left]:expr [right]:expr
-		|	{block} stmt*
-		|	{func_call} expr
-		|	{returnexpr} expr
+		|	{assignment} [left]:stmtexpr [right]:stmtexpr
+		|	{block} stmtexpr*
+		|	{fblock} stmtexpr*
+		|	{returnexpr} stmtexpr
 		|	{return} semicolon
 		
-		|	{if} cond stmt
-		|	{ifelse} cond [left]:stmt [right]:stmt
+		|	{if} cond stmtexpr
+		|	{ifelse} cond [left]:stmtexpr [right]:stmtexpr
 		
-		|	{while} cond stmt
-		|	
-	
-		;
+		|	{while} cond stmtexpr
+
+
+		|	{plus} [left]:stmtexpr [right]:stmtexpr
+		|	{minus} [left]:stmtexpr [right]:stmtexpr
+		|	{mult} [left]:stmtexpr [right]:stmtexpr
+		|	{div} [left]:stmtexpr [right]:stmtexpr
+		|	{mod} [left]:stmtexpr [right]:stmtexpr
 		
-	
-	
-	////////// EXRPESSIONS ///////////
-	
-	expr =
-			{plus} [left]:expr [right]:expr
-		|	{minus} [left]:expr [right]:expr
-		|	{mult} [left]:expr [right]:expr
-		|	{div} [left]:expr [right]:expr
-		|	{mod} [left]:expr [right]:expr
-		
-	 	|	{pos} expr
-		|	{neg} expr
+	 	|	{pos} stmtexpr
+		|	{neg} stmtexpr
 		
 		|	{conchar} conchar
 	 	|	{num} number
 		
+		|	{l_value} stmtexpr
+		
 		|	{id} id
 		|	{str} string
-		|	{array} [left]:expr [right]:expr
+		|	{array} [left]:stmtexpr [right]:stmtexpr
 		
-		|	{fun_call} id expr*
+		|	{funcall} id stmtexpr*
 		
 		;
-	     
-	 
-	 ////////// CONDITIONS ///////////
 	 
 	cond =
 	 		{not} cond
 	 	|	{and} [left]:cond [right]:cond
 	 	|	{or} [left]:cond [right]:cond
 		
-		|	{equal} [left]:expr [right]:expr	
-	 	|	{nequal} [left]:expr [right]:expr
-	 	|	{less} [left]:expr [right]:expr
-	 	|	{greater} [left]:expr [right]:expr
-		|	{lesseq} [left]:expr [right]:expr
-		|	{greatereq} [left]:expr [right]:expr
+		|	{equal} [left]:stmtexpr [right]:stmtexpr
+	 	|	{nequal} [left]:stmtexpr [right]:stmtexpr
+	 	|	{less} [left]:stmtexpr [right]:stmtexpr
+	 	|	{greater} [left]:stmtexpr [right]:stmtexpr
+		|	{lesseq} [left]:stmtexpr [right]:stmtexpr
+		|	{greatereq} [left]:stmtexpr [right]:stmtexpr
 		
 		;
 

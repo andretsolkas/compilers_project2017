@@ -9,8 +9,8 @@ public class SymbolTable {
 	LinkedList <Node> list;
 
 	public SymbolTable(){
-		hashtable = new Hashtable <Key, Node>();
-		list = new LinkedList <Node>();
+		hashtable = new Hashtable <>();
+		list = new LinkedList <>();
 		scope = 0;
 	}
 	
@@ -24,18 +24,18 @@ public class SymbolTable {
 		
 		Node newNode, node = hashtable.get(name);
 
-		if(node == null){											//id 's first appearance in the hash table
+		if(node == null){                                                       //id 's first appearance in the hash table
 			newNode = new Node(name, type, scope, ref, params, arraylist, retvalue, defined, null);
 			hashtable.put(name, newNode);
 		}
 		
-		else{														//id will shadow an already existing one
+		else{                                                                   //id will shadow an already existing one
 			newNode = new Node(name, type, scope, ref, params, arraylist, retvalue, defined, node);
 			hashtable.replace(name, newNode);
 		}
 		
 		list.addLast(newNode);
-		hashtable.get(name).print();
+		//hashtable.get(name).print();
 	}
 	
 	
@@ -45,28 +45,39 @@ public class SymbolTable {
 	
 	
 	
-	public void exit(){												//Destroy last scope
+	public void exit(){                                                         //Destroy last scope
 		
 		Node node;
-		
-		for(int i=0; i < list.size(); i++){
-				
-				node = list.get(i);
+		Iterator<Node> iter = list.descendingIterator();
+        while(iter.hasNext()){
+				node = iter.next();
+
 				if(node.scope == scope){
-					
 					if(node.prevNode == null)
 						hashtable.remove(node.name);
-
 					else
 						hashtable.replace(node.name, node.prevNode);
 				
-					list.remove(node);
+					iter.remove();
+
 				}
 		}
 		
 		scope--;	
 	}
-	
+    
+    int SearchKey(Key key){
+        
+        Node node = hashtable.get(key);
+        while(node != null){
+            if(node.scope == scope)
+                return 1;
+            node = node.prevNode;
+        }
+        return 0;
+        
+    }
+    
 	public void increase_scope(){
 		scope++;
 	}
@@ -75,25 +86,13 @@ public class SymbolTable {
 		scope--;
 	}
 	
-	
 	public void print(){
 		
-		System.out.println("Symbol Table:\n");
+		System.out.println("List:\n");
 		for(int i=0; i<list.size(); i++){
 			
 			list.get(i).print();
 		}
-	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+    }
 	
 }

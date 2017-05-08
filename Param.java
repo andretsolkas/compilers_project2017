@@ -4,27 +4,39 @@ import java.util.*;
 public class Param {
 
 	String type;
+	Key idname;
 	LinkedList <Integer> arraylist;
 	
 	
-	public Param(String tp, LinkedList <Integer> arlist)
+	public Param(String tp, Key name, LinkedList <Integer> arlist)
 	{
-		type = tp;
-		arraylist = arlist;
+		type = new String(tp);
+		
+		idname = new Key(name.name);
+		
+		arraylist = new LinkedList<>();
+		
+		if(arlist!=null && !arlist.isEmpty()){
+			for(int i=0; i<arlist.size(); i++){
+				arraylist.addLast(new Integer(arlist.get(i)));
+			}
+		}
+		else arraylist = null;
 	}
 	
 	public void print(){
 		int i;
-		System.out.printf("Type = %s", type);
+		System.out.printf("Id: %s, ", idname.name);
+		
+		System.out.printf("Type: %s", type);
 		
 		if(arraylist != null && !arraylist.isEmpty()){
 				
-			for(i=0; i<arraylist.size()-1; i++){
-				System.out.printf("[%d], ",arraylist.get(i).intValue());
+			for(i=0; i<arraylist.size(); i++){
+				System.out.printf("[%d]",arraylist.get(i).intValue());
 			}
-			
-			System.out.printf("[%d]",arraylist.get(i).intValue());
-	
+			System.out.printf("\n");
 		}
 	}
+	
 }
