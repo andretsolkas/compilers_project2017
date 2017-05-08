@@ -15,14 +15,15 @@ public class Main{
 
 	try {
 
-	Lexer lex = new Lexer(new PushbackReader(new FileReader(args[0]), 1024));
-       
-    	Parser p = new Parser(lex);
-	tree = p.parse();
+        Lexer lex = new Lexer(new PushbackReader(new FileReader(args[0]), 1024));
+
+        Parser p = new Parser(lex);
+        tree = p.parse();
 
 	}
 	catch(Exception e){
 		System.out.println(e.getMessage());
+		System.exit(1);
 	}
        
 

@@ -17,14 +17,46 @@ public class Node {
 	
 	public Node(Key idName, String tp, int sp, Boolean ref, LinkedList <Param> pm, LinkedList <Integer> arlist, String ret, Boolean def, Node prevnode){
 		
-		name = idName;
-		type = tp;
+		name = new Key(idName.name);
+		
+		if(tp != null){
+			type = new String(tp);
+		}
+		else type = null;
+		
 		scope = sp;
-		reference = ref;
-		params = pm;
-		arraylist = arlist;
-		retvalue = ret;
-		defined = def;
+		
+		if(ref != null){
+			reference = new Boolean(ref);
+		}
+		else reference = null;
+		
+		if(pm != null){
+			params = new LinkedList<>();
+			
+			for(int i=0; i<pm.size(); i++){
+				params.addLast(new Param(pm.get(i).type, pm.get(i).idname, pm.get(i).arraylist));
+			}
+		}
+		else params = null;
+		
+		if(arlist!=null && !arlist.isEmpty()){
+			arraylist = new LinkedList<>();
+			
+			for(int i=0; i<arlist.size(); i++)
+				arraylist.addLast(new Integer(arlist.get(i).intValue()));
+		}
+		else arraylist = null;
+
+		if(ret != null){
+			retvalue = new String(ret);
+		}
+		else retvalue = null;
+		
+		if(def != null){
+			defined = new Boolean(def);
+		}
+		else defined = null;
 		
 		prevNode = prevnode;
 		
