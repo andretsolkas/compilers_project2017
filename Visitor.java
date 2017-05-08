@@ -52,7 +52,7 @@ import java.util.*;
 	        }
 			
 	        else{
-	        	System.out.println("Error: Expr " + str + " has operands of different types");
+	        	System.out.println("Error: Expr " + str + " has operands of different types\n");
 	        	System.exit(1);
 	        }
 		}
@@ -418,15 +418,16 @@ import java.util.*;
 	    }
 
         @Override
-	    public void inAAssignmentStmtexpr(AAssignmentStmtexpr node)
-	    {
-	        defaultIn(node);
-	    }
-
-        @Override
 	    public void outAAssignmentStmtexpr(AAssignmentStmtexpr node)
 	    {
-	        defaultOut(node);
+        	TypeCheck opRight = typeCheck.removeLast();
+        	TypeCheck opLeft = typeCheck.removeLast();
+	        
+        	if(!opLeft.type.equals(opRight.type)){
+        		System.out.println("Error: Assignment: Left Value and Right Value are of different types\n");
+	        	System.exit(1);
+        	}
+        	
 	    }
         
         @Override
@@ -517,7 +518,6 @@ import java.util.*;
 	    public void outAPlusStmtexpr(APlusStmtexpr node)
 	    {
         	typeCheckerInt("Plus");
-        	print_typeCheck();	
 	    }
 
         @Override
@@ -541,6 +541,8 @@ import java.util.*;
         	typeCheckerInt("Mod");
         }
   
+        
+
         public void inAPosStmtexpr(APosStmtexpr node)
         {
             defaultIn(node);
@@ -561,6 +563,8 @@ import java.util.*;
             defaultOut(node);
         }
 
+        
+        
         
         public void outALValueStmtexpr(ALValueStmtexpr node)
         {
@@ -583,7 +587,6 @@ import java.util.*;
         	}
         }
         
-
         public void outAConcharStmtexpr(AConcharStmtexpr node)
         {
         	typeCheck.addLast(new TypeCheck("char", null, null, null, null));
@@ -611,7 +614,6 @@ import java.util.*;
         	}
         	print_typeCheck();
         }
-
 
         public void outAStrStmtexpr(AStrStmtexpr node)
         {
@@ -646,12 +648,94 @@ import java.util.*;
 			print_typeCheck();	
         }
         
-        public void outAFuncallStmtexpr(AFuncallStmtexpr node)
+        
+        
+
+        
+
+        
+        @Override
+        public void caseAFuncallStmtexpr(AFuncallStmtexpr node)
         {
-            defaultOut(node);
+            inAFuncallStmtexpr(node);
+            if(node.getId() != null)
+            {
+                node.getId().apply(this);
+            }
+            
+            Key key = new Key(node.getId().getText());
+        	Node n = symtable.lookup(key);
+        	
+        	if(n == null){
+        		System.out.println("Error: Function " + key.name + " has not been declared/defined before\n");
+        		System.exit(1);
+        	}
+        	
+        	if(n.retvalue == null){
+        		System.out.println("Error: " + key.name + " is not a function\n");
+        		System.exit(1);
+        	}
+        	
+            {
+            	TypeCheck tpc;
+            	LinkedList<Param> ps = new LinkedList<>();
+            	
+                List<PStmtexpr> copy = new ArrayList<PStmtexpr>(node.getStmtexpr());
+                for(PStmtexpr e : copy)
+                {
+                    e.apply(this);
+                
+                    tpc = typeCheck.removeLast();
+                    ps.addLast(new Param(tpc.type, new Key(tpc.idname), tpc.declarraylist));
+                
+                }
+            
+                if(n.params != null){
+	                if(ps.size() != n.params.size()){
+	                	System.out.println("Error: Function " + n.name.name + ": different amount of arguments\n");
+	            		System.exit(1);
+	                }
+
+                }
+                
+                else if(!ps.isEmpty()){
+                	System.out.println("Error: Function " + n.name.name + ": has no parameters, yet it is given arguments\n");
+            		System.exit(1);
+                }
+                
+                for(int i=0; i<ps.size(); i++){								//Check the parameters of the function
+                	if(n.params.get(i).type.equals(ps.get(i).type)){
+                		
+                		if(n.params.get(i).arraylist != null && ps.get(i).arraylist != null){									//In case of an array -- check the indexes of each array
+                			if(n.params.get(i).arraylist.size() != ps.get(i).arraylist.size()){
+                				System.out.println("Error: Function " + n.name.name + ": array argument with wrong dimensions\n");
+                        		System.exit(1);
+                			}
+                		
+                			else{
+                				for(int j=0; j<ps.get(i).arraylist.size(); j++){
+                						
+                					if(ps.get(i).arraylist.get(j).intValue() >= n.params.get(i).arraylist.get(j).intValue()){							//WATCH IN CASE OF [] 0!!!!!!!!!
+                	                	System.out.println("Error: Function " + n.name.name + ": argument: index out of bounds\n");
+                	            		System.exit(1);
+                					}
+                				}
+                			}
+                		}
+                	}
+                	
+                	else{
+                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+                		System.exit(1);
+                	}
+                }
+                
+                
+                typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, null));				//Add the return type on stack
+            
+            }
+            outAFuncallStmtexpr(node);
         }
-        
-        
         
         
         

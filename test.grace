@@ -1,12 +1,12 @@
 fun hello (ref x,y:int; i,j:char[][20]) : int
 
-	fun boo(x,z:int) : nothing
+	fun boo(x,g,z:int) : nothing
 	{	;
 	}
 	
-var bella, kira : char[10][15];
+var bella, kira : int[4];
 
 {
-	puts("Hello world!\n");
+	x <- kira["ba"]+y;
 }
 
