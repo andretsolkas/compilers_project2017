@@ -19,7 +19,7 @@ public class Node {
 		
 		name = new Key(idName.name);
 		
-		if(tp != null){
+		if(tp != null){															//Copying all values
 			type = new String(tp);
 		}
 		else type = null;
@@ -44,7 +44,7 @@ public class Node {
 			arraylist = new LinkedList<>();
 			
 			for(int i=0; i<arlist.size(); i++)
-				arraylist.addLast(new Integer(arlist.get(i).intValue()));
+				arraylist.addLast(new Integer(arlist.get(i)));
 		}
 		else arraylist = null;
 

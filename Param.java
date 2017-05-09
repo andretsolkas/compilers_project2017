@@ -9,13 +9,19 @@ public class Param {
 	
 	
 	public Param(String tp, Key name, LinkedList <Integer> arlist)
-	{
-		type = new String(tp);
+	{	
+		if(tp!=null)										//Copying all values
+			type = new String(tp);
+		else type = null;
 		
-		idname = new Key(name.name);
 		
+		if(name != null)
+			idname = new Key(name.name);
+		else idname = null;
+		
+			
 		arraylist = new LinkedList<>();
-		
+	
 		if(arlist!=null && !arlist.isEmpty()){
 			for(int i=0; i<arlist.size(); i++){
 				arraylist.addLast(new Integer(arlist.get(i)));

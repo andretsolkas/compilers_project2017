@@ -52,7 +52,7 @@ import java.util.*;
 	        }
 			
 	        else{
-	        	System.out.println("Error: Expr " + str + " has operands of different types");
+	        	System.out.println("Error: Expr " + str + " has operands of different types\n");
 	        	System.exit(1);
 	        }
 		}
@@ -83,22 +83,12 @@ import java.util.*;
 	    }
 
         @Override
-	    public void outAFuncdefLocalDef(AFuncdefLocalDef node)
-	    {
-	    }		
-
-        @Override
 	    public void inAFuncdeclLocalDef(AFuncdeclLocalDef node)
 	    {
 	        headerMode = 1;
         }
 
-        @Override
-	    public void outAFuncdeclLocalDef(AFuncdeclLocalDef node)
-	    {
-	        defaultOut(node);
-	    }
-	    
+
         @Override
 	    public void inAVardefLocalDef(AVardefLocalDef node)
 	    {
@@ -130,18 +120,13 @@ import java.util.*;
 	    {
 	    	initialize();
 	    }
-	    
-        @Override
-	    public void outAWithparsHeader(AWithparsHeader node)
-	    {	//
-	    }
 
 	    @Override
 	    public void caseAWithparsHeader(AWithparsHeader node)
 	    {
 	        inAWithparsHeader(node);
 	        
-	        funname = new Key(node.getId().getText());											//Functions' id name	        
+	        funname = new Key(node.getId().getText());														//Functions' id name	        
 	        if(node.getId() != null){
 	            node.getId().apply(this);
 	        }
@@ -150,17 +135,17 @@ import java.util.*;
 	        if(node.getRetType() != null){
 	            node.getRetType().apply(this);
 	        }
+	        dataTypeMode = 0;
 
             Key key;
             Param param;
-            
-	        dataTypeMode = 0;
+
             List<PFparDef> copy = new ArrayList<>(node.getFparDef());
             for(PFparDef e : copy)
             {
                 e.apply(this);
 	                
-            	for(int i=0; i<idlist.size(); i++){														//Insert all parameter-variables into the symbol table
+            	for(int i=0; i<idlist.size(); i++){															//Insert all parameter-variables into the symbol table
 
                     key = idlist.get(i);
 
@@ -176,10 +161,12 @@ import java.util.*;
                     params.add(param);
             	
             	}
-            	
-                idlist = new LinkedList<>(); 															//Initialize id list 
+                
+            	arraylist = new LinkedList<>();
+                idlist = new LinkedList<>();			 																//Initialize id list 
             }
 
+            /************************************/
     		symtable.decrease_scope();																		//Function's prototype belongs to the previous scope
     		
     		if(headerMode == 0)																				//If function definition
@@ -188,10 +175,10 @@ import java.util.*;
     		else symtable.insert(funname, null, null, null, params, false, retvalue);						//If function declaration
     		
 			symtable.increase_scope();
-    		
-	        outAWithparsHeader(node);
+			
+			outAWithparsHeader(node);
 	    }
-
+	    
         @Override
 	    public void inAWithoutparsHeader(AWithoutparsHeader node)
 	    {	
@@ -232,12 +219,6 @@ import java.util.*;
 	    }
 
         @Override
-	    public void outAWithrefFparDef(AWithrefFparDef node)
-	    {
-	        defaultOut(node);
-	    }
-
-        @Override
 	    public void inAWithoutrefFparDef(AWithoutrefFparDef node)
 	    {
 	        reference = false;
@@ -248,34 +229,16 @@ import java.util.*;
 	    }
 
         @Override
-	    public void outAWithoutrefFparDef(AWithoutrefFparDef node)
-	    {
-	        defaultOut(node);
-	    }
-	    
-        @Override
 	    public void inANoarrayFparType(ANoarrayFparType node)
-	    {		//array list is empty
+	    {		arraylist = null;
 	    }
 
-        @Override
-	    public void outANoarrayFparType(ANoarrayFparType node)
-	    {
-	        defaultOut(node);
-	    }
-	    
         @Override
 	    public void inAArrayFirstFparType(AArrayFirstFparType node)
 	    {
 	    	arraylist.addFirst(0);
 	    }
 
-        @Override
-	    public void outAArrayFirstFparType(AArrayFirstFparType node)
-	    {
-	        defaultOut(node);
-	    }
-	    
         @Override
 	    public void inAArrayFirstsecFparType(AArrayFirstsecFparType node)
 	    {
@@ -286,12 +249,6 @@ import java.util.*;
 	    }
 
         @Override
-	    public void outAArrayFirstsecFparType(AArrayFirstsecFparType node)
-	    {
-	        defaultOut(node);
-	    }
-	    
-        @Override
 	    public void inAArraySecFparType(AArraySecFparType node)
 	    {
 	    	for(int i=0; i<node.getNumber().size(); i++){
@@ -300,33 +257,17 @@ import java.util.*;
 	    }
 
         @Override
-	    public void outAArraySecFparType(AArraySecFparType node)
-	    {
-	        defaultOut(node);
-	    }
-
-        @Override
 	    public void inADataRetType(ADataRetType node)
 	    {
 	        defaultOut(node);
 	    }
 
-        @Override
-	    public void outADataRetType(ADataRetType node)
-	    {
-	        defaultOut(node);
-	    }
+
 	    
         @Override
 	    public void inANoneRetType(ANoneRetType node)
 	    {
 	        retvalue = "nothing";
-	    }
-
-        @Override
-	    public void outANoneRetType(ANoneRetType node)
-	    {
-	        defaultOut(node);
 	    }
 	    
         @Override
@@ -339,24 +280,12 @@ import java.util.*;
         }
 
         @Override
-	    public void outAIntDataType(AIntDataType node)
-	    {
-	        defaultOut(node);
-	    }
-	    
-        @Override
 	    public void inACharDataType(ACharDataType node)
 	    {
 	    	if(dataTypeMode == 0)
 	    		datatype = "char";
 	    	
 	    	else retvalue = "char";
-	    }
-
-        @Override
-	    public void outACharDataType(ACharDataType node)
-	    {
-	        defaultOut(node);
 	    }
 	    
 	    //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -370,12 +299,6 @@ import java.util.*;
 	    }
 
         @Override
-	    public void outAArrayType(AArrayType node)
-	    {
-	        defaultOut(node);
-	    }
-
-        @Override
 	    public void inAPrimitiveType(APrimitiveType node)
 	    {
 	        defaultIn(node);
@@ -386,16 +309,6 @@ import java.util.*;
 	    {
 	        defaultOut(node);
 	    }
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
-	    
 	    
 	    
 	    
@@ -418,15 +331,16 @@ import java.util.*;
 	    }
 
         @Override
-	    public void inAAssignmentStmtexpr(AAssignmentStmtexpr node)
-	    {
-	        defaultIn(node);
-	    }
-
-        @Override
 	    public void outAAssignmentStmtexpr(AAssignmentStmtexpr node)
 	    {
-	        defaultOut(node);
+        	TypeCheck opRight = typeCheck.removeLast();
+        	TypeCheck opLeft = typeCheck.removeLast();
+	        
+        	if(!opLeft.type.equals(opRight.type)){
+        		System.out.println("Error: Assignment: Left Value and Right Value are of different types\n");
+	        	System.exit(1);
+        	}
+        	
 	    }
         
         @Override
@@ -517,7 +431,6 @@ import java.util.*;
 	    public void outAPlusStmtexpr(APlusStmtexpr node)
 	    {
         	typeCheckerInt("Plus");
-        	print_typeCheck();	
 	    }
 
         @Override
@@ -526,76 +439,91 @@ import java.util.*;
         	typeCheckerInt("Minus");
 	    }
 
+        @Override
         public void outAMultStmtexpr(AMultStmtexpr node)
         {
         	typeCheckerInt("Mult");
         }
 
+        @Override
         public void outADivStmtexpr(ADivStmtexpr node)
         {
         	typeCheckerInt("Div");
         }
 
+        @Override
         public void outAModStmtexpr(AModStmtexpr node)
         {
         	typeCheckerInt("Mod");
         }
-  
-        public void inAPosStmtexpr(APosStmtexpr node)
-        {
-            defaultIn(node);
-        }
 
+        @Override
         public void outAPosStmtexpr(APosStmtexpr node)
         {
-            defaultOut(node);
-        }
-	    	    
-        public void inANegStmtexpr(ANegStmtexpr node)
-        {
-            defaultIn(node);
+         //
         }
 
+        @Override
         public void outANegStmtexpr(ANegStmtexpr node)
         {
-            defaultOut(node);
+            //TypeCheck tpc = typeCheck.removeLast();
+            //typeCheck.addLast(new TypeCheck(tpc.));
         }
 
         
+        
+        
+        @Override
         public void outALValueStmtexpr(ALValueStmtexpr node)
         {
         	TypeCheck value = typeCheck.getLast();
         	
-        	if(value.declarraylist != null){ 
+        	if(value.declarraylist != null){ 											//ARRAY
         		
         		if(value.arraylist.size() != value.declarraylist.size()){					//If is an array
 	        		System.out.println("Error: Variable " + value.idname + " : different number of ARRAY arguments \n");
 	        		System.exit(1);
         		}
         		
-	        	for(int i=0; i<arraylist.size(); i++){
-	        		if(Integer.parseInt(value.arraylist.get(i)) <= Integer.parseInt(value.arraylist.get(i))){
-	 
-	        			System.out.println("Error: Variable " + value.idname + " : out of bound\n");
-	            		System.exit(1);
-	        		}
+        		String ar;
+        		Integer declar;
+        		
+	        	for(int i=0; i<value.arraylist.size(); i++){					//Check for index boundaries
+	        		
+	        		ar = value.arraylist.get(i);
+	        		declar = value.declarraylist.get(i);
+	        		
+	        		if(!ar.equals("int") && ! ar.equals("char")){				//Then ar is been given a number
+	        			
+		        		if(declar <= Integer.parseInt(ar)){
+		 
+		        			System.out.println("Error: Variable " + value.idname + " : index out of bound\n");
+		            		System.exit(1);
+		        		}
+		        	}
 	        	}
+        	}
+        	else if(value.arraylist != null && !value.arraylist.isEmpty()){							//PRIMITIVE 
+    			System.out.println("Error: Variable " + value.idname + " : is primitive, yet, it's been treated as an array\n");
+        		System.exit(1);
         	}
         }
         
-
+        @Override
         public void outAConcharStmtexpr(AConcharStmtexpr node)
         {
         	typeCheck.addLast(new TypeCheck("char", null, null, null, null));
         	print_typeCheck();
         }
 	    
+        @Override
         public void outANumStmtexpr(ANumStmtexpr node)
         {
         	typeCheck.addLast(new TypeCheck("int", null, node.getNumber().getText(), null, null));
         	print_typeCheck();
         }
 
+        @Override
         public void outAIdStmtexpr(AIdStmtexpr node)
         {
         	Key key = new Key(node.getId().getText());
@@ -603,7 +531,7 @@ import java.util.*;
         	Node n = symtable.lookup(key);
 
         	if(n != null)
-        		typeCheck.addLast(new TypeCheck(n.type, new LinkedList <String>(), null, node.getId().getText(), n.arraylist));
+        		typeCheck.addLast(new TypeCheck(n.type, new LinkedList <>(), null, node.getId().getText(), n.arraylist));
         	
         	else {
         		System.out.println("Error: Variable " + key.name + " has not been declared before\n");
@@ -612,46 +540,136 @@ import java.util.*;
         	print_typeCheck();
         }
 
-
+        @Override
         public void outAStrStmtexpr(AStrStmtexpr node)
         {
         	typeCheck.addLast(new TypeCheck(node.getString().getText(), null, null, null, null));						//MAYBE NEEDS FIX IN CASE IT CAN BE AN ARRAY
         	print_typeCheck();
         }
 
+        @Override
         public void outAArrayStmtexpr(AArrayStmtexpr node)
         {
-        	TypeCheck rightExpr = typeCheck.removeLast();
-			TypeCheck leftId = typeCheck.removeLast();
+        	TypeCheck rightExpr = typeCheck.removeLast();				//rightExpr is the Index of the array
+			TypeCheck leftId = typeCheck.removeLast();					// leftId is the array's id
 
-			if(!leftId.type.equals("int")){
+			if(rightExpr.type.equals("int")){
 				
 				String str = rightExpr.num;
-				
 				if(str == null)
-					str = leftId.type;
-				
-				
+					str = "int";
+                
 				LinkedList <String> arlist = leftId.arraylist;
 				arlist.addLast(str);
 				
 				typeCheck.addLast(new TypeCheck(leftId.type, arlist, null, leftId.idname, leftId.declarraylist));
-
 			}
 			
 			else{
-        		System.out.println("Error: Variable " + leftId.idname + " .. Array index is not int\n");
+        		System.out.println("Error: Variable " + leftId.idname + " Type " +   rightExpr.type + " .. Array index is not int\n");
         		System.exit(1);
 			}
 			print_typeCheck();	
         }
         
-        public void outAFuncallStmtexpr(AFuncallStmtexpr node)
+
+        
+        
+        
+        @Override
+        public void caseAFuncallStmtexpr(AFuncallStmtexpr node)
         {
-            defaultOut(node);
+            inAFuncallStmtexpr(node);
+            if(node.getId() != null)
+            {
+                node.getId().apply(this);
+            }
+            
+            Key key = new Key(node.getId().getText());
+        	Node n = symtable.lookup(key);
+        	
+        	if(n == null){
+        		System.out.println("Error: Function " + key.name + " has not been declared/defined before\n");
+        		System.exit(1);
+        	}
+        	
+        	if(n.retvalue == null){
+        		System.out.println("Error: " + key.name + " is not a function\n");
+        		System.exit(1);
+        	}
+        	
+            {
+            	TypeCheck tpc;
+            	LinkedList<Param> ps = new LinkedList<>();
+            	
+                List<PStmtexpr> copy = new ArrayList<PStmtexpr>(node.getStmtexpr());
+                for(PStmtexpr e : copy)
+                {
+                    e.apply(this);
+                
+                    tpc = typeCheck.removeLast();														//Remove from stack the parameter
+                    ps.addLast(new Param(tpc.type, new Key(tpc.idname), tpc.declarraylist));			//Add it to the ps list
+                
+                }
+
+
+                if(n.params != null){
+	                if(ps.size() != n.params.size()){
+	                	System.out.println("Error: Function " + n.name.name + ": different amount of arguments\n");
+	            		System.exit(1);
+	                }
+
+                }
+                
+                else if(!ps.isEmpty()){
+                	System.out.println("Error: Function " + n.name.name + ": has no parameters, yet it is given arguments\n");
+            		System.exit(1);
+                }
+                
+                for(int i=0; i<ps.size(); i++){													//Check the parameters of the function
+                	if(n.params.get(i).type.equals(ps.get(i).type)){
+                		
+                		if(n.params.get(i).arraylist != null){									//In case of an array -- check the indexes of each array
+                			
+                			if(ps.get(i).arraylist == null){
+                				System.out.println("Error: Function " + n.name.name + ": argument: given primitive but expects array\n");
+        	            		System.exit(1);
+                			}
+                			
+                			
+                			if(n.params.get(i).arraylist.size() != ps.get(i).arraylist.size()){
+                				System.out.println("Error: Function " + n.name.name + ": array argument with wrong dimensions\n");
+                        		System.exit(1);
+                			}
+                		
+                				for(int j=0; j<ps.get(i).arraylist.size(); j++){
+                						
+                					if(ps.get(i).arraylist.get(j) >= n.params.get(i).arraylist.get(j)){							//WATCH IN CASE OF [] 0!!!!!!!!!
+                	                	System.out.println("Error: Function " + n.name.name + ": argument: index out of bounds\n");
+                	            		System.exit(1);
+                					}
+                				}
+                		}
+                        
+                        else if(!ps.get(i).arraylist.isEmpty()){
+                            System.out.println("Error: Function " + n.name.name + ": argument: given array but expects primitive\n");
+                            System.exit(1);
+                        }
+
+                	}
+                	
+                	else{
+                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+                		System.exit(1);
+                	}
+                }
+                
+                
+                typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, null));				//Add the return type on stack
+            print_typeCheck();
+            }
+            outAFuncallStmtexpr(node);
         }
-        
-        
         
         
         

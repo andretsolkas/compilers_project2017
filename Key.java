@@ -4,7 +4,7 @@ public class Key {
 	
 	public Key(String str){
 		
-		name = str;
+		name = new String(str);
 	}
 
 	public String getKey(){
