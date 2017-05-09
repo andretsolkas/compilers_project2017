@@ -3,39 +3,57 @@ import java.util.LinkedList;
 public class TypeCheck {
 
 	String type;
-	//LinkedList <Param> params;
 	LinkedList <String> arraylist;
-	String idname;
 	String num;
+	String idname;
 	LinkedList <Integer> declarraylist;
-	//LinkedList <Param> declparams;
+
 	
 	public TypeCheck(String tp, LinkedList <String> arlist, String n, String name, LinkedList <Integer> declarlist)
 	{
-		type = tp;
-		//params = ps;
-		arraylist = arlist;
-		idname = name;
-		num = n;
-		declarraylist = declarlist;
-		//declparams = dps;
+		if(tp!=null)													//Copying all values
+			type = new String(tp);
+		else type = null;
+		
+
+		arraylist = new LinkedList<>();
+		
+		if(arlist!=null){
+			arraylist = new LinkedList<>();
+			
+			for(int i=0; i<arlist.size(); i++)
+				arraylist.addLast(new String(arlist.get(i)));
+		}
+		else arraylist = null;
+
+		
+		
+		if(n!=null)
+			num =  new String(n);
+		else num = null;
+			
+		if(name!=null)
+			idname = new String(name);
+		else idname = null;
+		
+		
+		
+		declarraylist = new LinkedList<>();
+		
+		if(declarlist!=null){
+			declarraylist = new LinkedList<>();
+			
+			for(int i=0; i<declarlist.size(); i++)
+				declarraylist.addLast(new Integer(declarlist.get(i)));
+		}
+		else declarraylist = null;
+
 	}
 
 	public void print(){
 		int i;
 		System.out.printf("Type = %s\n", type);
-		/*
-		if(params != null && !params.isEmpty()){
-			
-			System.out.printf("Params = ");
-			
-			for(i=0; i<params.size(); i++)
-				params.get(i).print();;
-		}
-		
-		else System.out.printf("Params = null\n");
-		*/
-		
+
 		if(arraylist != null && !arraylist.isEmpty()){
 			
 			System.out.printf("Arraylist = ");
@@ -66,17 +84,6 @@ public class TypeCheck {
 		}
 	
 		else System.out.printf("DeclArraylist = null\n");
-		
-		/*
-		if(declparams != null && !declparams.isEmpty()){
-			
-			System.out.printf("DeclParams = ");
-			
-			for(i=0; i<declparams.size(); i++)
-				declparams.get(i).print();;
-		}
-		
-		else System.out.printf("DeclParams = null\n");
-		*/
+
 	}
 }

@@ -1,12 +1,13 @@
-fun hello (ref x,y:int; i,j:char[][20]) : int
+fun hello (ref x,y:int; i,j:int[4]) : int
 
-	fun boo(x,g,z:int) : nothing
-	{	;
+	fun boo(x:int[4] ; g,z:int) : nothing
+	{	
+		;
 	}
 	
-var bella, kira : int[4];
+var bella, kira : int;
 
 {
-	x <- kira["ba"]+y;
+	x <- boo(i[4],2,3);	$boo("foo");
 }
 

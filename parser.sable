@@ -247,14 +247,11 @@ Productions
 		
 			{id} id													{-> New stmtexpr.id(id)}
 		|	{str} string	 										{-> New stmtexpr.str(string)}
-		|	{expr} lvalue left_bracket expr right_bracket			{-> New stmtexpr.array(lvalue.stmtexpr, expr.stmtexpr)}
+		|	{expr} lvalue left_bracket expr right_bracket			{-> New stmtexpr.array(l	value.stmtexpr, expr.stmtexpr)}
 		;
 
 	
-	func_call {-> stmtexpr} = 
-			{withpars} id left_par expr_list right_par 				{-> New stmtexpr.funcall(id, [expr_list.stmtexpr])}
-		|	{withoutpars} id left_par right_par			 			{-> New stmtexpr.funcall(id, [])}
-		;
+	x
 	
 	expr_list {-> stmtexpr*} = expr expr_list_tail* 					{-> [expr.stmtexpr, expr_list_tail.stmtexpr]} ;
 	expr_list_tail {-> stmtexpr} = comma expr 							{-> expr.stmtexpr} ;
