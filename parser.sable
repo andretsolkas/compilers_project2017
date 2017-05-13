@@ -56,9 +56,12 @@ Tokens
 	
 	number = digit+;        						//Integer Numbers
 	
+	erroneous_number = digit+ ('and' | 'char' | 'div' | 'do' | 'else' | 'fun' | 'if' | 'int' | 'mod' | 'not' | 'nothing' | 'or' | 'ref' | 'return' | 'then' | 'var' | 'while')+;
+	//seperate numbers from numbers+keys
+	
 	conchar = ''' (all | escape) ''';				//Constant Characters
 	
-	string = '"' ([all - ['"' + [lf + cr]]] | '\"')* '"';
+	string = '"' ([all - ['"' + ['\' + [lf + cr]]]] | escape)* '"';
   
 	plus = '+';										//Symbolic operators
 	minus = '-';
@@ -93,7 +96,8 @@ Ignored Tokens
 	
 	white_space,
 	line_comment,
-	multiline_comment;	
+	multiline_comment,
+	erroneous_number;	
 	
   
 Productions
