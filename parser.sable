@@ -96,8 +96,7 @@ Ignored Tokens
 	
 	white_space,
 	line_comment,
-	multiline_comment,
-	erroneous_number;	
+	multiline_comment;	
 	
   
 Productions
