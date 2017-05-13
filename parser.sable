@@ -249,11 +249,10 @@ Productions
 		
 			{id} id													{-> New stmtexpr.id(id)}
 		|	{str} string	 										{-> New stmtexpr.str(string)}
-		|	{expr} lvalue left_bracket expr right_bracket			{-> New stmtexpr.array(l	value.stmtexpr, expr.stmtexpr)}
+		|	{expr} lvalue left_bracket expr right_bracket			{-> New stmtexpr.array(lvalue.stmtexpr, expr.stmtexpr)}
 		;
 
 	
-	x
 	
 	expr_list {-> stmtexpr*} = expr expr_list_tail* 					{-> [expr.stmtexpr, expr_list_tail.stmtexpr]} ;
 	expr_list_tail {-> stmtexpr} = comma expr 							{-> expr.stmtexpr} ;
