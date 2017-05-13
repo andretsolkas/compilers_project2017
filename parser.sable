@@ -27,7 +27,7 @@ Helpers
 	white_space = (sp | ht | ff | lterminator)*;
 	    
 	a = [all - '$'];
-	b = [a - [whitespace + lterminator]]; 
+	b = [a - [sp + [ht + [ff + [lf + cr]]]]]; 
 	middle = (('$' b) | a)*;
 	multiline_comment =  '$' '$' middle '$' '$' ;
 
@@ -58,8 +58,7 @@ Tokens
 	
 	conchar = ''' (all | escape) ''';				//Constant Characters
 	
-	string_all = [all - '"'];
-	string = '"' ([string_all - lterminator] | '\"')* '"';
+	string = '"' ([all - ['"' + [lf + cr]]] | '\"')* '"';
   
 	plus = '+';										//Symbolic operators
 	minus = '-';
