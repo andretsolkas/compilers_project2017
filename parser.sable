@@ -21,9 +21,11 @@ Helpers
 	
 	lterminator = (lf | cr | cr lf);
 	
-	comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]* lterminator?);
-	line_comment = '$' ( comment | lterminator?);
+	nonempty = ([all - [lf + [cr + ['$' + [sp + [ht + ff]]]]]]);	
 	
+	comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]*);
+	line_comment = '$' comment? nonempty comment? lterminator?;
+
 	white_space = (sp | ht | ff | lterminator)*;
 	    
 	a = [all - '$'];
@@ -57,7 +59,9 @@ Tokens
 	
 	conchar = ''' (all | escape) ''';				//Constant Characters
 	
-	string = '"' ([all - '"'] | '\"')* '"';
+	string = '"' ([all - ['"' + ['\' + [lf + cr]]]] | escape)* '"';
+  
+  	erroneous_case = digit+ letter+;
   
 	plus = '+';										//Symbolic operators
 	minus = '-';
