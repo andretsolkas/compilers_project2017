@@ -21,14 +21,15 @@ Helpers
 	
 	lterminator = (lf | cr | cr lf);
 	
+	nonempty = ([all - [lf + [cr + ['$' + [sp + [ht + ff]]]]]]);
+	
 	comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]*);
-	line_comment = '$' comment lterminator?;
+	line_comment = '$' comment? nonempty comment? lterminator?;
 	
 	white_space = (sp | ht | ff | lterminator)*;
 	    
 	a = [all - '$'];
-	b = [a - [sp + [ht + [ff + [lf + cr]]]]]; 
-	middle = (('$' b) | a)*;
+	middle = ('$'? a)*;
 	multiline_comment =  '$' '$' middle '$' '$' ;
 
 
