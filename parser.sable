@@ -21,6 +21,7 @@ Helpers
 	
 	lterminator = (lf | cr | cr lf);
 	
+
 	nonempty = ([all - [lf + [cr + ['$' + [sp + [ht + ff]]]]]]);	
 	
 	comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]*);
@@ -29,7 +30,7 @@ Helpers
 	white_space = (sp | ht | ff | lterminator)*;
 	    
 	a = [all - '$'];
-	middle = ('$'? a)* ;									// a* ('$' a a*)*
+	middle = ('$'? a)*;
 	multiline_comment =  '$' '$' middle '$' '$' ;
 
 
@@ -57,11 +58,12 @@ Tokens
 	
 	number = digit+;        						//Integer Numbers
 	
+	erroneous_number = digit+ letter+;			//seperate numbers from numbers+anything
+	
 	conchar = ''' (all | escape) ''';				//Constant Characters
 	
 	string = '"' ([all - ['"' + ['\' + [lf + cr]]]] | escape)* '"';
-  
-  	erroneous_case = digit+ letter+;
+
   
 	plus = '+';										//Symbolic operators
 	minus = '-';
@@ -254,12 +256,11 @@ Productions
 		|	{expr} lvalue left_bracket expr right_bracket			{-> New stmtexpr.array(lvalue.stmtexpr, expr.stmtexpr)}
 		;
 
-	
 	func_call {-> stmtexpr} = 
 			{withpars} id left_par expr_list right_par 				{-> New stmtexpr.funcall(id, [expr_list.stmtexpr])}
 		|	{withoutpars} id left_par right_par			 			{-> New stmtexpr.funcall(id, [])}
 		;
-
+    
 	expr_list {-> stmtexpr*} = expr expr_list_tail* 					{-> [expr.stmtexpr, expr_list_tail.stmtexpr]} ;
 	expr_list_tail {-> stmtexpr} = comma expr 							{-> expr.stmtexpr} ;
 
