@@ -21,8 +21,8 @@ Helpers
 	
 	lterminator = (lf | cr | cr lf);
 	
-	comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]* lterminator?);
-	line_comment = '$' ( comment | lterminator?);
+	comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]*);
+	line_comment = '$' comment lterminator?;
 	
 	white_space = (sp | ht | ff | lterminator)*;
 	    
