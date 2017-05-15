@@ -1,13 +1,14 @@
 fun hello (ref x,y:int; i,j:int[4]) : int
 
-	fun boo(x:int[4] ; g,z:int) : nothing
-	{	
-		;
+	fun boo(x:int[5] ; g,z:int) : int
+	{	return 0;
 	}
 	
 var bella, kira : int;
 
 {
-	x <- boo(i[4],2,3);	$boo("foo");
+	x <- ----2;
+
+	return x;
 }
 

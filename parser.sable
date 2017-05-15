@@ -21,11 +21,12 @@ Helpers
 	
 	lterminator = (lf | cr | cr lf);
 	
-	nonempty = ([all - [lf + [cr + ['$' + [sp + [ht + ff]]]]]]);
+
+	nonempty = ([all - [lf + [cr + ['$' + [sp + [ht + ff]]]]]]);	
 	
 	comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]*);
 	line_comment = '$' comment? nonempty comment? lterminator?;
-	
+
 	white_space = (sp | ht | ff | lterminator)*;
 	    
 	a = [all - '$'];
@@ -62,6 +63,7 @@ Tokens
 	conchar = ''' (all | escape) ''';				//Constant Characters
 	
 	string = '"' ([all - ['"' + ['\' + [lf + cr]]]] | escape)* '"';
+
   
 	plus = '+';										//Symbolic operators
 	minus = '-';
@@ -190,7 +192,7 @@ Productions
 		|	{block} block 										{-> block.stmtexpr}
 		|	{funcall} func_call semicolon						{-> func_call.stmtexpr}
 		|	{returnepxr} return expr semicolon					{-> New stmtexpr.returnexpr(expr.stmtexpr)}
-		|	{return} return semicolon							{-> New stmtexpr.return(semicolon)}
+		|	{return} return semicolon							{-> New stmtexpr.return_none(semicolon)}
 		;
 	
 	ifstmt {-> stmtexpr} = 
@@ -254,8 +256,11 @@ Productions
 		|	{expr} lvalue left_bracket expr right_bracket			{-> New stmtexpr.array(lvalue.stmtexpr, expr.stmtexpr)}
 		;
 
-	
-	
+	func_call {-> stmtexpr} = 
+			{withpars} id left_par expr_list right_par 				{-> New stmtexpr.funcall(id, [expr_list.stmtexpr])}
+		|	{withoutpars} id left_par right_par			 			{-> New stmtexpr.funcall(id, [])}
+		;
+    
 	expr_list {-> stmtexpr*} = expr expr_list_tail* 					{-> [expr.stmtexpr, expr_list_tail.stmtexpr]} ;
 	expr_list_tail {-> stmtexpr} = comma expr 							{-> expr.stmtexpr} ;
 
@@ -352,7 +357,7 @@ Abstract Syntax Tree
 		|	{block} stmtexpr*
 		|	{fblock} stmtexpr*
 		|	{returnexpr} stmtexpr
-		|	{return} semicolon
+		|	{return_none} semicolon
 		
 		|	{if} cond stmtexpr
 		|	{ifelse} cond [left]:stmtexpr [right]:stmtexpr

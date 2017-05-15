@@ -7,17 +7,20 @@ import java.util.*;
 		
 		SymbolTable symtable;
 		
-		int dataTypeMode;								//0 if parameter, 1 if return_value
-		int headerMode;									//0 if fun definition, 1 if fun declaration
+		int dataTypeMode;														//0 if parameter, 1 if return_value
+		int headerMode;															//0 if fun definition, 1 if fun declaration
 		
-		LinkedList<TypeCheck> typeCheck = new LinkedList<>();				//Functions as a stack
+		LinkedList<TypeCheck> typeCheck = new LinkedList<>();					//Using it as a stack
+		LinkedList<Node> funcDefinition = new LinkedList<>();					//Using it as a stack
+		boolean returned = false;
 		
+		//Members used for the symbol table construction
 		Boolean reference;
 		String datatype;
 		Key name;
 		Key funname;
 		LinkedList <Param> params;
-		LinkedList <Integer> arraylist;					//In case of array- list's size depicts array's dimensions
+		LinkedList <Integer> arraylist;											//In case of array- list's size depicts array's dimensions
 		LinkedList <Key> idlist;
 		
 		String retvalue;
@@ -52,7 +55,7 @@ import java.util.*;
 	        }
 			
 	        else{
-	        	System.out.println("Error: Expr " + str + " has operands of different types\n");
+	        	System.out.println("Error: Expr " + str + " 's operands must both be integers\n");
 	        	System.exit(1);
 	        }
 		}
@@ -80,8 +83,22 @@ import java.util.*;
 	    {
 	        headerMode = 0;
 	        symtable.enter();
+	        
 	    }
 
+        @Override
+		public void outAFuncdefLocalDef(AFuncdefLocalDef node)
+	    {
+	        Node nd = funcDefinition.removeLast();
+
+	        if(!nd.retvalue.equals("nothing") && returned == false){									//if function is not supposed to return 'nothing', yet returned value is false
+        		System.out.println("Error: Function must have a return statement\n");
+	        	System.exit(1);
+	        }
+	        
+	        returned = false;
+	    }
+        
         @Override
 	    public void inAFuncdeclLocalDef(AFuncdeclLocalDef node)
 	    {
@@ -167,12 +184,13 @@ import java.util.*;
             }
 
             /************************************/
-    		symtable.decrease_scope();																		//Function's prototype belongs to the previous scope
+    		symtable.decrease_scope();																			//Function's prototype belongs to the previous scope
     		
-    		if(headerMode == 0)																				//If function definition
+    		if(headerMode == 0){																				//If function definition
     			symtable.insert(funname, null, null, null, params, true, retvalue);
-    		
-    		else symtable.insert(funname, null, null, null, params, false, retvalue);						//If function declaration
+    			funcDefinition.addLast(symtable.lookup(funname));
+    		}
+    		else symtable.insert(funname, null, null, null, params, false, retvalue);							//If function declaration
     		
 			symtable.increase_scope();
 			
@@ -200,9 +218,10 @@ import java.util.*;
 	        
 	        symtable.decrease_scope();
 	        
-	        if(headerMode == 0)
+	        if(headerMode == 0){
 	        	symtable.insert(funname, null, null, null, null, true, retvalue);							//If function definition
-	    
+    			funcDefinition.addLast(symtable.lookup(funname));
+	        }
 	        else symtable.insert(funname, null, null, null, null, false, retvalue);							//If function declaration
 
         	symtable.increase_scope();
@@ -298,37 +317,10 @@ import java.util.*;
 	    	}
 	    }
 
-        @Override
-	    public void inAPrimitiveType(APrimitiveType node)
-	    {
-	        defaultIn(node);
-	    }
-
-        @Override
-	    public void outAPrimitiveType(APrimitiveType node)
-	    {
-	        defaultOut(node);
-	    }
-	    
-	    
-	    
-	    
-	    
 
 	    
 	    /////////////////////////////////////
 	    
-        @Override
-	    public void inANoneStmtexpr(ANoneStmtexpr node)
-	    {
-	        defaultIn(node);
-	    }
-
-        @Override
-	    public void outANoneStmtexpr(ANoneStmtexpr node)
-	    {
-	        defaultOut(node);
-	    }
 
         @Override
 	    public void outAAssignmentStmtexpr(AAssignmentStmtexpr node)
@@ -336,18 +328,18 @@ import java.util.*;
         	TypeCheck opRight = typeCheck.removeLast();
         	TypeCheck opLeft = typeCheck.removeLast();
 	        
+        	if(opLeft.declarraylist != null){
+        		System.out.println("Error: Assignment: Left Value must not be an Array\n");
+	        	System.exit(1);
+        	}
+        	
         	if(!opLeft.type.equals(opRight.type)){
         		System.out.println("Error: Assignment: Left Value and Right Value are of different types\n");
 	        	System.exit(1);
         	}
         	
 	    }
-        
-        @Override
-        public void inAFblockStmtexpr(AFblockStmtexpr node)
-        {
-            defaultIn(node);
-        }
+
         
         @Override
         public void outAFblockStmtexpr(AFblockStmtexpr node)
@@ -367,28 +359,37 @@ import java.util.*;
 	        symtable.exit();
 	    }
 
-        @Override
-	    public void inAReturnexprStmtexpr(AReturnexprStmtexpr node)
-	    {
-	        defaultIn(node);
-	    }
 
         @Override
 	    public void outAReturnexprStmtexpr(AReturnexprStmtexpr node)
 	    {
-	        defaultOut(node);
+	        TypeCheck tp = typeCheck.removeLast();
+	        Node nd = funcDefinition.getLast();
+
+	        if(nd.retvalue.equals("nothing")){
+        		System.out.println("Error: Function must not return an expression\n");
+	        	System.exit(1);
+	        }
+	        
+	        if(!tp.type.equals(nd.retvalue)){
+        		System.out.println("Error: Function must return " + nd.retvalue + ", not " + tp.type);
+	        	System.exit(1);
+	        }
+	        
+	        returned = true;
 	    }
 
         @Override
-	    public void inAReturnStmtexpr(AReturnStmtexpr node)
+	    public void outAReturnNoneStmtexpr(AReturnNoneStmtexpr node)
 	    {
-	        defaultIn(node);
-	    }
+	        Node nd = funcDefinition.getLast();
 
-        @Override
-	    public void outAReturnStmtexpr(AReturnStmtexpr node)
-	    {
-	        defaultOut(node);
+	        if(!nd.retvalue.equals("nothing")){
+        		System.out.println("Error: Function must return an expression\n");
+	        	System.exit(1);
+	        }
+	        
+	        returned = true;
 	    }
 
         @Override
@@ -466,8 +467,7 @@ import java.util.*;
         @Override
         public void outANegStmtexpr(ANegStmtexpr node)
         {
-            //TypeCheck tpc = typeCheck.removeLast();
-            //typeCheck.addLast(new TypeCheck(tpc.));
+        	//
         }
 
         
@@ -493,7 +493,7 @@ import java.util.*;
 	        		ar = value.arraylist.get(i);
 	        		declar = value.declarraylist.get(i);
 	        		
-	        		if(!ar.equals("int") && ! ar.equals("char")){				//Then ar is been given a number
+	        		if(!ar.equals("int") && !ar.equals("char") && declar!=0){				//Then ar is been given a number
 	        			
 		        		if(declar <= Integer.parseInt(ar)){
 		 
@@ -513,14 +513,12 @@ import java.util.*;
         public void outAConcharStmtexpr(AConcharStmtexpr node)
         {
         	typeCheck.addLast(new TypeCheck("char", null, null, null, null));
-        	print_typeCheck();
         }
 	    
         @Override
         public void outANumStmtexpr(ANumStmtexpr node)
         {
         	typeCheck.addLast(new TypeCheck("int", null, node.getNumber().getText(), null, null));
-        	print_typeCheck();
         }
 
         @Override
@@ -537,14 +535,15 @@ import java.util.*;
         		System.out.println("Error: Variable " + key.name + " has not been declared before\n");
         		System.exit(1);
         	}
-        	print_typeCheck();
         }
 
         @Override
         public void outAStrStmtexpr(AStrStmtexpr node)
         {
-        	typeCheck.addLast(new TypeCheck(node.getString().getText(), null, null, null, null));						//MAYBE NEEDS FIX IN CASE IT CAN BE AN ARRAY
-        	print_typeCheck();
+        	LinkedList <Integer> declarraylist = new LinkedList<>();
+        	declarraylist.add(0);
+        	
+        	typeCheck.addLast(new TypeCheck("char", new LinkedList <>(), null, null, declarraylist));		//String's type is char[]
         }
 
         @Override
@@ -568,13 +567,9 @@ import java.util.*;
 			else{
         		System.out.println("Error: Variable " + leftId.idname + " Type " +   rightExpr.type + " .. Array index is not int\n");
         		System.exit(1);
-			}
-			print_typeCheck();	
+			}	
         }
-        
 
-        
-        
         
         @Override
         public void caseAFuncallStmtexpr(AFuncallStmtexpr node)
@@ -587,7 +582,7 @@ import java.util.*;
             
             Key key = new Key(node.getId().getText());
         	Node n = symtable.lookup(key);
-        	
+
         	if(n == null){
         		System.out.println("Error: Function " + key.name + " has not been declared/defined before\n");
         		System.exit(1);
@@ -595,6 +590,11 @@ import java.util.*;
         	
         	if(n.retvalue == null){
         		System.out.println("Error: " + key.name + " is not a function\n");
+        		System.exit(1);
+        	}
+        	
+        	if(n.defined == false){
+        		System.out.println("Error: Function " + key.name + " is declared but not defined\n");
         		System.exit(1);
         	}
         	
@@ -608,7 +608,8 @@ import java.util.*;
                     e.apply(this);
                 
                     tpc = typeCheck.removeLast();														//Remove from stack the parameter
-                    ps.addLast(new Param(tpc.type, new Key(tpc.idname), tpc.declarraylist));			//Add it to the ps list
+                    
+                    ps.addLast(new Param(tpc.type, null, tpc.declarraylist));			//Add it to the ps list
                 
                 }
 
@@ -645,14 +646,17 @@ import java.util.*;
                 				for(int j=0; j<ps.get(i).arraylist.size(); j++){
                 						
                 					if(ps.get(i).arraylist.get(j) >= n.params.get(i).arraylist.get(j)){							//WATCH IN CASE OF [] 0!!!!!!!!!
-                	                	System.out.println("Error: Function " + n.name.name + ": argument: index out of bounds\n");
+                	                	
+                				System.out.println(ps.get(i).arraylist.get(j));
+                				System.out.println(n.params.get(i).arraylist.get(j));
+                						System.out.println("Error: Function " + n.name.name + ": array argument: index out of bounds\n");
                 	            		System.exit(1);
                 					}
                 				}
                 		}
                         
-                        else if(!ps.get(i).arraylist.isEmpty()){
-                            System.out.println("Error: Function " + n.name.name + ": argument: given array but expects primitive\n");
+                        else if(ps.get(i).arraylist != null && !ps.get(i).arraylist.isEmpty()){
+                            System.out.println("Error: Function " + n.name.name + ": argument: given array but expects primitive argument\n");
                             System.exit(1);
                         }
 
@@ -664,10 +668,11 @@ import java.util.*;
                 	}
                 }
                 
-                
+
                 typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, null));				//Add the return type on stack
-            print_typeCheck();
+
             }
+            
             outAFuncallStmtexpr(node);
         }
         
