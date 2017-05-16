@@ -328,16 +328,15 @@ import java.util.*;
         	TypeCheck opRight = typeCheck.removeLast();
         	TypeCheck opLeft = typeCheck.removeLast();
 	        
-        	if(opLeft.declarraylist != null){
-        		System.out.println("Error: Assignment: Left Value must not be an Array\n");
+        	if(opLeft.dimensions > 0 && opLeft.indices != null && opLeft.indices.size() != opLeft.dimensions){
+        		System.out.println("Error: Assignment: Left Value must be of type t where t can't be an Array\n");
 	        	System.exit(1);
         	}
         	
-        	if(!opLeft.type.equals(opRight.type)){
+        	if(!opLeft.type.equals(opRight.type) || (opRight.dimensions > 0 && opRight.indices != null && opRight.indices.size() != opRight.dimensions)){
         		System.out.println("Error: Assignment: Left Value and Right Value are of different types\n");
 	        	System.exit(1);
-        	}
-        	
+        	}	
 	    }
 
         
@@ -478,98 +477,121 @@ import java.util.*;
         {
         	TypeCheck value = typeCheck.getLast();
         	
-        	if(value.declarraylist != null){ 											//ARRAY
+        	if(value.indices != null){																		//In case the given input is array	 											
         		
-        		if(value.arraylist.size() != value.declarraylist.size()){					//If is an array
-	        		System.out.println("Error: Variable " + value.idname + " : different number of ARRAY arguments \n");
-	        		System.exit(1);
-        		}
+        		if(value.dimensions == 0){																	//In case the corresponding variable is declared as a primitive type
+           			System.out.println("Error: Variable " + value.idname + " : is primitive, yet, it's been treated as an array\n");
+            		System.exit(1);
+        		}        	
         		
-        		String ar;
-        		Integer declar;
+        		else{																						//In case the corresponding variable is declared as an array			
         		
-	        	for(int i=0; i<value.arraylist.size(); i++){					//Check for index boundaries
-	        		
-	        		ar = value.arraylist.get(i);
-	        		declar = value.declarraylist.get(i);
-	        		
-	        		if(!ar.equals("int") && !ar.equals("char") && declar!=0){				//Then ar is been given a number
-	        			
-		        		if(declar <= Integer.parseInt(ar)){
-		 
-		        			System.out.println("Error: Variable " + value.idname + " : index out of bound\n");
-		            		System.exit(1);
-		        		}
+        			if(value.indices.size() > value.dimensions){
+		        		System.out.println("Error: Variable " + value.idname + " : Array is being given too many indices\n");
+		        		System.exit(1);
+	        		}
+        		
+        			if(value.idname != null){											//Not a string -- therefore, it can be searched in the symbol table
+        				Node myNode = symtable.lookup(new Key(value.idname));			//No need to check if returned value is null, as i am sure at this point that variable with such idname exists
+        			
+        				String index;
+        				int declindex;
+
+        				for(int i=0; i<value.indices.size(); i++){												//Check for index boundaries
+        					
+        					index = value.indices.get(i);
+        					declindex = myNode.arraylist.get(i);
+        					
+			        		if(!index.equals("int") && !index.equals("char") && declindex != 0){				//Then index is been given a number -- so i can perform an index-bound check
+			        			
+				        		if(declindex <= Integer.parseInt(index)){
+				        			System.out.println("Error: Variable " + value.idname + " : index out of bound\n");
+				            		System.exit(1);
+				        		}
+				        	}
+			        	}
 		        	}
-	        	}
-        	}
-        	else if(value.arraylist != null && !value.arraylist.isEmpty()){							//PRIMITIVE 
-    			System.out.println("Error: Variable " + value.idname + " : is primitive, yet, it's been treated as an array\n");
-        		System.exit(1);
+		        }
         	}
         }
+        
+        
+        
         
         @Override
         public void outAConcharStmtexpr(AConcharStmtexpr node)
         {
-        	typeCheck.addLast(new TypeCheck("char", null, null, null, null));
+        	typeCheck.addLast(new TypeCheck("char", null, null, null, 0));
         }
 	    
         @Override
         public void outANumStmtexpr(ANumStmtexpr node)
         {
-        	typeCheck.addLast(new TypeCheck("int", null, node.getNumber().getText(), null, null));
+        	typeCheck.addLast(new TypeCheck("int", null, node.getNumber().getText(), null, 0));
         }
 
+        
         @Override
         public void outAIdStmtexpr(AIdStmtexpr node)
         {
-        	Key key = new Key(node.getId().getText());
-        	
+        	Key key = new Key(node.getId().getText());        	
         	Node n = symtable.lookup(key);
 
-        	if(n != null)
-        		typeCheck.addLast(new TypeCheck(n.type, new LinkedList <>(), null, node.getId().getText(), n.arraylist));
-        	
-        	else {
+        	if(n == null){
         		System.out.println("Error: Variable " + key.name + " has not been declared before\n");
         		System.exit(1);
         	}
+        	
+        	int dimensions;
+        	if(n.arraylist == null)		//Variable has not been defined as an array
+        		dimensions = 0;
+        	else dimensions = n.arraylist.size();
+        	
+        	typeCheck.addLast(new TypeCheck(n.type, null, null, node.getId().getText(), dimensions));
         }
-
+        	
         @Override
         public void outAStrStmtexpr(AStrStmtexpr node)
-        {
-        	LinkedList <Integer> declarraylist = new LinkedList<>();
-        	declarraylist.add(0);
-        	
-        	typeCheck.addLast(new TypeCheck("char", new LinkedList <>(), null, null, declarraylist));		//String's type is char[]
+        {      	
+        	typeCheck.addLast(new TypeCheck("char", null, null, null, 1));		//String's type is char[]
         }
 
+        
+        
+        
         @Override
         public void outAArrayStmtexpr(AArrayStmtexpr node)
         {
         	TypeCheck rightExpr = typeCheck.removeLast();				//rightExpr is the Index of the array
-			TypeCheck leftId = typeCheck.removeLast();					// leftId is the array's id
+			TypeCheck leftId = typeCheck.removeLast();					//leftId is the array's id -- it could be also a string
 
-			if(rightExpr.type.equals("int")){
-				
-				String str = rightExpr.num;
-				if(str == null)
-					str = "int";
-                
-				LinkedList <String> arlist = leftId.arraylist;
-				arlist.addLast(str);
-				
-				typeCheck.addLast(new TypeCheck(leftId.type, arlist, null, leftId.idname, leftId.declarraylist));
-			}
-			
-			else{
+			if(!rightExpr.type.equals("int")){ 							//Must check if right value is an integer
         		System.out.println("Error: Variable " + leftId.idname + " Type " +   rightExpr.type + " .. Array index is not int\n");
         		System.exit(1);
-			}	
+			}
+																		//Right expr is integer but it may not be primitive - it could be an array
+			
+			if(rightExpr.dimensions != rightExpr.indices.size()){		//It is primitive only when the number of given indices equals to the number of indices with which it was declared
+        		System.out.println("Error: Variable " + leftId.idname + " Type " +   rightExpr.type + " .. Array index is not a primitive integer type\n");
+        		System.exit(1);
+			}
+			
+			String str = rightExpr.num;									//In case its value is known it's been passed for later index boundary checking
+			if(str == null)
+				str = "int";
+            
+			if(leftId.indices == null){
+				leftId.indices = new LinkedList<>();
+			}
+			leftId.indices.addLast(str);
+			
+			typeCheck.addLast(new TypeCheck(leftId.type, leftId.indices, null, leftId.idname, leftId.dimensions));
+
         }
 
+        
+        
+        
         
         @Override
         public void caseAFuncallStmtexpr(AFuncallStmtexpr node)
@@ -609,7 +631,7 @@ import java.util.*;
                 
                     tpc = typeCheck.removeLast();														//Remove from stack the parameter
                     
-                    ps.addLast(new Param(tpc.type, null, tpc.declarraylist));			//Add it to the ps list
+                    ps.addLast(new Param(tpc.type, null, tpc.declarraylist));							//Add it to the ps list
                 
                 }
 
@@ -627,7 +649,7 @@ import java.util.*;
             		System.exit(1);
                 }
                 
-                for(int i=0; i<ps.size(); i++){													//Check the parameters of the function
+                for(int i=0; i<ps.size(); i++){													//Check the arguments of the function
                 	if(n.params.get(i).type.equals(ps.get(i).type)){
                 		
                 		if(n.params.get(i).arraylist != null){									//In case of an array -- check the indexes of each array
