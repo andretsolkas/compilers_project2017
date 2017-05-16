@@ -65,6 +65,36 @@ public class SymbolTable {
 		
 		scope--;	
 	}
+	
+	public void alteredExit(){                                                         //Destroys last scope, meanwhile it searched for declared but undefined functions
+		
+		Node node;
+		Iterator<Node> iter = list.descendingIterator();
+        while(iter.hasNext()){
+				node = iter.next();
+
+				if(node.scope == scope){
+					
+					if(node.defined != null && node.defined == false){											//Found an undefined function
+						System.out.println("Error: Function " + node.name.name + " never matches with a definiton\n");
+	                    System.exit(1);
+					}
+					
+					if(node.prevNode == null)
+						hashtable.remove(node.name);
+					else
+						hashtable.replace(node.name, node.prevNode);
+				
+					iter.remove();
+
+				}
+		}
+		
+		scope--;	
+	}
+	
+	
+	
     
     int SearchKey(Key key){
         
@@ -78,13 +108,19 @@ public class SymbolTable {
         
     }
     
+    
+    
 	public void increase_scope(){
 		scope++;
 	}
 	
+	
+	
 	public void decrease_scope(){
 		scope--;
 	}
+	
+	
 	
 	public void print(){
 		

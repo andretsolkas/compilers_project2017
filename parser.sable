@@ -109,8 +109,8 @@ Productions
 	func_def {-> local_def} = header local_def* fblock 							{-> New local_def.funcdef(header.header, [local_def.local_def], fblock.stmtexpr)} ;
 
 	header {-> header} = 
-			{withpars} fun id left_par fpar_def_list right_par colon ret_type	{-> New header.withpars(id, [fpar_def_list.fpar_def], ret_type.ret_type)}
-		|	{withoutpars} fun id left_par right_par colon ret_type				{-> New header.withoutpars(id, ret_type.ret_type)}
+			{withpars} fun id left_par fpar_def_list right_par colon ret_type	{-> New header(id, [fpar_def_list.fpar_def], ret_type.ret_type)}
+		|	{withoutpars} fun id left_par right_par colon ret_type				{-> New header(id, [], ret_type.ret_type)}
 		;
 
 	fpar_def_list {-> fpar_def*} = fpar_def fpar_def_list_tail*					{-> [fpar_def.fpar_def, fpar_def_list_tail.fpar_def]} ;
@@ -314,11 +314,7 @@ Abstract Syntax Tree
 		|	{vardef} id* type
 		;
 
-	header = 
-			{withpars} id fpar_def* ret_type
-		|	{withoutpars} id ret_type
-		;
-	
+	header = id fpar_def* ret_type;
 	
 	fpar_def = 
 			{withref} ref id* fpar_type 

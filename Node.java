@@ -8,7 +8,7 @@ public class Node {
 	int scope;											//Scope
 	Boolean reference;									//reference
 	LinkedList <Param> params; 							//If not function, gets null- holds a function's parameters
-	LinkedList <Integer> arraylist;
+	LinkedList <Integer> arraylist;						//In case it's an array
 	String retvalue;									//Return Value
 	Boolean defined;									//In case of function - True if it's been defined, false if not
 	

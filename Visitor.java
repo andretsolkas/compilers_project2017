@@ -45,32 +45,20 @@ import java.util.*;
 		
 		private void typeCheckerInt(String str){
 	        
-			TypeCheck opRight = typeCheck.removeLast();
+			TypeCheck opRight = typeCheck.removeLast();				//opLeft and opRight must be primitive integers
 			TypeCheck opLeft = typeCheck.removeLast();
 
-			if(opLeft.type.equals("int") && opRight.type.equals("int")){
-				if(opLeft.declarraylist == null && opRight.declarraylist == null){				//Not arrays
-					typeCheck.addLast(new TypeCheck(opLeft.type, null, null, null, null));
-				}
-	        }
-			
-	        else{
-	        	System.out.println("Error: Expr " + str + " 's operands must both be integers\n");
+			if(!(opLeft.type.equals("int") && opRight.type.equals("int")) || 											//Not Both Integers OR
+				(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions))) ||	//opLeft not primitive OR
+				(opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions))))	//opRight not primitive
+			{
+				System.out.println("Error: Expr " + str + " 's operands must both be primitive integers\n");
 	        	System.exit(1);
-	        }
+			}
+
+			typeCheck.addLast(new TypeCheck(opLeft.type, null, null, null, 0));
 		}
 		
-		private void print_typeCheck(){
-			System.out.println("Type Check Stack:\n");
-			for(int i=0; i<typeCheck.size(); i++){
-				
-				System.out.println(i);
-				
-				typeCheck.get(i).print();
-			}
-			System.out.println("\n");
-		}
-
 		//////////////////////////////////////
 		
         @Override
@@ -82,8 +70,7 @@ import java.util.*;
 		public void inAFuncdefLocalDef(AFuncdefLocalDef node)
 	    {
 	        headerMode = 0;
-	        symtable.enter();
-	        
+	        symtable.enter();   
 	    }
 
         @Override
@@ -125,29 +112,62 @@ import java.util.*;
                     System.exit(1);
                 }
                 
-                
 	    		symtable.insert(key, datatype, false, arraylist, null, null, null);
 	    	}
 	    }
-        
-	    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 	    @Override
-	    public void inAWithparsHeader(AWithparsHeader node)
+	    public void caseAHeader(AHeader node)
 	    {
 	    	initialize();
-	    }
-
-	    @Override
-	    public void caseAWithparsHeader(AWithparsHeader node)
-	    {
-	        inAWithparsHeader(node);
 	        
 	        funname = new Key(node.getId().getText());														//Functions' id name	        
 	        if(node.getId() != null){
 	            node.getId().apply(this);
 	        }
+
+	        /*************************************************/
 	        
+	    	if(headerMode == 0){																			//If function definition
+	    		
+    			symtable.decrease_scope();
+	    	
+    			if(1 == symtable.SearchKey(funname)){
+    	    		
+    				Node nd = symtable.lookup(funname);
+    				
+    	    		if(nd.defined == true){
+                        System.out.println("Error: Function " + funname.name + " is being  redefined\n");
+                        System.exit(1);
+    				}
+    	    		
+    	    		else nd.defined = true;
+    	    	}
+    			
+    			symtable.increase_scope();
+    		}
+    		
+    		else {																							//If function declaration
+    			if(1 == symtable.SearchKey(funname)){
+
+    				Node nd = symtable.lookup(funname);
+    				
+    	    		if(nd.defined == true){
+	    				System.out.println("Error: Function " + funname.name + " has been defined before, yet it is being redeclared\n");
+	                    System.exit(1);
+    	    		}
+    	    		
+    	    		else{
+	    				System.out.println("Error: Function " + funname.name + " has been declared again before\n");
+	                    System.exit(1);
+    	    		}
+    	    	}
+    		}
+	    	
+	    	
+	    	/*************************************************/
+	    	
 	        dataTypeMode = 1;																				//Functions' return type
 	        if(node.getRetType() != null){
 	            node.getRetType().apply(this);
@@ -156,7 +176,11 @@ import java.util.*;
 
             Key key;
             Param param;
+            
+            if(node.getFparDef().isEmpty())
+            	params = null;
 
+            /************************************/
             List<PFparDef> copy = new ArrayList<>(node.getFparDef());
             for(PFparDef e : copy)
             {
@@ -184,49 +208,23 @@ import java.util.*;
             }
 
             /************************************/
-    		symtable.decrease_scope();																			//Function's prototype belongs to the previous scope
     		
     		if(headerMode == 0){																				//If function definition
+    		
+    			symtable.decrease_scope();																		//Function's prototype belongs to the previous scope
+    			
     			symtable.insert(funname, null, null, null, params, true, retvalue);
     			funcDefinition.addLast(symtable.lookup(funname));
+    			
+    			symtable.increase_scope();
     		}
+    		
     		else symtable.insert(funname, null, null, null, params, false, retvalue);							//If function declaration
     		
-			symtable.increase_scope();
-			
-			outAWithparsHeader(node);
 	    }
 	    
-        @Override
-	    public void inAWithoutparsHeader(AWithoutparsHeader node)
-	    {	
-	    	initialize();
-	    }
-
-        @Override
-	    public void outAWithoutparsHeader(AWithoutparsHeader node)
-	    {
-	        funname = new Key(node.getId().getText());						//Functions' id name	        
-	        if(node.getId() != null){
-	            node.getId().apply(this);
-	        }
-
-	        dataTypeMode = 1;															//Functions' return type
-	        if(node.getRetType() != null){
-	            node.getRetType().apply(this);
-	        }
-	        
-	        symtable.decrease_scope();
-	        
-	        if(headerMode == 0){
-	        	symtable.insert(funname, null, null, null, null, true, retvalue);							//If function definition
-    			funcDefinition.addLast(symtable.lookup(funname));
-	        }
-	        else symtable.insert(funname, null, null, null, null, false, retvalue);							//If function declaration
-
-        	symtable.increase_scope();
-	    }
 	    
+
         @Override
 	    public void inAWithrefFparDef(AWithrefFparDef node)
 	    {
@@ -275,13 +273,6 @@ import java.util.*;
 	    	}
 	    }
 
-        @Override
-	    public void inADataRetType(ADataRetType node)
-	    {
-	        defaultOut(node);
-	    }
-
-
 	    
         @Override
 	    public void inANoneRetType(ANoneRetType node)
@@ -328,23 +319,22 @@ import java.util.*;
         	TypeCheck opRight = typeCheck.removeLast();
         	TypeCheck opLeft = typeCheck.removeLast();
 	        
-        	if(opLeft.declarraylist != null){
-        		System.out.println("Error: Assignment: Left Value must not be an Array\n");
+        	if(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions))){
+        		System.out.println("Error: Assignment: Left Value must be of type t where t can't be an Array\n");
 	        	System.exit(1);
         	}
         	
-        	if(!opLeft.type.equals(opRight.type)){
+        	if(!opLeft.type.equals(opRight.type) || (opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions)))){
         		System.out.println("Error: Assignment: Left Value and Right Value are of different types\n");
 	        	System.exit(1);
-        	}
-        	
+        	}	
 	    }
 
         
         @Override
         public void outAFblockStmtexpr(AFblockStmtexpr node)
         {
-        	symtable.exit();
+        	symtable.alteredExit();
         }
         
         @Override
@@ -471,106 +461,123 @@ import java.util.*;
         }
 
         
-        
-        
         @Override
         public void outALValueStmtexpr(ALValueStmtexpr node)
         {
         	TypeCheck value = typeCheck.getLast();
         	
-        	if(value.declarraylist != null){ 											//ARRAY
+        	if(value.indices != null){																		//In case the given input is array	 											
         		
-        		if(value.arraylist.size() != value.declarraylist.size()){					//If is an array
-	        		System.out.println("Error: Variable " + value.idname + " : different number of ARRAY arguments \n");
-	        		System.exit(1);
-        		}
+        		if(value.dimensions == 0){																	//In case the corresponding variable is declared as a primitive type
+           			System.out.println("Error: Variable " + value.idname + " : is primitive, yet, it's been treated as an array\n");
+            		System.exit(1);
+        		}        	
         		
-        		String ar;
-        		Integer declar;
+        		else{																						//In case the corresponding variable is declared as an array			
         		
-	        	for(int i=0; i<value.arraylist.size(); i++){					//Check for index boundaries
-	        		
-	        		ar = value.arraylist.get(i);
-	        		declar = value.declarraylist.get(i);
-	        		
-	        		if(!ar.equals("int") && !ar.equals("char") && declar!=0){				//Then ar is been given a number
-	        			
-		        		if(declar <= Integer.parseInt(ar)){
-		 
-		        			System.out.println("Error: Variable " + value.idname + " : index out of bound\n");
-		            		System.exit(1);
-		        		}
+        			if(value.indices.size() > value.dimensions){
+		        		System.out.println("Error: Variable " + value.idname + " : Array is being given too many indices\n");
+		        		System.exit(1);
+	        		}
+        		
+        			if(value.idname != null){											//Not a string -- therefore, it can be searched in the symbol table
+        				Node myNode = symtable.lookup(new Key(value.idname));			//No need to check if returned value is null, as i am sure at this point that variable with such idname exists
+        			
+        				String index;
+        				int declindex;
+
+        				for(int i=0; i<value.indices.size(); i++){												//Check for index boundaries
+        					
+        					index = value.indices.get(i);
+        					declindex = myNode.arraylist.get(i);
+        					
+			        		if(!index.equals("int") && !index.equals("char") && declindex != 0){				//Then index is been given a number -- so i can perform an index-bound check
+			        			
+				        		if(declindex <= Integer.parseInt(index)){
+				        			System.out.println("Error: Variable " + value.idname + " : index out of bound\n");
+				            		System.exit(1);
+				        		}
+				        	}
+			        	}
 		        	}
-	        	}
-        	}
-        	else if(value.arraylist != null && !value.arraylist.isEmpty()){							//PRIMITIVE 
-    			System.out.println("Error: Variable " + value.idname + " : is primitive, yet, it's been treated as an array\n");
-        		System.exit(1);
+		        }
         	}
         }
+                
         
         @Override
         public void outAConcharStmtexpr(AConcharStmtexpr node)
         {
-        	typeCheck.addLast(new TypeCheck("char", null, null, null, null));
+        	typeCheck.addLast(new TypeCheck("char", null, null, null, 0));
         }
 	    
         @Override
         public void outANumStmtexpr(ANumStmtexpr node)
         {
-        	typeCheck.addLast(new TypeCheck("int", null, node.getNumber().getText(), null, null));
+        	typeCheck.addLast(new TypeCheck("int", null, node.getNumber().getText(), null, 0));
         }
 
+        
         @Override
         public void outAIdStmtexpr(AIdStmtexpr node)
         {
-        	Key key = new Key(node.getId().getText());
-        	
+        	Key key = new Key(node.getId().getText());        	
         	Node n = symtable.lookup(key);
 
-        	if(n != null)
-        		typeCheck.addLast(new TypeCheck(n.type, new LinkedList <>(), null, node.getId().getText(), n.arraylist));
-        	
-        	else {
+        	if(n == null){
         		System.out.println("Error: Variable " + key.name + " has not been declared before\n");
         		System.exit(1);
         	}
+        	
+        	int dimensions;
+        	if(n.arraylist == null)		//Variable has not been defined as an array
+        		dimensions = 0;
+        	else dimensions = n.arraylist.size();
+        	
+        	typeCheck.addLast(new TypeCheck(n.type, null, null, node.getId().getText(), dimensions));
         }
-
+        	
         @Override
         public void outAStrStmtexpr(AStrStmtexpr node)
-        {
-        	LinkedList <Integer> declarraylist = new LinkedList<>();
-        	declarraylist.add(0);
-        	
-        	typeCheck.addLast(new TypeCheck("char", new LinkedList <>(), null, null, declarraylist));		//String's type is char[]
+        {      	
+        	typeCheck.addLast(new TypeCheck("char", null, null, null, 1));		//String's type is char[]
         }
+
 
         @Override
         public void outAArrayStmtexpr(AArrayStmtexpr node)
         {
         	TypeCheck rightExpr = typeCheck.removeLast();				//rightExpr is the Index of the array
-			TypeCheck leftId = typeCheck.removeLast();					// leftId is the array's id
+			TypeCheck leftId = typeCheck.removeLast();					//leftId is the array's id -- it could be also a string
 
-			if(rightExpr.type.equals("int")){
-				
-				String str = rightExpr.num;
-				if(str == null)
-					str = "int";
-                
-				LinkedList <String> arlist = leftId.arraylist;
-				arlist.addLast(str);
-				
-				typeCheck.addLast(new TypeCheck(leftId.type, arlist, null, leftId.idname, leftId.declarraylist));
-			}
-			
-			else{
+			if(!rightExpr.type.equals("int")){ 							//Must check if right value is an integer
         		System.out.println("Error: Variable " + leftId.idname + " Type " +   rightExpr.type + " .. Array index is not int\n");
         		System.exit(1);
-			}	
+			}
+																		//Right expr is integer but it may not be primitive - it could be an array
+			
+			int indices = 0;
+			if(rightExpr.indices != null)
+				indices = rightExpr.indices.size();
+			
+			if(rightExpr.dimensions != indices){						//It is primitive only when the number of given indices equals the number of indices with which it was declared
+        		System.out.println("Error: Variable " + leftId.idname + " Type " +   rightExpr.type + " .. Array index is not a primitive integer type\n");
+        		System.exit(1);
+			}
+		
+			String str = rightExpr.num;									//In case its value is known it's been passed for later index boundary checking
+			if(str == null)
+				str = "int";
+            
+			if(leftId.indices == null){
+				leftId.indices = new LinkedList<>();
+			}
+			leftId.indices.addLast(str);
+			
+			typeCheck.addLast(new TypeCheck(leftId.type, leftId.indices, null, leftId.idname, leftId.dimensions));
+
         }
 
-        
         @Override
         public void caseAFuncallStmtexpr(AFuncallStmtexpr node)
         {
@@ -584,7 +591,7 @@ import java.util.*;
         	Node n = symtable.lookup(key);
 
         	if(n == null){
-        		System.out.println("Error: Function " + key.name + " has not been declared/defined before\n");
+        		System.out.println("Error: Function " + key.name + " has not been declared before\n");
         		System.exit(1);
         	}
         	
@@ -598,90 +605,85 @@ import java.util.*;
         		System.exit(1);
         	}
         	
-            {
-            	TypeCheck tpc;
-            	LinkedList<Param> ps = new LinkedList<>();
+        	
+        	{	/**********************************/
+        		//Get the parameters one by one, add them to list
+        		
+        		TypeCheck tpc;
+            	LinkedList<TypeCheck> args = new LinkedList<>();
             	
                 List<PStmtexpr> copy = new ArrayList<PStmtexpr>(node.getStmtexpr());
                 for(PStmtexpr e : copy)
                 {
                     e.apply(this);
                 
-                    tpc = typeCheck.removeLast();														//Remove from stack the parameter
-                    
-                    ps.addLast(new Param(tpc.type, null, tpc.declarraylist));			//Add it to the ps list
-                
+                    tpc = typeCheck.removeLast();														//Remove from stack the argument
+                    args.addLast(tpc);																	//Pass by reference - it won't cause problems  
                 }
 
-
+                /**********************************/
                 if(n.params != null){
-	                if(ps.size() != n.params.size()){
-	                	System.out.println("Error: Function " + n.name.name + ": different amount of arguments\n");
+	                if(args.size() != n.params.size()){
+	                	System.out.println("Error: Function " + n.name.name + ": different amount of arguments than expected\n");
 	            		System.exit(1);
 	                }
-
                 }
                 
-                else if(!ps.isEmpty()){
+                else if(!args.isEmpty()){			//Function has no parameters, yet it is given arguments 
                 	System.out.println("Error: Function " + n.name.name + ": has no parameters, yet it is given arguments\n");
             		System.exit(1);
                 }
                 
-                for(int i=0; i<ps.size(); i++){													//Check the parameters of the function
-                	if(n.params.get(i).type.equals(ps.get(i).type)){
-                		
-                		if(n.params.get(i).arraylist != null){									//In case of an array -- check the indexes of each array
-                			
-                			if(ps.get(i).arraylist == null){
-                				System.out.println("Error: Function " + n.name.name + ": argument: given primitive but expects array\n");
-        	            		System.exit(1);
-                			}
-                			
-                			
-                			if(n.params.get(i).arraylist.size() != ps.get(i).arraylist.size()){
-                				System.out.println("Error: Function " + n.name.name + ": array argument with wrong dimensions\n");
-                        		System.exit(1);
-                			}
-                		
-                				for(int j=0; j<ps.get(i).arraylist.size(); j++){
-                						
-                					if(ps.get(i).arraylist.get(j) >= n.params.get(i).arraylist.get(j)){							//WATCH IN CASE OF [] 0!!!!!!!!!
-                	                	
-                				System.out.println(ps.get(i).arraylist.get(j));
-                				System.out.println(n.params.get(i).arraylist.get(j));
-                						System.out.println("Error: Function " + n.name.name + ": array argument: index out of bounds\n");
-                	            		System.exit(1);
-                					}
-                				}
-                		}
-                        
-                        else if(ps.get(i).arraylist != null && !ps.get(i).arraylist.isEmpty()){
-                            System.out.println("Error: Function " + n.name.name + ": argument: given array but expects primitive argument\n");
-                            System.exit(1);
-                        }
-
-                	}
+                /**********************************/		//Check the arguments given to the function
+                
+                for(int i=0; i<args.size(); i++){
                 	
-                	else{
+                	if(!(n.params.get(i).type.equals(args.get(i).type))){
                 		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
                 		System.exit(1);
                 	}
-                }
+                	
+                	int argIndices = 0;
+                	if(args.get(i).indices != null)
+                		argIndices = args.get(i).indices.size(); 
                 
+                	int argDimension = args.get(i).dimensions - argIndices;			//Find out arg's type i.e. boo[0][2] is of type char[4] if boo is declared as: var boo : char[0][2][4] 
+                	
+                	
+                	int paramDimension = 0;
+                	if(n.params.get(i).arraylist != null)
+                		paramDimension = n.params.get(i).arraylist.size();
+                	
+                	if(paramDimension != argDimension){
+                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+                		System.exit(1);
+                	}
+                	
+	                if(argDimension > 0){				//Array Case - Further Checking
+	                	
+	                	if(args.get(i).idname != null){												//Not a string -- it is an id
+	                		
+	                		Node myNode = symtable.lookup(new Key(args.get(i).idname));				//At this point myNode won't be null
+	                	
+	                		int j = myNode.arraylist.size() - argDimension;
+	                		
+	                		for(int x=0; x<=paramDimension; j++, x++){
+	                			
+	                			if(myNode.arraylist.get(j) != n.params.get(i).arraylist.get(x) && myNode.arraylist.get(j) != 0){
+					        		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+					        		System.exit(1);
+	                			}
+	                		}
+	                	}
+	                	
+	                	//STRING CASE
+                	}
+                }
 
-                typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, null));				//Add the return type on stack
-
+                typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, 0));				//Add the return type on stack
             }
             
             outAFuncallStmtexpr(node);
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
 	}
