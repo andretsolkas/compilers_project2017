@@ -59,18 +59,6 @@ import java.util.*;
 			typeCheck.addLast(new TypeCheck(opLeft.type, null, null, null, 0));
 		}
 		
-
-		private void print_typeCheck(){
-			System.out.println("Type Check Stack:\n");
-			for(int i=0; i<typeCheck.size(); i++){
-				
-				System.out.println(i);
-				
-				typeCheck.get(i).print();
-			}
-			System.out.println("\n");
-		}
-
 		//////////////////////////////////////
 		
         @Override
@@ -124,29 +112,62 @@ import java.util.*;
                     System.exit(1);
                 }
                 
-                
 	    		symtable.insert(key, datatype, false, arraylist, null, null, null);
 	    	}
 	    }
-        
-	    ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	    @Override
-	    public void inAHeader(AHeader node)
-	    {
-	    	initialize();
-	    }
 
 	    @Override
 	    public void caseAHeader(AHeader node)
 	    {
-	        inAHeader(node);
+	    	initialize();
 	        
 	        funname = new Key(node.getId().getText());														//Functions' id name	        
 	        if(node.getId() != null){
 	            node.getId().apply(this);
 	        }
+
+	        /*************************************************/
 	        
+	    	if(headerMode == 0){																			//If function definition
+	    		
+    			symtable.decrease_scope();
+	    	
+    			if(1 == symtable.SearchKey(funname)){
+    	    		
+    				Node nd = symtable.lookup(funname);
+    				
+    	    		if(nd.defined == true){
+                        System.out.println("Error: Function " + funname.name + " is being  redefined\n");
+                        System.exit(1);
+    				}
+    	    		
+    	    		else nd.defined = true;
+    	    	}
+    			
+    			symtable.increase_scope();
+    		}
+    		
+    		else {																							//If function declaration
+    			if(1 == symtable.SearchKey(funname)){
+
+    				Node nd = symtable.lookup(funname);
+    				
+    	    		if(nd.defined == true){
+	    				System.out.println("Error: Function " + funname.name + " has been defined before, yet it is being redeclared\n");
+	                    System.exit(1);
+    	    		}
+    	    		
+    	    		else{
+	    				System.out.println("Error: Function " + funname.name + " has been declared again before\n");
+	                    System.exit(1);
+    	    		}
+    	    	}
+    		}
+	    	
+	    	
+	    	/*************************************************/
+	    	
 	        dataTypeMode = 1;																				//Functions' return type
 	        if(node.getRetType() != null){
 	            node.getRetType().apply(this);
@@ -187,18 +208,22 @@ import java.util.*;
             }
 
             /************************************/
-    		symtable.decrease_scope();																			//Function's prototype belongs to the previous scope
     		
     		if(headerMode == 0){																				//If function definition
+    		
+    			symtable.decrease_scope();																		//Function's prototype belongs to the previous scope
+    			
     			symtable.insert(funname, null, null, null, params, true, retvalue);
     			funcDefinition.addLast(symtable.lookup(funname));
+    			
+    			symtable.increase_scope();
     		}
+    		
     		else symtable.insert(funname, null, null, null, params, false, retvalue);							//If function declaration
     		
-			symtable.increase_scope();
-			
-			outAHeader(node);
 	    }
+	    
+	    
 
         @Override
 	    public void inAWithrefFparDef(AWithrefFparDef node)
@@ -309,7 +334,7 @@ import java.util.*;
         @Override
         public void outAFblockStmtexpr(AFblockStmtexpr node)
         {
-        	symtable.exit();
+        	symtable.alteredExit();
         }
         
         @Override
@@ -436,8 +461,6 @@ import java.util.*;
         }
 
         
-        
-        
         @Override
         public void outALValueStmtexpr(ALValueStmtexpr node)
         {
@@ -480,9 +503,7 @@ import java.util.*;
 		        }
         	}
         }
-        
-        
-        
+                
         
         @Override
         public void outAConcharStmtexpr(AConcharStmtexpr node)
@@ -522,9 +543,7 @@ import java.util.*;
         	typeCheck.addLast(new TypeCheck("char", null, null, null, 1));		//String's type is char[]
         }
 
-        
-        
-        
+
         @Override
         public void outAArrayStmtexpr(AArrayStmtexpr node)
         {
@@ -559,10 +578,6 @@ import java.util.*;
 
         }
 
-        
-        
-        
-        
         @Override
         public void caseAFuncallStmtexpr(AFuncallStmtexpr node)
         {
@@ -670,8 +685,5 @@ import java.util.*;
             
             outAFuncallStmtexpr(node);
         }
-        
 
-        
-        
 	}

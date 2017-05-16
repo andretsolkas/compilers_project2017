@@ -25,9 +25,7 @@ public class Main{
 		System.out.println(e.getMessage());
 		System.exit(1);
 	}
-       
 
-        System.out.println("Now printing the abstract syntax tree:\n\n");
         tree.apply(new Visitor());
     }
 }
