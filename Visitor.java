@@ -45,21 +45,21 @@ import java.util.*;
 		
 		private void typeCheckerInt(String str){
 	        
-			TypeCheck opRight = typeCheck.removeLast();
+			TypeCheck opRight = typeCheck.removeLast();				//opLeft and opRight must be primitive integers
 			TypeCheck opLeft = typeCheck.removeLast();
 
-			if(opLeft.type.equals("int") && opRight.type.equals("int")){
-				if(opLeft.declarraylist == null && opRight.declarraylist == null){				//Not arrays
-					typeCheck.addLast(new TypeCheck(opLeft.type, null, null, null, null));
-				}
-	        }
-			
-	        else{
-	        	System.out.println("Error: Expr " + str + " 's operands must both be integers\n");
+			if(!(opLeft.type.equals("int") && opRight.type.equals("int")) || 											//Not Both Integers OR
+				(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions) ||	//opLeft not primitive OR
+				(opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions))	//opRight not primitive
+			{
+				System.out.println("Error: Expr " + str + " 's operands must both be primitive integers\n");
 	        	System.exit(1);
-	        }
+			}
+
+			typeCheck.addLast(new TypeCheck(opLeft.type, null, null, null, 0));
 		}
 		
+
 		private void print_typeCheck(){
 			System.out.println("Type Check Stack:\n");
 			for(int i=0; i<typeCheck.size(); i++){
@@ -82,8 +82,7 @@ import java.util.*;
 		public void inAFuncdefLocalDef(AFuncdefLocalDef node)
 	    {
 	        headerMode = 0;
-	        symtable.enter();
-	        
+	        symtable.enter();   
 	    }
 
         @Override
@@ -133,15 +132,15 @@ import java.util.*;
 	    ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	    @Override
-	    public void inAWithparsHeader(AWithparsHeader node)
+	    public void inAHeader(AHeader node)
 	    {
 	    	initialize();
 	    }
 
 	    @Override
-	    public void caseAWithparsHeader(AWithparsHeader node)
+	    public void caseAHeader(AHeader node)
 	    {
-	        inAWithparsHeader(node);
+	        inAHeader(node);
 	        
 	        funname = new Key(node.getId().getText());														//Functions' id name	        
 	        if(node.getId() != null){
@@ -156,6 +155,9 @@ import java.util.*;
 
             Key key;
             Param param;
+            
+            if(node.getFparDef().isEmpty())
+            	params = null;
 
             List<PFparDef> copy = new ArrayList<>(node.getFparDef());
             for(PFparDef e : copy)
@@ -194,39 +196,9 @@ import java.util.*;
     		
 			symtable.increase_scope();
 			
-			outAWithparsHeader(node);
-	    }
-	    
-        @Override
-	    public void inAWithoutparsHeader(AWithoutparsHeader node)
-	    {	
-	    	initialize();
+			outAHeader(node);
 	    }
 
-        @Override
-	    public void outAWithoutparsHeader(AWithoutparsHeader node)
-	    {
-	        funname = new Key(node.getId().getText());						//Functions' id name	        
-	        if(node.getId() != null){
-	            node.getId().apply(this);
-	        }
-
-	        dataTypeMode = 1;															//Functions' return type
-	        if(node.getRetType() != null){
-	            node.getRetType().apply(this);
-	        }
-	        
-	        symtable.decrease_scope();
-	        
-	        if(headerMode == 0){
-	        	symtable.insert(funname, null, null, null, null, true, retvalue);							//If function definition
-    			funcDefinition.addLast(symtable.lookup(funname));
-	        }
-	        else symtable.insert(funname, null, null, null, null, false, retvalue);							//If function declaration
-
-        	symtable.increase_scope();
-	    }
-	    
         @Override
 	    public void inAWithrefFparDef(AWithrefFparDef node)
 	    {
@@ -275,13 +247,6 @@ import java.util.*;
 	    	}
 	    }
 
-        @Override
-	    public void inADataRetType(ADataRetType node)
-	    {
-	        defaultOut(node);
-	    }
-
-
 	    
         @Override
 	    public void inANoneRetType(ANoneRetType node)
@@ -328,12 +293,12 @@ import java.util.*;
         	TypeCheck opRight = typeCheck.removeLast();
         	TypeCheck opLeft = typeCheck.removeLast();
 	        
-        	if(opLeft.dimensions > 0 && opLeft.indices != null && opLeft.indices.size() != opLeft.dimensions){
+        	if(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions)){
         		System.out.println("Error: Assignment: Left Value must be of type t where t can't be an Array\n");
 	        	System.exit(1);
         	}
         	
-        	if(!opLeft.type.equals(opRight.type) || (opRight.dimensions > 0 && opRight.indices != null && opRight.indices.size() != opRight.dimensions)){
+        	if(!opLeft.type.equals(opRight.type) || (opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions)){
         		System.out.println("Error: Assignment: Left Value and Right Value are of different types\n");
 	        	System.exit(1);
         	}	
@@ -606,7 +571,7 @@ import java.util.*;
         	Node n = symtable.lookup(key);
 
         	if(n == null){
-        		System.out.println("Error: Function " + key.name + " has not been declared/defined before\n");
+        		System.out.println("Error: Function " + key.name + " has not been declared before\n");
         		System.exit(1);
         	}
         	
@@ -620,7 +585,8 @@ import java.util.*;
         		System.exit(1);
         	}
         	
-            {
+        	/**********************************/
+            {															//Get the parameters one by one, add them to ps list
             	TypeCheck tpc;
             	LinkedList<Param> ps = new LinkedList<>();
             	
