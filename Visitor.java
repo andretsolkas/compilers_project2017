@@ -49,8 +49,8 @@ import java.util.*;
 			TypeCheck opLeft = typeCheck.removeLast();
 
 			if(!(opLeft.type.equals("int") && opRight.type.equals("int")) || 											//Not Both Integers OR
-				(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions) ||	//opLeft not primitive OR
-				(opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions))	//opRight not primitive
+				(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions))) ||	//opLeft not primitive OR
+				(opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions))))	//opRight not primitive
 			{
 				System.out.println("Error: Expr " + str + " 's operands must both be primitive integers\n");
 	        	System.exit(1);
@@ -159,6 +159,7 @@ import java.util.*;
             if(node.getFparDef().isEmpty())
             	params = null;
 
+            /************************************/
             List<PFparDef> copy = new ArrayList<>(node.getFparDef());
             for(PFparDef e : copy)
             {
@@ -293,12 +294,12 @@ import java.util.*;
         	TypeCheck opRight = typeCheck.removeLast();
         	TypeCheck opLeft = typeCheck.removeLast();
 	        
-        	if(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions)){
+        	if(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions))){
         		System.out.println("Error: Assignment: Left Value must be of type t where t can't be an Array\n");
 	        	System.exit(1);
         	}
         	
-        	if(!opLeft.type.equals(opRight.type) || (opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions)){
+        	if(!opLeft.type.equals(opRight.type) || (opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions)))){
         		System.out.println("Error: Assignment: Left Value and Right Value are of different types\n");
 	        	System.exit(1);
         	}	
@@ -536,11 +537,15 @@ import java.util.*;
 			}
 																		//Right expr is integer but it may not be primitive - it could be an array
 			
-			if(rightExpr.dimensions != rightExpr.indices.size()){		//It is primitive only when the number of given indices equals to the number of indices with which it was declared
+			int indices = 0;
+			if(rightExpr.indices != null)
+				indices = rightExpr.indices.size();
+			
+			if(rightExpr.dimensions != indices){						//It is primitive only when the number of given indices equals the number of indices with which it was declared
         		System.out.println("Error: Variable " + leftId.idname + " Type " +   rightExpr.type + " .. Array index is not a primitive integer type\n");
         		System.exit(1);
 			}
-			
+		
 			String str = rightExpr.num;									//In case its value is known it's been passed for later index boundary checking
 			if(str == null)
 				str = "int";
@@ -585,91 +590,88 @@ import java.util.*;
         		System.exit(1);
         	}
         	
-        	/**********************************/
-            {															//Get the parameters one by one, add them to ps list
-            	TypeCheck tpc;
-            	LinkedList<Param> ps = new LinkedList<>();
+        	
+        	{	/**********************************/
+        		//Get the parameters one by one, add them to list
+        		
+        		TypeCheck tpc;
+            	LinkedList<TypeCheck> args = new LinkedList<>();
             	
                 List<PStmtexpr> copy = new ArrayList<PStmtexpr>(node.getStmtexpr());
                 for(PStmtexpr e : copy)
                 {
                     e.apply(this);
                 
-                    tpc = typeCheck.removeLast();														//Remove from stack the parameter
-                    
-                    ps.addLast(new Param(tpc.type, null, tpc.declarraylist));							//Add it to the ps list
-                
+                    tpc = typeCheck.removeLast();														//Remove from stack the argument
+                    args.addLast(tpc);																	//Pass by reference - it won't cause problems  
                 }
 
-
+                /**********************************/
                 if(n.params != null){
-	                if(ps.size() != n.params.size()){
-	                	System.out.println("Error: Function " + n.name.name + ": different amount of arguments\n");
+	                if(args.size() != n.params.size()){
+	                	System.out.println("Error: Function " + n.name.name + ": different amount of arguments than expected\n");
 	            		System.exit(1);
 	                }
-
                 }
                 
-                else if(!ps.isEmpty()){
+                else if(!args.isEmpty()){			//Function has no parameters, yet it is given arguments 
                 	System.out.println("Error: Function " + n.name.name + ": has no parameters, yet it is given arguments\n");
             		System.exit(1);
                 }
                 
-                for(int i=0; i<ps.size(); i++){													//Check the arguments of the function
-                	if(n.params.get(i).type.equals(ps.get(i).type)){
-                		
-                		if(n.params.get(i).arraylist != null){									//In case of an array -- check the indexes of each array
-                			
-                			if(ps.get(i).arraylist == null){
-                				System.out.println("Error: Function " + n.name.name + ": argument: given primitive but expects array\n");
-        	            		System.exit(1);
-                			}
-                			
-                			
-                			if(n.params.get(i).arraylist.size() != ps.get(i).arraylist.size()){
-                				System.out.println("Error: Function " + n.name.name + ": array argument with wrong dimensions\n");
-                        		System.exit(1);
-                			}
-                		
-                				for(int j=0; j<ps.get(i).arraylist.size(); j++){
-                						
-                					if(ps.get(i).arraylist.get(j) >= n.params.get(i).arraylist.get(j)){							//WATCH IN CASE OF [] 0!!!!!!!!!
-                	                	
-                				System.out.println(ps.get(i).arraylist.get(j));
-                				System.out.println(n.params.get(i).arraylist.get(j));
-                						System.out.println("Error: Function " + n.name.name + ": array argument: index out of bounds\n");
-                	            		System.exit(1);
-                					}
-                				}
-                		}
-                        
-                        else if(ps.get(i).arraylist != null && !ps.get(i).arraylist.isEmpty()){
-                            System.out.println("Error: Function " + n.name.name + ": argument: given array but expects primitive argument\n");
-                            System.exit(1);
-                        }
-
-                	}
+                /**********************************/		//Check the arguments given to the function
+                
+                for(int i=0; i<args.size(); i++){
                 	
-                	else{
+                	if(!(n.params.get(i).type.equals(args.get(i).type))){
                 		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
                 		System.exit(1);
                 	}
-                }
+                	
+                	int argIndices = 0;
+                	if(args.get(i).indices != null)
+                		argIndices = args.get(i).indices.size(); 
                 
+                	int argDimension = args.get(i).dimensions - argIndices;			//Find out arg's type i.e. boo[0][2] is of type char[4] if boo is declared as: var boo : char[0][2][4] 
+                	
+                	
+                	int paramDimension = 0;
+                	if(n.params.get(i).arraylist != null)
+                		paramDimension = n.params.get(i).arraylist.size();
+                	
+                	if(paramDimension != argDimension){
+                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+                		System.exit(1);
+                	}
+                	
+	                if(argDimension > 0){				//Array Case - Further Checking
+	                	
+	                	if(args.get(i).idname != null){												//Not a string -- it is an id
+	                		
+	                		Node myNode = symtable.lookup(new Key(args.get(i).idname));				//At this point myNode won't be null
+	                	
+	                		int j = myNode.arraylist.size() - argDimension;
+	                		
+	                		for(int x=0; x<=paramDimension; j++, x++){
+	                			
+	                			if(myNode.arraylist.get(j) != n.params.get(i).arraylist.get(x) && myNode.arraylist.get(j) != 0){
+					        		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+					        		System.exit(1);
+	                			}
+	                		}
+	                	}
+	                	
+	                	//STRING CASE
+                	}
+                }
 
-                typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, null));				//Add the return type on stack
-
+                typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, 0));				//Add the return type on stack
             }
             
             outAFuncallStmtexpr(node);
         }
         
-        
-        
-        
-        
-        
-        
+
         
         
 	}

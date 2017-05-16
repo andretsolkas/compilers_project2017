@@ -1,14 +1,14 @@
-fun hello (ref x,y:int; i,j:int[4]) : int
+fun hello (x,y:int; i,j:int[][4]) : nothing
 
-	fun boo(x:int[5] ; g,z:int) : int
-	{	return 0;
+	fun boo(x:int ; y:int) : int
+	{	
+		return 0;
 	}
 	
-var bella, kira : int;
+var bella, kira : char;
 
 {
-	x <- ----2;
+	x <- boo(i[0][4],y);
 
-	return x;
 }
 
