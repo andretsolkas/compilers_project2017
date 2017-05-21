@@ -6,6 +6,7 @@ import java.util.*;
 	{
 		
 		SymbolTable symtable;
+		QuadManager quadManager;
 		
 		int dataTypeMode;														//0 if parameter, 1 if return_value
 		int headerMode;															//0 if fun definition, 1 if fun declaration
@@ -28,6 +29,7 @@ import java.util.*;
 		public Visitor(){
 			
 			symtable = new SymbolTable();
+			quadManager = new QuadManager();
 			initialize();
 		}
 
@@ -43,7 +45,7 @@ import java.util.*;
 		}
 		
 		
-		private void typeCheckerInt(String str){
+		private void typeCheckerExpr(String str){
 	        
 			TypeCheck opRight = typeCheck.removeLast();				//opLeft and opRight must be primitive integers
 			TypeCheck opLeft = typeCheck.removeLast();
@@ -59,11 +61,42 @@ import java.util.*;
 			typeCheck.addLast(new TypeCheck(opLeft.type, null, null, null, 0));
 		}
 		
+		private void typeCheckerCond(String str){
+	        
+			TypeCheck opRight = typeCheck.removeLast();				//opLeft and opRight must be primitive integers
+			TypeCheck opLeft = typeCheck.removeLast();
+
+			if(!(opLeft.type.equals("int") && opRight.type.equals("int")) || 											//Not Both Integers OR
+				(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions))) ||	//opLeft not primitive OR
+				(opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions))))	//opRight not primitive
+			{
+				System.out.println("Error: Cond " + str + " 's operands must both be primitive integers\n");
+	        	System.exit(1);
+			}
+
+
+		}
+		
+		
+    	public void quadGenExpr(String opcode){
+        	
+    		IRelement left = quadManager.stack.removeLast();
+        	IRelement right = quadManager.stack.removeLast();
+        	
+        	String newTemp = quadManager.newtemp(left.type);
+        	
+        	quadManager.genQuad(opcode, left.place, right.place, newTemp);
+        	
+        	quadManager.stack.addLast(new IRelement(left.type, newTemp, null, null, null));
+    	}
+		
 		//////////////////////////////////////
 		
         @Override
 		public void outAProgram(AProgram node){
            symtable.exit();
+           
+           quadManager.printQuads();
 		}
 
         @Override
@@ -146,6 +179,9 @@ import java.util.*;
     	    	}
     			
     			symtable.increase_scope();
+    			
+    			quadManager.genQuad("unit", funname.name, null, null);
+    			
     		}
     		
     		else {																							//If function declaration
@@ -418,46 +454,60 @@ import java.util.*;
 	        symtable.exit();
 	    }
 
+        
+        
         @Override
 	    public void outAPlusStmtexpr(APlusStmtexpr node)
 	    {
-        	typeCheckerInt("Plus");
+        	typeCheckerExpr("Plus");
+        	quadGenExpr("+");
 	    }
 
         @Override
 	    public void outAMinusStmtexpr(AMinusStmtexpr node)
 	    {
-        	typeCheckerInt("Minus");
+        	typeCheckerExpr("Minus");
+        	quadGenExpr("-");
 	    }
 
         @Override
         public void outAMultStmtexpr(AMultStmtexpr node)
         {
-        	typeCheckerInt("Mult");
+        	typeCheckerExpr("Mult");
+        	quadGenExpr("*");
         }
 
         @Override
         public void outADivStmtexpr(ADivStmtexpr node)
         {
-        	typeCheckerInt("Div");
+        	typeCheckerExpr("Div");
+        	quadGenExpr("/");
         }
 
         @Override
         public void outAModStmtexpr(AModStmtexpr node)
         {
-        	typeCheckerInt("Mod");
+        	typeCheckerExpr("Mod");
+        	quadGenExpr("mod");
         }
 
+        /*
         @Override
         public void outAPosStmtexpr(APosStmtexpr node)
         {
          //
         }
-
+        */
+        
         @Override
         public void outANegStmtexpr(ANegStmtexpr node)
         {
-        	//
+        	IRelement irel = quadManager.stack.removeLast();
+        	
+        	String newTemp = quadManager.newtemp(irel.type);
+        	quadManager.genQuad("-", "0", irel.place, newTemp);
+        	
+        	quadManager.stack.addLast(new IRelement(irel.type, newTemp, null, null, null));
         }
 
         
@@ -509,12 +559,16 @@ import java.util.*;
         public void outAConcharStmtexpr(AConcharStmtexpr node)
         {
         	typeCheck.addLast(new TypeCheck("char", null, null, null, 0));
+        	
+        	quadManager.stack.addLast(new IRelement("char", node.getConchar().getText(), null, null, null));
         }
 	    
         @Override
         public void outANumStmtexpr(ANumStmtexpr node)
         {
         	typeCheck.addLast(new TypeCheck("int", null, node.getNumber().getText(), null, 0));
+        	
+        	quadManager.stack.addLast(new IRelement("int", node.getNumber().getText(), null, null, null));
         }
 
         
@@ -535,12 +589,17 @@ import java.util.*;
         	else dimensions = n.arraylist.size();
         	
         	typeCheck.addLast(new TypeCheck(n.type, null, null, node.getId().getText(), dimensions));
+        	
+        	quadManager.stack.addLast(new IRelement(n.type, node.getId().getText(), null, null, null));
+        	
         }
         	
         @Override
         public void outAStrStmtexpr(AStrStmtexpr node)
         {      	
         	typeCheck.addLast(new TypeCheck("char", null, null, null, 1));		//String's type is char[]
+        
+        	quadManager.stack.addLast(new IRelement("char", node.getString().getText(), null, null, null));
         }
 
 
@@ -686,4 +745,95 @@ import java.util.*;
             outAFuncallStmtexpr(node);
         }
 
-	}
+
+/**********************************************************/
+        
+
+
+        public void outANotCond(ANotCond node)
+        {
+        	
+        }
+        
+        
+
+
+        public void outAAndCond(AAndCond node)
+        {
+        	typeCheckerCond("and");
+        	
+        	
+        	
+        }
+        
+        
+
+
+        public void outAOrCond(AOrCond node)
+        {
+        	typeCheckerCond("or");
+        }
+        
+        
+
+
+        public void outAEqualCond(AEqualCond node)
+        {
+        	typeCheckerCond("=");
+        }
+        
+        
+        
+
+        public void outANequalCond(ANequalCond node)
+        {
+        	typeCheckerCond("#");
+        }
+        
+        
+
+        public void outALessCond(ALessCond node)
+        {
+        	typeCheckerCond("<");
+        }
+        
+        
+
+        public void outAGreaterCond(AGreaterCond node)
+        {
+        	typeCheckerCond(">");
+        }
+
+        
+
+
+        public void outALesseqCond(ALesseqCond node)
+        {
+            typeCheckerCond("<=");
+        }
+        
+
+
+        public void outAGreatereqCond(AGreatereqCond node)
+        {
+        	typeCheckerCond(">=");
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+
+}

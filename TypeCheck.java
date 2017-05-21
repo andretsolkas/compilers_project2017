@@ -14,9 +14,6 @@ public class TypeCheck {
 			type = new String(tp);
 		else type = null;
 		
-
-		indices = new LinkedList<>();
-		
 		if(arlist!=null){
 			indices = new LinkedList<>();
 			
