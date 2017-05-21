@@ -3,30 +3,24 @@ import java.util.LinkedList;
 public class TypeCheck {
 
 	String type;
-	LinkedList <String> arraylist;
-	String num;
-	String idname;
-	LinkedList <Integer> declarraylist;
-
+	LinkedList <String> indices;			//Holds the current indices-- if not null the element given is an array
+	String num;								//In case i can have the real value during static checking i keep it for array's index bounds checking 
+	String idname;							//It is not null only in case the element corresponds to an identifier, existing in the symbol table
+	int dimensions = 0;						// In case of array this is >0
 	
-	public TypeCheck(String tp, LinkedList <String> arlist, String n, String name, LinkedList <Integer> declarlist)
+	public TypeCheck(String tp, LinkedList <String> arlist, String n, String name, int dim)
 	{
 		if(tp!=null)													//Copying all values
 			type = new String(tp);
 		else type = null;
 		
-
-		arraylist = new LinkedList<>();
-		
 		if(arlist!=null){
-			arraylist = new LinkedList<>();
+			indices = new LinkedList<>();
 			
 			for(int i=0; i<arlist.size(); i++)
-				arraylist.addLast(new String(arlist.get(i)));
+				indices.addLast(new String(arlist.get(i)));
 		}
-		else arraylist = null;
-
-		
+		else indices = null;
 		
 		if(n!=null)
 			num =  new String(n);
@@ -36,17 +30,7 @@ public class TypeCheck {
 			idname = new String(name);
 		else idname = null;
 		
-		
-		
-		declarraylist = new LinkedList<>();
-		
-		if(declarlist!=null){
-			declarraylist = new LinkedList<>();
-			
-			for(int i=0; i<declarlist.size(); i++)
-				declarraylist.addLast(new Integer(declarlist.get(i)));
-		}
-		else declarraylist = null;
+		dimensions = dim;
 
 	}
 
@@ -54,15 +38,15 @@ public class TypeCheck {
 		int i;
 		System.out.printf("Type = %s\n", type);
 
-		if(arraylist != null && !arraylist.isEmpty()){
+		if(indices != null && !indices.isEmpty()){
 			
 			System.out.printf("Arraylist = ");
 			
-			for(i=0; i<arraylist.size()-1; i++){
-				System.out.printf("[%s], ",arraylist.get(i));
+			for(i=0; i<indices.size()-1; i++){
+				System.out.printf("[%s], ",indices.get(i));
 			}
 			
-			System.out.printf("[%s]\n",arraylist.get(i));
+			System.out.printf("[%s]\n",indices.get(i));
 		}
 		
 		else System.out.printf("Arraylist = null\n");
@@ -70,20 +54,7 @@ public class TypeCheck {
 		
 		System.out.printf("idname = %s\n", idname);
 		System.out.printf("Num = %s\n", num);
-	
-		
-		if(declarraylist != null && !declarraylist.isEmpty()){
-			
-			System.out.printf("DeclArraylist = ");
-			
-			for(i=0; i<declarraylist.size()-1; i++){
-				System.out.printf("[%d], ",declarraylist.get(i).intValue());
-			}
-			
-			System.out.printf("[%d]\n",declarraylist.get(i).intValue());
-		}
-	
-		else System.out.printf("DeclArraylist = null\n");
+
 
 	}
 }
