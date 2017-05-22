@@ -84,9 +84,9 @@ import java.util.*;
 		public void outAProgram(AProgram node){
            symtable.exit();
            
-           //quadManager.printQuads();
+           quadManager.printQuads();
 		}
-
+        
         @Override
 		public void inAFuncdefLocalDef(AFuncdefLocalDef node)
 	    {
@@ -105,7 +105,13 @@ import java.util.*;
 	        }
 	        
 	        returned = false;
+
+	        IRelement irel = quadManager.stack.removeLast();
+	        quadManager.backpatch(irel.next, quadManager.nextQuad());
+	        
+	        quadManager.genQuad("endu", nd.name.name, "_", "_");	        
 	    }
+        
         
         @Override
 	    public void inAFuncdeclLocalDef(AFuncdeclLocalDef node)
@@ -168,7 +174,7 @@ import java.util.*;
     			
     			symtable.increase_scope();
     			
-    			quadManager.genQuad("unit", funname.name, null, null);
+    			quadManager.genQuad("unit", funname.name, "_", "_");
     			
     		}
     		
@@ -192,18 +198,32 @@ import java.util.*;
 	    	
 	    	/*************************************************/
 	    	
+	    	symtable.decrease_scope();
+	    	
 	        dataTypeMode = 1;																				//Functions' return type
 	        if(node.getRetType() != null){
 	            node.getRetType().apply(this);
 	        }
 	        dataTypeMode = 0;
 
+            if(symtable.scope == 0 && !retvalue.equals("nothing")){
+				System.out.println("Error: Main Function " + funname.name + " must only return \"nothing\"\n");
+                System.exit(1);
+            }
+	        
             Key key;
             Param param;
             
             if(node.getFparDef().isEmpty())
             	params = null;
-
+            
+            else if(symtable.scope == 0){
+				System.out.println("Error: Main Function " + funname.name + " can not have parameters\n");
+                System.exit(1);
+            }
+            
+            symtable.increase_scope();
+            
             /************************************/
             List<PFparDef> copy = new ArrayList<>(node.getFparDef());
             for(PFparDef e : copy)
@@ -386,11 +406,14 @@ import java.util.*;
 	            node.getStmtexpr().get(i).apply(this);
 	        
 	            irel = quadManager.stack.removeLast();
+	            
 	            quadManager.stack.addLast(new IRelement(null, null, irel.next, null, null));
-            }    
+            }
+            
+            else quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));
+            
             symtable.alteredExit();
         }
-
 
         @Override
         public void caseABlockStmtexpr(ABlockStmtexpr node)
@@ -413,14 +436,15 @@ import java.util.*;
 	            node.getStmtexpr().get(i).apply(this);
 	        
 	            irel = quadManager.stack.removeLast();
+	            
 	            quadManager.stack.addLast(new IRelement(null, null, irel.next, null, null));
         	}
+        	
+        	else quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));
             
             symtable.exit();
         }
-        
-        
-        
+
         @Override
 	    public void outAReturnexprStmtexpr(AReturnexprStmtexpr node)
 	    {
@@ -438,6 +462,14 @@ import java.util.*;
 	        }
 	        
 	        returned = true;
+
+
+	        IRelement expr = quadManager.stack.removeLast();
+	        
+	        quadManager.genQuad("ret", "_", "_", "_");
+
+	        quadManager.stack.addLast(new IRelement(expr.type, expr.place, new LinkedList<>(), null, null));
+	        
 	    }
 
         @Override
@@ -451,9 +483,11 @@ import java.util.*;
 	        }
 	        
 	        returned = true;
+	        
+	        quadManager.genQuad("ret", "_", "_", "_");
+
+	        quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));
 	    }
-
-
 	    
         @Override
         public void caseAIfStmtexpr(AIfStmtexpr node)
@@ -482,9 +516,6 @@ import java.util.*;
         	
             symtable.exit();
         }
-        
-        
-        
 
         @Override
         public void caseAIfelseStmtexpr(AIfelseStmtexpr node)
@@ -531,24 +562,37 @@ import java.util.*;
             
         }
         
-
-
-        
-        
         @Override
-	    public void inAWhileStmtexpr(AWhileStmtexpr node)
-	    {
-	        symtable.enter();
-	    }
+        public void caseAWhileStmtexpr(AWhileStmtexpr node)
+        {
+        	symtable.enter();
 
-        @Override
-	    public void outAWhileStmtexpr(AWhileStmtexpr node)
-	    {
-	        symtable.exit();
-	    }
+        	Integer Q = quadManager.nextQuad();
+        	
+        	if(node.getCond() != null)
+            {
+                node.getCond().apply(this);
+            }
+        	
+        	IRelement cond = quadManager.stack.removeLast();
+        	quadManager.backpatch(cond.True, quadManager.nextQuad());
+        	
+            if(node.getStmtexpr() != null)
+            {
+                node.getStmtexpr().apply(this);
+            }
+            
+            IRelement stmt = quadManager.stack.removeLast();
+            quadManager.backpatch(stmt.next, Q);
+            
+            quadManager.genQuad("jump", "_", "_", Q.toString());
+            
+            quadManager.stack.addLast(new IRelement(null, null, cond.False, null, null));
 
-        
-        
+            symtable.exit();
+        }
+
+        /*******************************************************/
         @Override
 	    public void outAPlusStmtexpr(APlusStmtexpr node)
 	    {
@@ -583,11 +627,19 @@ import java.util.*;
         	typeCheckerExpr("Mod");
         	quadGenExpr("mod");
         }
-
+        /*******************************************************/
+        
         
         @Override
         public void outANegStmtexpr(ANegStmtexpr node)
         {
+ 
+        	TypeCheck value = typeCheck.getLast();
+        	if(value.num != null){
+        		String newstr = "-";
+        		value.num = new String(newstr.concat(value.num));
+        	}
+        	
         	IRelement irel = quadManager.stack.removeLast();
         	
         	String newTemp = quadManager.newtemp(irel.type);
@@ -626,10 +678,10 @@ import java.util.*;
         					
         					index = value.indices.get(i);
         					declindex = myNode.arraylist.get(i);
-        					
-			        		if(!index.equals("int") && !index.equals("char") && declindex != 0){				//Then index is been given a number -- so i can perform an index-bound check
-			        			
-				        		if(declindex <= Integer.parseInt(index)){
+
+			        		if(!index.equals("int") && !index.equals("char")){				//Then index is been given a number -- so i can perform an index-bound check
+
+			        			if(Integer.parseInt(index) < 0 || (declindex != 0 && declindex <= Integer.parseInt(index))){
 				        			System.out.println("Error: Variable " + value.idname + " : index out of bound\n");
 				            		System.exit(1);
 				        		}
@@ -656,7 +708,6 @@ import java.util.*;
         	
         	quadManager.stack.addLast(new IRelement("int", node.getNumber().getText(), null, null, null));
         }
-
         
         @Override
         public void outAIdStmtexpr(AIdStmtexpr node)
@@ -679,6 +730,7 @@ import java.util.*;
         	quadManager.stack.addLast(new IRelement(n.type, node.getId().getText(), null, null, null));
         	
         }
+        
         	
         @Override
         public void outAStrStmtexpr(AStrStmtexpr node)
@@ -723,6 +775,7 @@ import java.util.*;
 
         }
 
+     
         @Override
         public void caseAFuncallStmtexpr(AFuncallStmtexpr node)
         {
@@ -945,10 +998,11 @@ import java.util.*;
         
         
         
-    	public void quadGenExpr(String opcode){
+    	
+        public void quadGenExpr(String opcode){
         	
-    		IRelement left = quadManager.stack.removeLast();
-        	IRelement right = quadManager.stack.removeLast();
+    		IRelement right = quadManager.stack.removeLast();
+        	IRelement left = quadManager.stack.removeLast();
         	
         	String newTemp = quadManager.newtemp(left.type);
         	

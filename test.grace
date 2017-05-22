@@ -1,19 +1,32 @@
-fun hello (x,y:int; i,j:int[][4]) : nothing
+fun hello () : nothing
 
 
-fun boo(x:char[] ; y:int) : int
+fun boo(x:char[] ; y:int ; z:int[4]) : int
 {
-	if(y>0 and y>1) then {
+	if(not (y>0 or y>1)) then {
 		y <- 1 + -1;
+	}
+
+	else{
+		 y <- 1 + -1;
+		
+	}
+
+
+	while(y>0) do {
+
+		y <- y + -y;
 	}
 
 	return 0;
 }
 	
-var bella, kira : char;
+var bella, kira : int;
 
 
 {
-
+	if(kira <3 and bella <3) then {
+		kira <- 1+1;
+	}
 }
 
