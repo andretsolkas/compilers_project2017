@@ -1,0 +1,68 @@
+
+SEMANTIC ERRORS
+
+- Error: variable has been declared before in this scope
+
+- Error: Expr 's operands must both be integers -- X+Y
+
+- Error: Assignment: Left Value must be of type t where t can't be an Array
+
+- Error: Assignment: Left Value and Right Value are of different types
+
+- Error: Variable has not been declared before
+
+
+-------- ARRAYS ---------
+
+- Error: Variable .. Array's  index is not int
+
+- Error: Variable .. Array index is not a primitive integer type
+
+- Error: Variable .. Array is being given too many indices
+
+- Error: Variable : index out of bound
+
+- Error: Variable is primitive, yet, it's been treated as an array
+
+--------------------------
+
+
+-------- FUNCTIONS ---------
+
+- Error: Function is being redefined
+
+- Error: Function has been defined before, yet it is being redeclared
+
+- Error: Function has been declared again before
+
+- Error: Function never matches with a definiton
+
+- Error: Function has not been declared/defined before
+
+- Error: Function is declared but not defined
+
+- Error: is not a function
+
+- Error: Function : different amount of arguments
+
+- Error: Function : has no parameters, yet it is given arguments
+
+- Error: Function : argument of different type than expected
+
+
+----------------------------
+
+-------- FUNCTIONS - RETURN ---------
+
+- Error: Function must not return an expression
+
+- Error: Function must return " + nd.retvalue + ", not " + tp.type
+
+- Error: Function must return an expression
+
+- Error: Function must have a return statement
+
+- 
+
+
+
