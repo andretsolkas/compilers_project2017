@@ -58,7 +58,7 @@ Tokens
 	
 	number = digit+;        						//Integer Numbers
 	
-	erroneous_number = digit+ letter+;			//seperate numbers from numbers+anything
+	erroneous_number = digit+ letter+;				//seperate numbers from numbers+anything
 	
 	conchar = ''' (all | escape) ''';				//Constant Characters
 	

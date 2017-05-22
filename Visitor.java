@@ -73,22 +73,10 @@ import java.util.*;
 				System.out.println("Error: Cond " + str + " 's operands must both be primitive integers\n");
 	        	System.exit(1);
 			}
-
-
 		}
 		
 		
-    	public void quadGenExpr(String opcode){
-        	
-    		IRelement left = quadManager.stack.removeLast();
-        	IRelement right = quadManager.stack.removeLast();
-        	
-        	String newTemp = quadManager.newtemp(left.type);
-        	
-        	quadManager.genQuad(opcode, left.place, right.place, newTemp);
-        	
-        	quadManager.stack.addLast(new IRelement(left.type, newTemp, null, null, null));
-    	}
+
 		
 		//////////////////////////////////////
 		
@@ -96,7 +84,7 @@ import java.util.*;
 		public void outAProgram(AProgram node){
            symtable.exit();
            
-           quadManager.printQuads();
+           //quadManager.printQuads();
 		}
 
         @Override
@@ -347,7 +335,11 @@ import java.util.*;
 
 	    
 	    /////////////////////////////////////
-	    
+        @Override
+        public void outANoneStmtexpr(ANoneStmtexpr node)
+        {
+        	quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));
+        }
 
         @Override
 	    public void outAAssignmentStmtexpr(AAssignmentStmtexpr node)
@@ -364,28 +356,71 @@ import java.util.*;
         		System.out.println("Error: Assignment: Left Value and Right Value are of different types\n");
 	        	System.exit(1);
         	}	
+	    
+        	IRelement right = quadManager.stack.removeLast();
+        	IRelement left = quadManager.stack.removeLast();
+	    
+        	quadManager.genQuad("<-", right.place, "_", left.place);
+        	
+        	quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));
+
 	    }
 
-        
         @Override
-        public void outAFblockStmtexpr(AFblockStmtexpr node)
+        public void caseAFblockStmtexpr(AFblockStmtexpr node)
         {
-        	symtable.alteredExit();
+        	IRelement irel;
+        	int i;
+        	
+            if(node.getStmtexpr().size() > 0){
+	            	
+	        	for(i=0; i<node.getStmtexpr().size()-1; i++){
+	                
+	            	node.getStmtexpr().get(i).apply(this);
+	            	
+	            	irel = quadManager.stack.removeLast();
+	                quadManager.backpatch(irel.next, quadManager.nextQuad());
+	            }
+	          
+	            
+	            node.getStmtexpr().get(i).apply(this);
+	        
+	            irel = quadManager.stack.removeLast();
+	            quadManager.stack.addLast(new IRelement(null, null, irel.next, null, null));
+            }    
+            symtable.alteredExit();
+        }
+
+
+        @Override
+        public void caseABlockStmtexpr(ABlockStmtexpr node)
+        {
+        	symtable.enter();
+            
+        	IRelement irel;
+        	int i;
+        	
+        	if(node.getStmtexpr().size() > 0){
+	        		
+	            for(i=0; i<node.getStmtexpr().size()-1; i++){
+	                
+	            	node.getStmtexpr().get(i).apply(this);
+	            	
+	            	irel = quadManager.stack.removeLast();
+	                quadManager.backpatch(irel.next, quadManager.nextQuad());
+	            }
+	          
+	            node.getStmtexpr().get(i).apply(this);
+	        
+	            irel = quadManager.stack.removeLast();
+	            quadManager.stack.addLast(new IRelement(null, null, irel.next, null, null));
+        	}
+            
+            symtable.exit();
         }
         
-        @Override
-	    public void inABlockStmtexpr(ABlockStmtexpr node)
-	    {
-	        symtable.enter();
-	    }
-
-        @Override
-	    public void outABlockStmtexpr(ABlockStmtexpr node)
-	    {	
-	        symtable.exit();
-	    }
-
-
+        
+        
         @Override
 	    public void outAReturnexprStmtexpr(AReturnexprStmtexpr node)
 	    {
@@ -418,30 +453,88 @@ import java.util.*;
 	        returned = true;
 	    }
 
-        @Override
-	    public void inAIfStmtexpr(AIfStmtexpr node)
-	    {
-        	symtable.enter();
-	    }
 
-        @Override
-	    public void outAIfStmtexpr(AIfStmtexpr node)
-	    {
-        	symtable.exit();
-	    }
 	    
         @Override
-	    public void inAIfelseStmtexpr(AIfelseStmtexpr node)
-	    {
-	        symtable.enter();
-	    }
+        public void caseAIfStmtexpr(AIfStmtexpr node)
+        {
+        	symtable.enter();
+
+        	if(node.getCond() != null)
+            {
+                node.getCond().apply(this);
+            }
+            
+        	IRelement irel = quadManager.stack.removeLast();
+        	
+        	quadManager.backpatch(irel.True, quadManager.nextQuad());
+        	
+        	if(node.getStmtexpr() != null)
+            {
+                node.getStmtexpr().apply(this);
+            }
+            
+        	quadManager.backpatch(irel.False, quadManager.nextQuad());
+            
+        	
+        	IRelement stmt_right = quadManager.stack.removeLast();
+        	quadManager.stack.addLast(new IRelement(null, null, stmt_right.next, null, null));
+        	
+            symtable.exit();
+        }
+        
+        
+        
 
         @Override
-	    public void outAIfelseStmtexpr(AIfelseStmtexpr node)
-	    {
-	        symtable.exit();
-	    }
+        public void caseAIfelseStmtexpr(AIfelseStmtexpr node)
+        {
+        	symtable.enter();
 
+            if(node.getCond() != null)
+            {
+                node.getCond().apply(this);
+            }
+
+            IRelement irel = quadManager.stack.removeLast();
+        	
+        	quadManager.backpatch(irel.True, quadManager.nextQuad());
+        	
+            if(node.getLeft() != null)
+            {
+                node.getLeft().apply(this);
+            }
+            
+            Quad quad = quadManager.genQuad("jump", "_", "_", "*");
+            LinkedList<Quad> L1 = new LinkedList<>();
+            L1.addLast(quad);
+            
+            quadManager.backpatch(irel.False, quadManager.nextQuad());
+            
+            
+            IRelement stmt_left = quadManager.stack.removeLast();
+            LinkedList<Quad> nextlist = quadManager.merge(L1, stmt_left.next);
+            
+            if(node.getRight() != null)
+            {
+                node.getRight().apply(this);
+            }
+            
+            IRelement stmt_right = quadManager.stack.removeLast();
+            
+            nextlist = quadManager.merge(nextlist, stmt_right.next);
+            
+            quadManager.stack.addLast(new IRelement(null, null, nextlist, null, null));
+            
+            symtable.exit();
+            
+            
+        }
+        
+
+
+        
+        
         @Override
 	    public void inAWhileStmtexpr(AWhileStmtexpr node)
 	    {
@@ -491,13 +584,6 @@ import java.util.*;
         	quadGenExpr("mod");
         }
 
-        /*
-        @Override
-        public void outAPosStmtexpr(APosStmtexpr node)
-        {
-         //
-        }
-        */
         
         @Override
         public void outANegStmtexpr(ANegStmtexpr node)
@@ -599,7 +685,7 @@ import java.util.*;
         {      	
         	typeCheck.addLast(new TypeCheck("char", null, null, null, 1));		//String's type is char[]
         
-        	quadManager.stack.addLast(new IRelement("char", node.getString().getText(), null, null, null));
+        	quadManager.stack.addLast(new IRelement("char", node.getString().getText(), null, null, null));					//FIXFIXFIXFIXI
         }
 
 
@@ -752,76 +838,142 @@ import java.util.*;
 
         public void outANotCond(ANotCond node)
         {
+        	IRelement irel = quadManager.stack.getLast();
         	
+        	LinkedList<Quad> temp;
+        	temp = irel.True;
+        	irel.True = irel.False;
+        	irel.False = temp;
         }
         
         
-
-
-        public void outAAndCond(AAndCond node)
+        @Override
+        public void caseAAndCond(AAndCond node)
         {
-        	typeCheckerCond("and");
-        	
-        	
-        	
+            
+            if(node.getLeft() != null)
+            {
+                node.getLeft().apply(this);
+            }
+            
+            IRelement left = quadManager.stack.removeLast();
+            
+            quadManager.backpatch(left.True, quadManager.nextQuad());
+
+            if(node.getRight() != null)
+            {
+                node.getRight().apply(this);
+            }
+
+            IRelement right = quadManager.stack.removeLast();
+            
+            LinkedList<Quad> trueStack = right.True;
+            
+            LinkedList<Quad> falseStack = quadManager.merge(left.False, right.False);
+            		
+            quadManager.stack.addLast(new IRelement(null, null, null, trueStack, falseStack));	
         }
-        
-        
 
-
-        public void outAOrCond(AOrCond node)
+        
+        @Override
+        public void caseAOrCond(AOrCond node)
         {
-        	typeCheckerCond("or");
+        	
+            if(node.getLeft() != null)
+            {
+                node.getLeft().apply(this);
+            }
+            
+            IRelement left = quadManager.stack.removeLast();
+            
+            quadManager.backpatch(left.False, quadManager.nextQuad());
+            
+            if(node.getRight() != null)
+            {
+                node.getRight().apply(this);
+            }
+           
+            IRelement right = quadManager.stack.removeLast();
+            
+            LinkedList<Quad> trueStack = quadManager.merge(left.True, right.True);
+            
+            LinkedList<Quad> falseStack = right.False;
+            		
+            quadManager.stack.addLast(new IRelement(null, null, null, trueStack, falseStack));
         }
-        
-        
 
 
+        
+/**************************************************************/
         public void outAEqualCond(AEqualCond node)
         {
         	typeCheckerCond("=");
+        	genQuadCond("=");
         }
-        
-        
-        
 
         public void outANequalCond(ANequalCond node)
         {
         	typeCheckerCond("#");
+        	genQuadCond("#");
         }
-        
-        
 
         public void outALessCond(ALessCond node)
         {
         	typeCheckerCond("<");
-        }
-        
-        
+        	genQuadCond("<");
+        }   
 
         public void outAGreaterCond(AGreaterCond node)
         {
         	typeCheckerCond(">");
+        	genQuadCond(">");
         }
-
-        
-
 
         public void outALesseqCond(ALesseqCond node)
         {
             typeCheckerCond("<=");
+            genQuadCond("<=");
         }
-        
-
 
         public void outAGreatereqCond(AGreatereqCond node)
         {
         	typeCheckerCond(">=");
+        	genQuadCond(">=");
         }
+/**************************************************************/
         
         
         
         
+    	public void quadGenExpr(String opcode){
+        	
+    		IRelement left = quadManager.stack.removeLast();
+        	IRelement right = quadManager.stack.removeLast();
+        	
+        	String newTemp = quadManager.newtemp(left.type);
+        	
+        	quadManager.genQuad(opcode, left.place, right.place, newTemp);
+        	
+        	quadManager.stack.addLast(new IRelement(left.type, newTemp, null, null, null));
+    	}
+                
+        public void genQuadCond(String relop){
+        	
+    		IRelement right = quadManager.stack.removeLast();
+        	IRelement left = quadManager.stack.removeLast();
+        	
+        	Quad quad1 = quadManager.genQuad(relop, left.place, right.place, "*");
+        	
+        	LinkedList<Quad> trueStack = new LinkedList<>();
+        	trueStack.addLast(quad1);
+        	
+        	Quad quad2 = quadManager.genQuad("jump", "_", "_", "*");
+        	
+        	LinkedList<Quad> falseStack = new LinkedList<>();
+        	falseStack.addLast(quad2);
+        
+        	quadManager.stack.addLast(new IRelement(null, null, null, trueStack, falseStack));
+        }
         
         
         

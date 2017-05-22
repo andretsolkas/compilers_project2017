@@ -3,19 +3,19 @@ import java.util.LinkedList;
 
 public class QuadManager{
 
-	int quad = 0;
+	int quadnum = 1;
 	Integer temp = 0;;
 	
 	LinkedList<IRelement> stack = new LinkedList<>();
-	LinkedList<IRelement> trueStack = new LinkedList<>();				//Using it as a stack
-	LinkedList<IRelement> falseStack = new LinkedList<>();				//Using it as a stack
+	LinkedList<IRelement> starStack = new LinkedList<>();				//Using it as a stack
+
 	
 	LinkedList<Quad> quads = new LinkedList<>();
 	
 	
 	
 	public int nextQuad(){
-		return ++quad;
+		return quadnum;
 	}
 	
 	public Quad genQuad(String opcode, String op1, String op2, String dest){
@@ -23,11 +23,13 @@ public class QuadManager{
 		Quad quad = new Quad(opcode, op1, op2, dest);
 		quads.addLast(quad);
 
+		quadnum++;
+		
 		return quad;
 	}
 	
 	
-	public String newtemp(String type){			//!!!!!!
+	public String newtemp(String type){			//!!!!!! whats type for
 		temp++;
 		String tmp = "$";
 		
@@ -42,19 +44,23 @@ public class QuadManager{
 		
 	}
 	
-	public void merge(){
+	public LinkedList<Quad> merge(LinkedList<Quad> list1, LinkedList<Quad> list2){
 		
+		for(int i=0; i<list2.size(); i++){
+			list1.addLast(list2.get(i));
+		}
+		
+		return list1;
 	}
 	
-	public void backpatch(){
+	public void backpatch(LinkedList<Quad> stack, Integer nextquad){
 		
+		for(int i=0; i<stack.size(); i++){
+			stack.get(i).dest = new String(nextquad.toString());
+		}
 	}
 	
-	/*
-	void insertQuad(Quad quad){
-		quads.addLast(quad);
-	}
-	*/
+
 	
 	
 	public void printQuads(){
