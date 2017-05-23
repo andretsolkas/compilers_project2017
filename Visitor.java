@@ -438,9 +438,20 @@ import java.util.*;
 	        }
 	        
 		if((tp.dimensions > 0 && (tp.indices == null || (tp.indices.size() != tp.dimensions)))){
-		        System.out.println("Error: Function must not return an array");
+		        System.out.println("Error: Function " + nd.name.name + " must not retrurn an array\n");
 	        	System.exit(1);
 		}
+
+		/* My fix
+		int indices = 0;
+		if(tp.indices != null)
+			indices = tp.indices.size();
+
+		if(tp.dimensions != indices){
+			System.out.println("Error: Function " + nd.name.name + " must not retrurn an array\n");
+			System.exit(1);
+		}
+		*/
 	        returned = true;
 	    }
 
