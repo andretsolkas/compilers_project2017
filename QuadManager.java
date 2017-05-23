@@ -7,8 +7,6 @@ public class QuadManager{
 	Integer temp = 0;;
 	
 	LinkedList<IRelement> stack = new LinkedList<>();
-	LinkedList<IRelement> starStack = new LinkedList<>();				//Using it as a stack
-
 	
 	LinkedList<Quad> quads = new LinkedList<>();
 	
@@ -29,20 +27,13 @@ public class QuadManager{
 	}
 	
 	
-	public String newtemp(String type){			//!!!!!! whats type for
+	public String newtemp(String type){			//!!!!!! whats type for???????????????????????
 		temp++;
 		String tmp = "$";
 		
 		return tmp.concat(temp.toString());
 	}
-	
-	public void emptylist(){
-		
-	}
-	
-	public void makelist(String x){
-		
-	}
+
 	
 	public LinkedList<Quad> merge(LinkedList<Quad> list1, LinkedList<Quad> list2){
 		
@@ -53,15 +44,13 @@ public class QuadManager{
 		return list1;
 	}
 	
+	
 	public void backpatch(LinkedList<Quad> stack, Integer nextquad){
 		
 		for(int i=0; i<stack.size(); i++){
 			stack.get(i).dest = new String(nextquad.toString());
 		}
 	}
-	
-
-	
 	
 	public void printQuads(){
 
