@@ -461,6 +461,10 @@ import java.util.*;
 	        	System.exit(1);
 	        }
 	        
+		if(tp.indices != null){
+		        System.out.println("Error: Function must not return an array");
+	        	System.exit(1);
+		}
 	        returned = true;
 
 
