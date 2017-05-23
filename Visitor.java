@@ -884,7 +884,8 @@ import java.util.*;
                 }
 
                 typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, 0));				//Add the return type on stack
-            }
+                quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));		//NOT READY
+        	}
             
             outAFuncallStmtexpr(node);
         }
