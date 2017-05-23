@@ -229,7 +229,12 @@ import java.util.*;
             for(PFparDef e : copy)
             {
                 e.apply(this);
-	                
+		
+		if(reference == false && arraylist != null){
+			System.out.println("Error: Function's " + funname.name + " array parameter must be passed by reference\n");
+			System.exit(0);
+                }
+			
             	for(int i=0; i<idlist.size(); i++){															//Insert all parameter-variables into the symbol table
 
                     key = idlist.get(i);
@@ -461,10 +466,12 @@ import java.util.*;
 	        	System.exit(1);
 	        }
 	        
-		if(tp.indices != null){
-		        System.out.println("Error: Function must not return an array");
+
+		      if((tp.dimensions > 0 && (tp.indices == null || (tp.indices.size() != tp.dimensions)))){
+		        System.out.println("Error: Function " + nd.name.name + " must not retrurn an array\n");
 	        	System.exit(1);
-		}
+      		}
+
 	        returned = true;
 
 
