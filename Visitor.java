@@ -209,7 +209,12 @@ import java.util.*;
             for(PFparDef e : copy)
             {
                 e.apply(this);
-	                
+		
+		if(reference == false && arraylist != null){
+			System.out.println("Error: Function's " + funname.name + " array parameter must be passed by reference\n");
+			System.exit(0);
+                }
+			
             	for(int i=0; i<idlist.size(); i++){															//Insert all parameter-variables into the symbol table
 
                     key = idlist.get(i);
