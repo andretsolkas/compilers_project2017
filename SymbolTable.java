@@ -35,7 +35,7 @@ public class SymbolTable {
 		}
 		
 		list.addLast(newNode);
-		//hashtable.get(name).print();
+		hashtable.get(name).print();
 	}
 	
 	
