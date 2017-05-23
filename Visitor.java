@@ -74,8 +74,6 @@ import java.util.*;
 	        	System.exit(1);
 			}
 		}
-		
-		
 
 		
 		//////////////////////////////////////
@@ -206,7 +204,7 @@ import java.util.*;
 	        }
 	        dataTypeMode = 0;
 
-            if(symtable.scope == 0 && !retvalue.equals("nothing")){
+            if(headerMode == 0 && symtable.scope == 0 && !retvalue.equals("nothing")){
 				System.out.println("Error: Main Function " + funname.name + " must only return \"nothing\"\n");
                 System.exit(1);
             }
@@ -217,7 +215,7 @@ import java.util.*;
             if(node.getFparDef().isEmpty())
             	params = null;
             
-            else if(symtable.scope == 0){
+            else if(headerMode == 0 && symtable.scope == 0){
 				System.out.println("Error: Main Function " + funname.name + " can not have parameters\n");
                 System.exit(1);
             }
@@ -229,13 +227,13 @@ import java.util.*;
             for(PFparDef e : copy)
             {
                 e.apply(this);
-		
-		if(reference == false && arraylist != null){
-			System.out.println("Error: Function's " + funname.name + " array parameter must be passed by reference\n");
-			System.exit(0);
+
+                if(reference == false && arraylist != null){
+                	System.out.println("Error: Function's " + funname.name + " array parameter must be passed by reference\n");
+                    System.exit(0);
                 }
-			
-            	for(int i=0; i<idlist.size(); i++){															//Insert all parameter-variables into the symbol table
+                
+                for(int i=0; i<idlist.size(); i++){															//Insert all parameter-variables into the symbol table
 
                     key = idlist.get(i);
 
@@ -246,7 +244,7 @@ import java.util.*;
                         }
                         symtable.insert(key, datatype, reference, arraylist, null, null, null);
                     }
-                    
+
                     param = new Param(datatype, key, arraylist);												//Add a parameter into the parameter list 
                     params.add(param);
             	
@@ -264,6 +262,7 @@ import java.util.*;
     			
     			symtable.insert(funname, null, null, null, params, true, retvalue);
     			funcDefinition.addLast(symtable.lookup(funname));
+
     			
     			symtable.increase_scope();
     		}
@@ -466,12 +465,11 @@ import java.util.*;
 	        	System.exit(1);
 	        }
 	        
-
-		      if((tp.dimensions > 0 && (tp.indices == null || (tp.indices.size() != tp.dimensions)))){
+			if((tp.dimensions > 0 && (tp.indices == null || (tp.indices.size() != tp.dimensions)))){
 		        System.out.println("Error: Function " + nd.name.name + " must not retrurn an array\n");
 	        	System.exit(1);
-      		}
-
+		}
+	        
 	        returned = true;
 
 
@@ -808,13 +806,7 @@ import java.util.*;
         		System.out.println("Error: " + key.name + " is not a function\n");
         		System.exit(1);
         	}
-        	
-        	if(n.defined == false){
-        		System.out.println("Error: Function " + key.name + " is declared but not defined\n");
-        		System.exit(1);
-        	}
-        	
-        	
+
         	{	/**********************************/
         		//Get the parameters one by one, add them to list
         		
@@ -874,6 +866,8 @@ import java.util.*;
 	                		
 	                		Node myNode = symtable.lookup(new Key(args.get(i).idname));				//At this point myNode won't be null
 	                	
+	                		
+	                		
 	                		int j = myNode.arraylist.size() - argDimension;
 	                		
 	                		for(int x=0; x<=paramDimension; j++, x++){

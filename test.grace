@@ -18,7 +18,7 @@ fun boo(x:char[] ; y:int ; z:int[4]) : int
 		y <- y + -y;
 	}
 
-	return 0;
+	return z[0];
 }
 	
 var bella, kira : int;
