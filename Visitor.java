@@ -82,7 +82,7 @@ import java.util.*;
 		public void outAProgram(AProgram node){
            symtable.exit();
            
-           quadManager.printQuads();
+           //quadManager.printQuads();
 		}
         
         @Override
@@ -194,16 +194,15 @@ import java.util.*;
     		}
 	    	
 	    	
+	    	/*************************************************/
 	    	
-	/*************************************************/
-		symtable.decrease_scope();
-
-		dataTypeMode = 1;																				//Functions' return type
-		if(node.getRetType() != null){
-		    node.getRetType().apply(this);
-		}
-		dataTypeMode = 0;
-
+	    	symtable.decrease_scope();
+	    	
+	        dataTypeMode = 1;																				//Functions' return type
+	        if(node.getRetType() != null){
+	            node.getRetType().apply(this);
+	        }
+	        dataTypeMode = 0;
 
             if(headerMode == 0 && symtable.scope == 0 && !retvalue.equals("nothing")){
 				System.out.println("Error: Main Function " + funname.name + " must only return \"nothing\"\n");
