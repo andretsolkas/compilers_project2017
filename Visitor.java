@@ -196,18 +196,18 @@ import java.util.*;
     		}
 	    	
 	    	
-	    	/*************************************************/
 	    	
-	    	symtable.decrease_scope();
-	    	
-	        dataTypeMode = 1;																				//Functions' return type
-	        if(node.getRetType() != null){
-	            node.getRetType().apply(this);
-	        }
-	        dataTypeMode = 0;
+	/*************************************************/
+		symtable.decrease_scope();
+
+		dataTypeMode = 1;																				//Functions' return type
+		if(node.getRetType() != null){
+		    node.getRetType().apply(this);
+		}
+		dataTypeMode = 0;
 
             if(symtable.scope == 0 && !retvalue.equals("nothing")){
-				System.out.println("Error: Main Function " + funname.name + " must only return \"nothing\"\n");
+		System.out.println("Error: Main Function " + funname.name + " must only return \"nothing\"\n");
                 System.exit(1);
             }
 	        
