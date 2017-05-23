@@ -437,7 +437,7 @@ import java.util.*;
 	        	System.exit(1);
 	        }
 	        
-		if(tp.indices != null){
+		if((tp.dimensions > 0 && (tp.indices == null || (tp.indices.size() != tp.dimensions)))){
 		        System.out.println("Error: Function must not return an array");
 	        	System.exit(1);
 		}
