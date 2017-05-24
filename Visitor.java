@@ -845,7 +845,7 @@ import java.util.*;
                 	}
                 	
                 	if(n.params.get(i).reference == true && args.get(i).idname == null){
-                		System.out.println("Error: Function " + n.name.name + ": the " + (i+1) + "-th parameter expected an Lvalue");
+                		System.out.println("Error: Function " + n.name.name + ": the " + (i+1) + "-(th/st/rd/nd) parameter expected an Lvalue");
                 		System.exit(1);
                 	}
                 	
