@@ -5,10 +5,11 @@ public class Param {
 
 	String type;
 	Key idname;
+	boolean reference;
 	LinkedList <Integer> arraylist;
 	
 	
-	public Param(String tp, Key name, LinkedList <Integer> arlist)
+	public Param(String tp, Key name, boolean ref, LinkedList <Integer> arlist)
 	{	
 		if(tp!=null)										//Copying all values
 			type = new String(tp);
@@ -19,7 +20,8 @@ public class Param {
 			idname = new Key(name.name);
 		else idname = null;
 		
-			
+		reference = ref;
+
 		arraylist = new LinkedList<>();
 	
 		if(arlist!=null && !arlist.isEmpty()){

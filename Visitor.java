@@ -245,7 +245,7 @@ import java.util.*;
                         symtable.insert(key, datatype, reference, arraylist, null, null, null);
                     }
 
-                    param = new Param(datatype, key, arraylist);												//Add a parameter into the parameter list 
+                    param = new Param(datatype, key, reference, arraylist);												//Add a parameter into the parameter list 
                     params.add(param);
             	
             	}
@@ -830,7 +830,7 @@ import java.util.*;
 	                }
                 }
                 
-                else if(!args.isEmpty()){			//Function has no parameters, yet it is given arguments 
+                else if(!args.isEmpty()){					//Function has no parameters, yet it is given arguments 
                 	System.out.println("Error: Function " + n.name.name + ": has no parameters, yet it is given arguments\n");
             		System.exit(1);
                 }
@@ -841,6 +841,11 @@ import java.util.*;
                 	
                 	if(!(n.params.get(i).type.equals(args.get(i).type))){
                 		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected");
+                		System.exit(1);
+                	}
+                	
+                	if(n.params.get(i).reference == true && args.get(i).idname == null){
+                		System.out.println("Error: Function " + n.name.name + ": the " + (i+1) + "-th parameter expected an Lvalue");
                 		System.exit(1);
                 	}
                 	
@@ -860,7 +865,7 @@ import java.util.*;
                 		System.exit(1);
                 	}
                 	
-	                if(argDimension > 0){				//Array Case - Further Checking
+	                if(argDimension > 0){											//Array Case - Further Checking
 	                	
 	                	if(args.get(i).idname != null){												//Not a string -- it is an id
 	                		
