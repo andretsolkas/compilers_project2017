@@ -245,7 +245,7 @@ import java.util.*;
                         symtable.insert(key, datatype, reference, arraylist, null, null, null);
                     }
 
-                    param = new Param(datatype, key, arraylist);												//Add a parameter into the parameter list 
+                    param = new Param(datatype, key, reference, arraylist);												//Add a parameter into the parameter list 
                     params.add(param);
             	
             	}
@@ -830,7 +830,7 @@ import java.util.*;
 	                }
                 }
                 
-                else if(!args.isEmpty()){			//Function has no parameters, yet it is given arguments 
+                else if(!args.isEmpty()){					//Function has no parameters, yet it is given arguments 
                 	System.out.println("Error: Function " + n.name.name + ": has no parameters, yet it is given arguments\n");
             		System.exit(1);
                 }
@@ -840,7 +840,12 @@ import java.util.*;
                 for(int i=0; i<args.size(); i++){
                 	
                 	if(!(n.params.get(i).type.equals(args.get(i).type))){
-                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected");
+                		System.exit(1);
+                	}
+                	
+                	if(n.params.get(i).reference == true && args.get(i).idname == null){
+                		System.out.println("Error: Function " + n.name.name + ": the " + (i+1) + "-(th/st/rd/nd) parameter expected an Lvalue");
                 		System.exit(1);
                 	}
                 	
@@ -856,24 +861,22 @@ import java.util.*;
                 		paramDimension = n.params.get(i).arraylist.size();
                 	
                 	if(paramDimension != argDimension){
-                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected");
                 		System.exit(1);
                 	}
                 	
-	                if(argDimension > 0){				//Array Case - Further Checking
+	                if(argDimension > 0){											//Array Case - Further Checking
 	                	
 	                	if(args.get(i).idname != null){												//Not a string -- it is an id
 	                		
 	                		Node myNode = symtable.lookup(new Key(args.get(i).idname));				//At this point myNode won't be null
-	                	
-	                		
-	                		
+
 	                		int j = myNode.arraylist.size() - argDimension;
-	                		
-	                		for(int x=0; x<=paramDimension; j++, x++){
-	                			
-	                			if(myNode.arraylist.get(j) != n.params.get(i).arraylist.get(x) && myNode.arraylist.get(j) != 0){
-					        		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+
+	                		for(int x=0; x<paramDimension; j++, x++){
+								                		
+	                			if(!myNode.arraylist.get(j).equals(n.params.get(i).arraylist.get(x)) && myNode.arraylist.get(j) != 0){
+					        		System.out.println("Error: Function " + n.name.name + ": expected an array argument of size " + n.params.get(i).arraylist.get(x) + " instead of " + myNode.arraylist.get(j));
 					        		System.exit(1);
 	                			}
 	                		}

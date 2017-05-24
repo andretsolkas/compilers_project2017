@@ -35,7 +35,7 @@ public class Node {
 			params = new LinkedList<>();
 			
 			for(int i=0; i<pm.size(); i++){
-				params.addLast(new Param(pm.get(i).type, pm.get(i).idname, pm.get(i).arraylist));
+				params.addLast(new Param(pm.get(i).type, pm.get(i).idname, pm.get(i).reference, pm.get(i).arraylist));
 			}
 		}
 		else params = null;
