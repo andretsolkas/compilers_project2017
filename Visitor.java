@@ -869,10 +869,11 @@ import java.util.*;
 	                		
 	                		
 	                		int j = myNode.arraylist.size() - argDimension;
-	                		
-	                		for(int x=0; x<=paramDimension; j++, x++){
-	                			
-	                			if(myNode.arraylist.get(j) != n.params.get(i).arraylist.get(x) && myNode.arraylist.get(j) != 0){
+
+
+	                		for(int x=0; x<paramDimension; j++, x++){
+								                		
+	                			if(!myNode.arraylist.get(j).equals(n.params.get(i).arraylist.get(x)) && myNode.arraylist.get(j) != 0){
 					        		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
 					        		System.exit(1);
 	                			}
