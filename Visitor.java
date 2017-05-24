@@ -840,7 +840,7 @@ import java.util.*;
                 for(int i=0; i<args.size(); i++){
                 	
                 	if(!(n.params.get(i).type.equals(args.get(i).type))){
-                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected");
                 		System.exit(1);
                 	}
                 	
@@ -856,7 +856,7 @@ import java.util.*;
                 		paramDimension = n.params.get(i).arraylist.size();
                 	
                 	if(paramDimension != argDimension){
-                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected");
                 		System.exit(1);
                 	}
                 	
@@ -865,16 +865,13 @@ import java.util.*;
 	                	if(args.get(i).idname != null){												//Not a string -- it is an id
 	                		
 	                		Node myNode = symtable.lookup(new Key(args.get(i).idname));				//At this point myNode won't be null
-	                	
-	                		
-	                		
-	                		int j = myNode.arraylist.size() - argDimension;
 
+	                		int j = myNode.arraylist.size() - argDimension;
 
 	                		for(int x=0; x<paramDimension; j++, x++){
 								                		
 	                			if(!myNode.arraylist.get(j).equals(n.params.get(i).arraylist.get(x)) && myNode.arraylist.get(j) != 0){
-					        		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected\n");
+					        		System.out.println("Error: Function " + n.name.name + ": expected an array argument of size " + n.params.get(i).arraylist.get(x) + " instead of " + myNode.arraylist.get(j));
 					        		System.exit(1);
 	                			}
 	                		}
