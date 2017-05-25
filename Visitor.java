@@ -82,7 +82,7 @@ import java.util.*;
 		public void outAProgram(AProgram node){
            symtable.exit();
            
-           //quadManager.printQuads();
+           quadManager.printQuads();
 		}
         
         @Override
@@ -475,6 +475,7 @@ import java.util.*;
 
 	        IRelement expr = quadManager.stack.removeLast();
 	        
+            quadManager.genQuad("<-", expr.place, "_", "$$");
 	        quadManager.genQuad("ret", "_", "_", "_");
 
 	        quadManager.stack.addLast(new IRelement(expr.type, expr.place, new LinkedList<>(), null, null));
@@ -698,7 +699,70 @@ import java.util.*;
 			        	}
 		        	}
 		        }
-        	}
+        	
+                //Array - quadManager.places list will not be empty
+                
+                IRelement id = quadManager.stack.removeLast();
+                String base = id.place;
+                
+                String finalTemp, myNewTemp;
+                
+                if(value.idname != null){       //In case of identifier -- not string
+
+                    Node n = symtable.lookup(new Key(value.idname));            //At this point it won't be null
+                    
+                    if(n.arraylist.size() == 1){
+                        myNewTemp = quadManager.places.getFirst();
+                    }
+                    
+                    else{
+                        LinkedList<String> factors = new LinkedList<>();
+                        LinkedList<String> sums = new LinkedList<>();
+                    
+                        String temp = n.arraylist.getLast().toString();
+                        factors.addFirst(temp);
+                    
+                        for(int i=n.arraylist.size()-1; i>1; i--){
+
+                            String newVar = quadManager.newtemp("int");
+                            factors.addFirst(newVar);
+
+                            quadManager.genQuad("*", n.arraylist.get(-i).toString(), temp, newVar);
+                            temp = newVar;
+                        }
+                    
+                        for(int i=0; i<quadManager.places.size()-1; i++){
+                            String myTemp = quadManager.newtemp("int");
+                            quadManager.genQuad("*", quadManager.places.get(i), factors.get(i), myTemp);
+                            sums.addLast(myTemp);
+                        }
+                    
+                        String myTemp = "0";
+                        for(int i=0; i<sums.size(); i++){                                               //Add the factors
+                            String newVar = quadManager.newtemp("int");
+                            quadManager.genQuad("+", myTemp, sums.get(i), newVar);
+                            myTemp = newVar;
+                        }
+                    
+                        myNewTemp = quadManager.newtemp("int");
+                        quadManager.genQuad("+", myTemp, quadManager.places.getLast(), myNewTemp);      //Add the last element
+                    }
+                }
+                
+                else{                       //String case -- //It will be a one-dimensional array
+                    myNewTemp = quadManager.places.getFirst();
+                }
+                
+                finalTemp = quadManager.newtemp(value.type);                //!!
+                quadManager.genQuad("array", base, myNewTemp, finalTemp);
+                
+                
+                if(value.indices.size() == value.dimensions){
+                    finalTemp = "[".concat(finalTemp.concat("]"));
+                }
+                quadManager.stack.addLast(new IRelement(value.type, finalTemp, null, null, null));
+                quadManager.places = new LinkedList<>();
+            }
         }
                 
         
@@ -737,7 +801,6 @@ import java.util.*;
         	typeCheck.addLast(new TypeCheck(n.type, null, null, node.getId().getText(), dimensions));
         	
         	quadManager.stack.addLast(new IRelement(n.type, node.getId().getText(), null, null, null));
-        	
         }
         
         	
@@ -761,7 +824,6 @@ import java.util.*;
         		System.exit(1);
 			}
 																		//Right expr is integer but it may not be primitive - it could be an array
-			
 			int indices = 0;
 			if(rightExpr.indices != null)
 				indices = rightExpr.indices.size();
@@ -782,6 +844,9 @@ import java.util.*;
 			
 			typeCheck.addLast(new TypeCheck(leftId.type, leftId.indices, null, leftId.idname, leftId.dimensions));
 
+            IRelement expr = quadManager.stack.removeLast();
+            quadManager.places.addLast(expr.place);
+            
         }
 
      
@@ -811,15 +876,19 @@ import java.util.*;
         		//Get the parameters one by one, add them to list
         		
         		TypeCheck tpc;
+                IRelement irel;
             	LinkedList<TypeCheck> args = new LinkedList<>();
-            	
+            	LinkedList<IRelement> exprs = new LinkedList<>();
+                
                 List<PStmtexpr> copy = new ArrayList<PStmtexpr>(node.getStmtexpr());
                 for(PStmtexpr e : copy)
                 {
                     e.apply(this);
                 
                     tpc = typeCheck.removeLast();														//Remove from stack the argument
+                    irel = quadManager.stack.removeLast();
                     args.addLast(tpc);																	//Pass by reference - it won't cause problems  
+                    exprs.addLast(irel);																	//Pass by reference - it won't cause problems  
                 }
 
                 /**********************************/
@@ -844,7 +913,7 @@ import java.util.*;
                 		System.exit(1);
                 	}
                 	
-                	if(n.params.get(i).reference == true && args.get(i).idname == null){
+                	if(n.params.get(i).reference == true && (args.get(i).idname == null && args.get(i).dimensions == 0)){           //Not an id or a string
                 		System.out.println("Error: Function " + n.name.name + ": the " + (i+1) + "-(th/st/rd/nd) parameter expected an Lvalue");
                 		System.exit(1);
                 	}
@@ -880,15 +949,24 @@ import java.util.*;
 					        		System.exit(1);
 	                			}
 	                		}
-	                	}
-	                	
-	                	//STRING CASE
+	                	} 
                 	}
+                    
+                    String parammode = "V";
+                    if(n.params.get(i).reference == true)
+                        parammode = "R";
+                    quadManager.genQuad("par", exprs.get(i).place, parammode, "_");
                 }
 
                 typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, 0));				//Add the return type on stack
-                quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));		//NOT READY
-        	}
+                
+                String newtemp = quadManager.newtemp(n.retvalue);
+                quadManager.genQuad("par", "RET", newtemp, "_");
+                
+                quadManager.stack.addLast(new IRelement(null, newtemp, new LinkedList<>(), null, null));		//NOT READY
+        	
+                quadManager.genQuad("call", "_", "_", n.name.name);
+            }
             
             outAFuncallStmtexpr(node);
         }
