@@ -7,7 +7,7 @@ public class QuadManager{
 	Integer temp = 0;;
 	
 	LinkedList<IRelement> stack = new LinkedList<>();
-	
+	LinkedList<String> places = new LinkedList<>();             //It will never be null. 
 	LinkedList<Quad> quads = new LinkedList<>();
 	
 	
