@@ -39,9 +39,11 @@ SEMANTIC ERRORS
 
 - Error: Function has not been declared/defined before
 
-- Error: Function is declared but not defined
-
 - Error: is not a function
+
+- Error: Function must not retrurn an array\n"
+
+- Error: Function's array parameter must be passed by reference
 
 - Error: Function : different amount of arguments
 
@@ -49,7 +51,11 @@ SEMANTIC ERRORS
 
 - Error: Function : argument of different type than expected
 
+- Error: Main Function must only return nothing
 
+- Error: Main Function can not have parameters
+
+- Error: Function expected an array argument of size .. instead of ..
 ----------------------------
 
 -------- FUNCTIONS - RETURN ---------
