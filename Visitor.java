@@ -169,9 +169,6 @@ import java.util.*;
     	    	}
     			
     			symtable.increase_scope();
-    			
-    			quadManager.genQuad("unit", funname.name, "_", "_");
-    			
     		}
     		
     		else {																							//If function declaration
