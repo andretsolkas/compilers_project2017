@@ -105,9 +105,7 @@ import java.util.*;
 	        returned = false;
 
 	        IRelement irel = quadManager.stack.removeLast();
-	        quadManager.backpatch(irel.next, quadManager.nextQuad());
-	        
-	        quadManager.genQuad("endu", nd.name.name, "_", "_");	        
+	        quadManager.backpatch(irel.next, quadManager.nextQuad());	        
 	    }
         
         
@@ -423,8 +421,9 @@ import java.util.*;
         public void caseABlockStmtexpr(ABlockStmtexpr node)
         {
         	symtable.enter();
-            
-        	IRelement irel;
+         	quadManager.genQuad("unit", nd.name.name, "_", "_");   
+        	
+		IRelement irel;
         	int i;
         	
         	if(node.getStmtexpr().size() > 0){
@@ -446,6 +445,7 @@ import java.util.*;
         	
         	else quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));
             
+	    quadManager.genQuad("endu", nd.name.name, "_", "_");
             symtable.exit();
         }
 
