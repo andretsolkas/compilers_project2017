@@ -6,11 +6,18 @@ public class QuadManager{
 	int quadnum = 1;
 	Integer temp = 0;;
 	
+	ScopeTemp temps;
+	SymbolTable symtable;
+	
 	LinkedList<IRelement> stack = new LinkedList<>();
 	LinkedList<String> places = new LinkedList<>();             //It will never be null. 
 	LinkedList<Quad> quads = new LinkedList<>();
 	
 	
+	public QuadManager(SymbolTable st){
+		temps = new ScopeTemp(0, new LinkedList<Temp>());
+		symtable = st;
+	}
 	
 	public int nextQuad(){
 		return quadnum;
@@ -27,11 +34,14 @@ public class QuadManager{
 	}
 	
 	
-	public String newtemp(String type){			//!!!!!! whats type for???????????????????????
+	public String newtemp(String type){
 		temp++;
-		String tmp = "$";
+		String str, tmp = "$";
 		
-		return tmp.concat(temp.toString());
+		str = tmp.concat(temp.toString());
+		temps.temps.addLast(new Temp(str, type));
+	
+		return str;
 	}
 
 	
@@ -52,6 +62,11 @@ public class QuadManager{
 		}
 	}
 	
+	public void clearTemps(){
+		temps.temps = new LinkedList<Temp>();
+	}
+	
+	
 	public void printQuads(){
 
 		for(int i=0; i<quads.size(); i++){
@@ -61,4 +76,8 @@ public class QuadManager{
 		}
 	}
 	
+	public void printTemps(){
+		
+		temps.print();
+	}
 }

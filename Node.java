@@ -11,7 +11,7 @@ public class Node {
 	LinkedList <Integer> arraylist;						//In case it's an array
 	String retvalue;									//Return Value
 	Boolean defined;									//In case of function - True if it's been defined, false if not
-	
+
 	Node prevNode;
 
 	

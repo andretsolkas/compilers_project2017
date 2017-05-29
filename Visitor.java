@@ -1,12 +1,19 @@
 import compiler.analysis.DepthFirstAdapter;
+import java.io.*;
 import compiler.node.*;
 import java.util.*;
 
 	class Visitor extends DepthFirstAdapter
 	{
+		FileWriter writer;
+		
+		Assembly assemblyManager;
 		
 		SymbolTable symtable;
 		QuadManager quadManager;
+		
+		LinkedList<LinkedList<Node>> scopes;
+
 		
 		int dataTypeMode;														//0 if parameter, 1 if return_value
 		int headerMode;															//0 if fun definition, 1 if fun declaration
@@ -26,10 +33,16 @@ import java.util.*;
 		
 		String retvalue;
 		
-		public Visitor(){
+		public Visitor(FileWriter wr){
 			
+			writer = wr;
+
 			symtable = new SymbolTable();
-			quadManager = new QuadManager();
+			quadManager = new QuadManager(symtable);
+			assemblyManager = new Assembly(wr, symtable);
+			
+			scopes = new LinkedList<>();
+			
 			initialize();
 		}
 
@@ -76,20 +89,33 @@ import java.util.*;
 		}
 
 		
+		private void printScopes(){
+			for(int i=0; i<scopes.size(); i++){
+				System.out.println("  Scope: " + (i+1));
+				
+				for(int j=0; j< scopes.get(i).size(); j++){
+					scopes.get(i).get(j).print();
+				}
+				System.out.println();
+			}
+		}
+		
+		
 		//////////////////////////////////////
 		
         @Override
 		public void outAProgram(AProgram node){
            symtable.exit();
            
-           quadManager.printQuads();
+           //quadManager.printQuads();
 		}
         
         @Override
 		public void inAFuncdefLocalDef(AFuncdefLocalDef node)
 	    {
 	        headerMode = 0;
-	        symtable.enter();   
+	        scopes.addLast(new LinkedList<Node>());	
+	        symtable.enter();
 	    }
 
         @Override
@@ -105,7 +131,31 @@ import java.util.*;
 	        returned = false;
 
 	        IRelement irel = quadManager.stack.removeLast();
-	        quadManager.backpatch(irel.next, quadManager.nextQuad());	        
+	        quadManager.backpatch(irel.next, quadManager.nextQuad());
+	        quadManager.genQuad("endu", nd.name.name, "_", null);
+	        
+	        //ASSEMBLY
+	        
+	        assemblyManager.runtimeScope = quadManager.temps.scope;
+
+	        
+	        
+	        
+	        
+	        
+	        /************************************************
+	        System.out.println("LOCALS");
+	        for(int j=0; j< scopes.get(quadManager.temps.scope-1).size(); j++){
+				scopes.get(quadManager.temps.scope-1).get(j).print();
+			}
+	        System.out.println("TEMPS");
+	        quadManager.printTemps();
+	        System.out.println("\n***********************\n");
+	        *************************************************/
+	        
+	        quadManager.clearTemps();
+    	    scopes.removeLast();
+            symtable.alteredExit();
 	    }
         
         
@@ -114,7 +164,6 @@ import java.util.*;
 	    {
 	        headerMode = 1;
         }
-
 
         @Override
 	    public void inAVardefLocalDef(AVardefLocalDef node)
@@ -136,9 +185,9 @@ import java.util.*;
                 }
                 
 	    		symtable.insert(key, datatype, false, arraylist, null, null, null);
+	    		scopes.get(symtable.scope-1).addLast(symtable.lookup(key));
 	    	}
 	    }
-
 
 	    @Override
 	    public void caseAHeader(AHeader node)
@@ -265,8 +314,6 @@ import java.util.*;
     		else symtable.insert(funname, null, null, null, params, false, retvalue);							//If function declaration
     		
 	    }
-	    
-	    
 
         @Override
 	    public void inAWithrefFparDef(AWithrefFparDef node)
@@ -350,8 +397,6 @@ import java.util.*;
 	    		arraylist.add(Integer.parseInt(node.getNumber().get(i).getText()));
 	    	}
 	    }
-
-
 	    
 	    /////////////////////////////////////
         @Override
@@ -391,6 +436,10 @@ import java.util.*;
         	IRelement irel;
         	int i;
         	
+        	quadManager.temps.scope = symtable.scope;
+        	
+         	quadManager.genQuad("unit", funcDefinition.getLast().name.name, "_", "_");  
+         	
             if(node.getStmtexpr().size() > 0){
 	            	
 	        	for(i=0; i<node.getStmtexpr().size()-1; i++){
@@ -410,17 +459,15 @@ import java.util.*;
             }
             
             else quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));
-            
-            symtable.alteredExit();
+
         }
 
         @Override
         public void caseABlockStmtexpr(ABlockStmtexpr node)
         {
-        	symtable.enter();
-         	quadManager.genQuad("unit", nd.name.name, "_", "_");   
+        	symtable.enter(); 
         	
-		IRelement irel;
+        	IRelement irel;
         	int i;
         	
         	if(node.getStmtexpr().size() > 0){
@@ -441,8 +488,7 @@ import java.util.*;
         	}
         	
         	else quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));
-            
-	    quadManager.genQuad("endu", nd.name.name, "_", "_");
+
             symtable.exit();
         }
 
@@ -468,7 +514,6 @@ import java.util.*;
 		}
 	        
 	        returned = true;
-
 
 	        IRelement expr = quadManager.stack.removeLast();
 	        
@@ -969,9 +1014,7 @@ import java.util.*;
         }
 
 
-/**********************************************************/
-        
-
+/**********************************************************/        
 
         public void outANotCond(ANotCond node)
         {
@@ -982,7 +1025,6 @@ import java.util.*;
         	irel.True = irel.False;
         	irel.False = temp;
         }
-        
         
         @Override
         public void caseAAndCond(AAndCond node)
@@ -1011,7 +1053,6 @@ import java.util.*;
             quadManager.stack.addLast(new IRelement(null, null, null, trueStack, falseStack));	
         }
 
-        
         @Override
         public void caseAOrCond(AOrCond node)
         {
@@ -1039,8 +1080,6 @@ import java.util.*;
             quadManager.stack.addLast(new IRelement(null, null, null, trueStack, falseStack));
         }
 
-
-        
 /**************************************************************/
         public void outAEqualCond(AEqualCond node)
         {
@@ -1077,12 +1116,8 @@ import java.util.*;
         	typeCheckerCond(">=");
         	genQuadCond(">=");
         }
-/**************************************************************/
+/**************************************************************/      
         
-        
-        
-        
-    	
         public void quadGenExpr(String opcode){
         	
     		IRelement right = quadManager.stack.removeLast();
