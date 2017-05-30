@@ -43,8 +43,9 @@ public class Param {
 			for(i=0; i<arraylist.size(); i++){
 				System.out.printf("[%d]",arraylist.get(i).intValue());
 			}
-			//System.out.printf("\n");
+			System.out.printf("\n");
 		}
+		System.out.printf("\n");
 	}
 	
 }

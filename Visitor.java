@@ -12,7 +12,8 @@ import java.util.*;
 		SymbolTable symtable;
 		QuadManager quadManager;
 		
-		LinkedList<LinkedList<Node>> scopes;
+		LinkedList<LinkedList<Node>> scopesLocal;
+		//LinkedList<LinkedList<Param>> scopesParam;
 
 		
 		int dataTypeMode;														//0 if parameter, 1 if return_value
@@ -41,7 +42,7 @@ import java.util.*;
 			quadManager = new QuadManager(symtable);
 			assemblyManager = new Assembly(wr, symtable);
 			
-			scopes = new LinkedList<>();
+			scopesLocal = new LinkedList<>();
 			
 			initialize();
 		}
@@ -88,18 +89,18 @@ import java.util.*;
 			}
 		}
 
-		
+/*	
 		private void printScopes(){
-			for(int i=0; i<scopes.size(); i++){
+			for(int i=0; i<scopesLocal.size(); i++){
 				System.out.println("  Scope: " + (i+1));
 				
-				for(int j=0; j< scopes.get(i).size(); j++){
-					scopes.get(i).get(j).print();
+				for(int j=0; j< scopesLocal.get(i).size(); j++){
+					scopesLocal.get(i).get(j).print();
 				}
 				System.out.println();
 			}
 		}
-		
+*/		
 		
 		//////////////////////////////////////
 		
@@ -114,7 +115,7 @@ import java.util.*;
 		public void inAFuncdefLocalDef(AFuncdefLocalDef node)
 	    {
 	        headerMode = 0;
-	        scopes.addLast(new LinkedList<Node>());	
+	        scopesLocal.addLast(new LinkedList<Node>());
 	        symtable.enter();
 	    }
 
@@ -136,25 +137,33 @@ import java.util.*;
 	        
 	        //ASSEMBLY
 	        
+	        LinkedList<Param> params = nd.params;
+	
 	        assemblyManager.runtimeScope = quadManager.temps.scope;
 
+
+	        assemblyManager.load("R", "[aaa]", scopesLocal, quadManager.temps, params);
 	        
-	        
-	        
-	        
+
 	        
 	        /************************************************
-	        System.out.println("LOCALS");
-	        for(int j=0; j< scopes.get(quadManager.temps.scope-1).size(); j++){
-				scopes.get(quadManager.temps.scope-1).get(j).print();
+	        System.out.println(nd.name.name);
+	        System.out.println("PARAMETERS:");
+	        for(int j=0; params!=null && j<params.size(); j++){
+				params.get(j).print();
 			}
-	        System.out.println("TEMPS");
+	        System.out.println("LOCALS:");
+	        for(int j=0; j< scopesLocal.get(quadManager.temps.scope-1).size(); j++){
+				scopesLocal.get(quadManager.temps.scope-1).get(j).print();
+			}
+	        System.out.println("TEMPS:");
 	        quadManager.printTemps();
 	        System.out.println("\n***********************\n");
 	        *************************************************/
 	        
 	        quadManager.clearTemps();
-    	    scopes.removeLast();
+    	    scopesLocal.removeLast();
+    	    
             symtable.alteredExit();
 	    }
         
@@ -185,7 +194,7 @@ import java.util.*;
                 }
                 
 	    		symtable.insert(key, datatype, false, arraylist, null, null, null);
-	    		scopes.get(symtable.scope-1).addLast(symtable.lookup(key));
+	    		scopesLocal.get(symtable.scope-1).addLast(symtable.lookup(key));
 	    	}
 	    }
 
@@ -312,7 +321,6 @@ import java.util.*;
     		}
     		
     		else symtable.insert(funname, null, null, null, params, false, retvalue);							//If function declaration
-    		
 	    }
 
         @Override
