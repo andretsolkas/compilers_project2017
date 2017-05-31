@@ -998,8 +998,8 @@ import java.util.*;
 	                		int j = myNode.arraylist.size() - argDimension;
 
 	                		for(int x=0; x<paramDimension; j++, x++){
-								                		
-	                			if(!myNode.arraylist.get(j).equals(n.params.get(i).arraylist.get(x)) && myNode.arraylist.get(j) != 0){
+
+	                			if(n.params.get(i).arraylist.get(x) != 0 && !myNode.arraylist.get(j).equals(n.params.get(i).arraylist.get(x))){
 					        		System.out.println("Error: Function " + n.name.name + ": expected an array argument of size " + n.params.get(i).arraylist.get(x) + " instead of " + myNode.arraylist.get(j));
 					        		System.exit(1);
 	                			}
@@ -1136,6 +1136,7 @@ import java.util.*;
         	genQuadCond(">=");
         }
 /**************************************************************/      
+        
         
         public void quadGenExpr(String opcode){
         	
