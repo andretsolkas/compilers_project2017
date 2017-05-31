@@ -13,8 +13,6 @@ import java.util.*;
 		QuadManager quadManager;
 		
 		LinkedList<LinkedList<Node>> scopesLocal;
-		//LinkedList<LinkedList<Param>> scopesParam;
-
 		
 		int dataTypeMode;														//0 if parameter, 1 if return_value
 		int headerMode;															//0 if fun definition, 1 if fun declaration
@@ -108,7 +106,7 @@ import java.util.*;
 		public void outAProgram(AProgram node){
            symtable.exit();
            
-           //quadManager.printQuads();
+           quadManager.printQuads();
 		}
         
         @Override
@@ -697,7 +695,7 @@ import java.util.*;
         	TypeCheck value = typeCheck.getLast();
         	if(value.num != null){
         		String newstr = "-";
-        		value.num = new String(newstr.concat(value.num));
+        		value.num = newstr.concat(value.num);
         	}
         	
         	IRelement irel = quadManager.stack.removeLast();
@@ -1024,6 +1022,7 @@ import java.util.*;
 
 /**********************************************************/        
 
+        @Override
         public void outANotCond(ANotCond node)
         {
         	IRelement irel = quadManager.stack.getLast();
@@ -1089,36 +1088,42 @@ import java.util.*;
         }
 
 /**************************************************************/
+        @Override
         public void outAEqualCond(AEqualCond node)
         {
         	typeCheckerCond("=");
         	genQuadCond("=");
         }
 
+        @Override
         public void outANequalCond(ANequalCond node)
         {
         	typeCheckerCond("#");
         	genQuadCond("#");
         }
 
+        @Override
         public void outALessCond(ALessCond node)
         {
         	typeCheckerCond("<");
         	genQuadCond("<");
         }   
 
+        @Override
         public void outAGreaterCond(AGreaterCond node)
         {
         	typeCheckerCond(">");
         	genQuadCond(">");
         }
 
+        @Override
         public void outALesseqCond(ALesseqCond node)
         {
             typeCheckerCond("<=");
             genQuadCond("<=");
         }
 
+        @Override
         public void outAGreatereqCond(AGreatereqCond node)
         {
         	typeCheckerCond(">=");
