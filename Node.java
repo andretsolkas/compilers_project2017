@@ -86,7 +86,7 @@ public class Node {
 			for(i=0; i<params.size()-1; i++){
 			
 				params.get(i).print();
-				System.out.printf(", ");
+				System.out.printf(",  ");
 			}
 			params.get(i).print();
 			System.out.printf("\n");

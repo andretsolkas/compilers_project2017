@@ -13,6 +13,8 @@ import java.util.*;
 		QuadManager quadManager;
 		
 		LinkedList<LinkedList<Node>> scopesLocal;
+
+		int quadcounter;
 		
 		int dataTypeMode;														//0 if parameter, 1 if return_value
 		int headerMode;															//0 if fun definition, 1 if fun declaration
@@ -41,6 +43,8 @@ import java.util.*;
 			assemblyManager = new Assembly(wr, symtable);
 			
 			scopesLocal = new LinkedList<>();
+			
+			quadcounter = 0;
 			
 			initialize();
 		}
@@ -105,8 +109,8 @@ import java.util.*;
         @Override
 		public void outAProgram(AProgram node){
            symtable.exit();
-           
-           quadManager.printQuads();
+
+           //quadManager.printQuads();
 		}
         
         @Override
@@ -133,31 +137,29 @@ import java.util.*;
 	        quadManager.backpatch(irel.next, quadManager.nextQuad());
 	        quadManager.genQuad("endu", nd.name.name, "_", null);
 	        
-	        //ASSEMBLY
+	        
+	        /*****************ASSEMBLY*******************/
 	        
 	        LinkedList<Param> params = nd.params;
 	
-	        assemblyManager.runtimeScope = quadManager.temps.scope;
+	        assemblyManager.np = quadManager.temps.scope;
 
+	        int i,j;
+	        
+/*
+	        for(i=quadManager.quads.size()-1; !quadManager.quads.get(i).opcode.equals("unit"); i--){;}
+	        
+	        int size = quadManager.quads.size() - i;
+	        
+	        for(j=i, i=0; i<size; i++){
+	        	quadManager.quads.get(j).print();
+	        	assemblyManager.createAssembly(quadManager.quads.get(j), ++quadcounter, scopesLocal, quadManager.temps, params);
+	        	quadManager.quads.remove(j);
+	        }
 
-	        assemblyManager.load("R", "[aaa]", scopesLocal, quadManager.temps, params);
+*/
 	        
 
-	        
-	        /************************************************
-	        System.out.println(nd.name.name);
-	        System.out.println("PARAMETERS:");
-	        for(int j=0; params!=null && j<params.size(); j++){
-				params.get(j).print();
-			}
-	        System.out.println("LOCALS:");
-	        for(int j=0; j< scopesLocal.get(quadManager.temps.scope-1).size(); j++){
-				scopesLocal.get(quadManager.temps.scope-1).get(j).print();
-			}
-	        System.out.println("TEMPS:");
-	        quadManager.printTemps();
-	        System.out.println("\n***********************\n");
-	        *************************************************/
 	        
 	        quadManager.clearTemps();
     	    scopesLocal.removeLast();
@@ -270,6 +272,11 @@ import java.util.*;
 				System.out.println("Error: Main Function " + funname.name + " can not have parameters\n");
                 System.exit(1);
             }
+            
+            if(symtable.scope == 0){
+            	symtable.insertLibfuncs();
+            }
+            
             
             symtable.increase_scope();
             
@@ -523,7 +530,7 @@ import java.util.*;
 
 	        IRelement expr = quadManager.stack.removeLast();
 	        
-            quadManager.genQuad("<-", expr.place, "_", "$$");
+            quadManager.genQuad(":-", expr.place, "_", "$$");
 	        quadManager.genQuad("ret", "_", "_", "_");
 
 	        quadManager.stack.addLast(new IRelement(expr.type, expr.place, new LinkedList<>(), null, null));
@@ -695,7 +702,7 @@ import java.util.*;
         	TypeCheck value = typeCheck.getLast();
         	if(value.num != null){
         		String newstr = "-";
-        		value.num = newstr.concat(value.num);
+        		value.num = new String(newstr.concat(value.num));
         	}
         	
         	IRelement irel = quadManager.stack.removeLast();
@@ -1021,7 +1028,6 @@ import java.util.*;
 
 
 /**********************************************************/        
-
         @Override
         public void outANotCond(ANotCond node)
         {
@@ -1115,7 +1121,7 @@ import java.util.*;
         	typeCheckerCond(">");
         	genQuadCond(">");
         }
-
+        
         @Override
         public void outALesseqCond(ALesseqCond node)
         {
