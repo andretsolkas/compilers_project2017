@@ -114,7 +114,7 @@ import java.util.*;
 	        Node nd = funcDefinition.removeLast();
 
 	        if(!nd.retvalue.equals("nothing") && returned == false){									//if function is not supposed to return 'nothing', yet returned value is false
-        		System.out.println("Error: Function must have a return statement\n");
+        		System.out.println("Error: Line " + lineError + " Function must have a return statement\n");
 	        	System.exit(1);
 	        }
 	        
@@ -151,7 +151,7 @@ import java.util.*;
 	        quadManager.clearTemps();
     	    scopesLocal.removeLast();
     	    
-            symtable.alteredExit();
+            symtable.alteredExit(lineError);
 	    }
         
         

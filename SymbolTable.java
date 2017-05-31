@@ -64,7 +64,7 @@ public class SymbolTable {
 		scope--;	
 	}
 	
-	public void alteredExit(){                                                         //Destroys last scope, meanwhile it searched for declared but undefined functions
+	public void alteredExit(int lineError){                                                         //Destroys last scope, meanwhile it searched for declared but undefined functions
 		
 		Node node;
 		Iterator<Node> iter = list.descendingIterator();
@@ -74,7 +74,7 @@ public class SymbolTable {
 				if(node.scope == scope){
 					
 					if(node.defined != null && node.defined == false){											//Found an undefined function
-						System.out.println("Error: Function " + node.name.name + " never matches with a definiton\n");
+						System.out.println("Error: Line " + lineError + " Function " + node.name.name + " never matches with a definiton\n");
 	                    System.exit(1);
 					}
 					
