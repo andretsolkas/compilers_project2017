@@ -3,9 +3,8 @@ import compiler.parser.*;
 import compiler.lexer.*;
 import compiler.node.*;
 //import compiler.analysis.*;
-
 import java.io.*;
-//import java.util.Set;
+
 
 public class Main{
 
@@ -26,6 +25,22 @@ public class Main{
 		System.exit(1);
 	}
 	
-        tree.apply(new Visitor());
+		File file = new File("myAssembly.txt");
+		
+		try{
+			file.createNewFile();
+			FileWriter writer = new FileWriter(file);
+			
+	        tree.apply(new Visitor(writer));
+			
+			writer.close();
+		}
+		
+		catch(Exception e){
+			System.out.println(e.getMessage());
+			System.exit(1);
+		}
+		
+
     }
 }

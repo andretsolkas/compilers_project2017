@@ -43,8 +43,6 @@ public class SymbolTable {
 		return hashtable.get(name);
 	}
 	
-	
-	
 	public void exit(){                                                         //Destroy last scope
 		
 		Node node;
@@ -92,9 +90,6 @@ public class SymbolTable {
 		
 		scope--;	
 	}
-	
-	
-	
     
     int SearchKey(Key key){
         
@@ -107,20 +102,105 @@ public class SymbolTable {
         return 0;
         
     }
-    
-    
-    
+ 
 	public void increase_scope(){
 		scope++;
 	}
-	
-	
-	
+		
 	public void decrease_scope(){
 		scope--;
 	}
 	
+	public void insertLibfuncs(){
+		
+		LinkedList<Param> params;
+		LinkedList<Integer> arraylist;
+		
+		params = new LinkedList<Param>();
+		params.addLast(new Param("int", new Key("n"), false, null));
+		insert(new Key("puti"), null, null, null, params, true, "nothing");
+		
+		
+		params = new LinkedList<Param>();
+		params.addLast(new Param("char", new Key("c"), false, null));
+		insert(new Key("putc"), null, null, null, params, true, "nothing");
+		
+		
+		params = new LinkedList<Param>();
+		arraylist = new LinkedList<Integer>();
+		arraylist.addLast(0);
+		params.addLast(new Param("char", new Key("s"), true, arraylist));
+		insert(new Key("puts"), null, null, null, params, true, "nothing");
 	
+		
+		insert(new Key("geti"), null, null, null, null, true, "int");
+	
+		insert(new Key("getc"), null, null, null, null, true, "char");
+	
+		
+		params = new LinkedList<Param>();
+		params.addLast(new Param("int", new Key("n"), false, null));
+		arraylist = new LinkedList<Integer>();
+		arraylist.addLast(0);
+		params.addLast(new Param("char", new Key("s"), true, arraylist));
+		insert(new Key("gets"), null, null, null, params, true, "nothing");
+	
+		
+		params = new LinkedList<Param>();
+		params.addLast(new Param("int", new Key("n"), false, null));
+		insert(new Key("abs"), null, null, null, params, true, "int");
+		
+		
+		params = new LinkedList<Param>();
+		params.addLast(new Param("char", new Key("c"), false, null));
+		insert(new Key("ord"), null, null, null, params, true, "int");
+		
+		
+		params = new LinkedList<Param>();
+		params.addLast(new Param("int", new Key("n"), false, null));
+		insert(new Key("chr"), null, null, null, params, true, "char");
+
+	
+		params = new LinkedList<Param>();
+		arraylist = new LinkedList<Integer>();
+		arraylist.addLast(0);
+		params.addLast(new Param("char", new Key("s"), true, arraylist));
+		insert(new Key("strlen"), null, null, null, params, true, "int");
+		
+		
+		params = new LinkedList<Param>();
+		arraylist = new LinkedList<Integer>();
+		arraylist.addLast(0);
+		params.addLast(new Param("char", new Key("s1"), true, arraylist));
+		
+		arraylist = new LinkedList<Integer>();
+		arraylist.addLast(0);
+		params.addLast(new Param("char", new Key("s2"), true, arraylist));
+		insert(new Key("strcmp"), null, null, null, params, true, "int");
+		
+		
+		params = new LinkedList<Param>();
+		arraylist = new LinkedList<Integer>();
+		arraylist.addLast(0);
+		params.addLast(new Param("char", new Key("trg"), true, arraylist));
+		
+		arraylist = new LinkedList<Integer>();
+		arraylist.addLast(0);
+		params.addLast(new Param("char", new Key("src"), true, arraylist));
+		insert(new Key("strcpy"), null, null, null, params, true, "nothing");
+		
+		
+		params = new LinkedList<Param>();
+		arraylist = new LinkedList<Integer>();
+		arraylist.addLast(0);
+		params.addLast(new Param("char", new Key("trg"), true, arraylist));
+		
+		arraylist = new LinkedList<Integer>();
+		arraylist.addLast(0);
+		params.addLast(new Param("char", new Key("src"), true, arraylist));
+		insert(new Key("strcat"), null, null, null, params, true, "nothing");
+	}
+
 	
 	public void print(){
 		
