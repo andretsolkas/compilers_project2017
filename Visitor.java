@@ -15,7 +15,7 @@ import java.util.*;
 		LinkedList<LinkedList<Node>> scopesLocal;
 
 		int quadcounter;
-		
+		int lineError;
 		int dataTypeMode;														//0 if parameter, 1 if return_value
 		int headerMode;															//0 if fun definition, 1 if fun declaration
 		
@@ -45,6 +45,7 @@ import java.util.*;
 			scopesLocal = new LinkedList<>();
 			
 			quadcounter = 0;
+			lineError = 0;
 			
 			initialize();
 		}
@@ -59,18 +60,17 @@ import java.util.*;
 			arraylist = new LinkedList<>();
 			idlist = new LinkedList<>();
 		}
-		
-		
+
 		private void typeCheckerExpr(String str){
 	        
 			TypeCheck opRight = typeCheck.removeLast();				//opLeft and opRight must be primitive integers
 			TypeCheck opLeft = typeCheck.removeLast();
 
-			if(!(opLeft.type.equals("int") && opRight.type.equals("int")) || 											//Not Both Integers OR
-				(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions))) ||	//opLeft not primitive OR
+			if(!(opLeft.type.equals("int") && opRight.type.equals("int")) || 												//Not Both Integers OR
+				(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions))) ||		//opLeft not primitive OR
 				(opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions))))	//opRight not primitive
 			{
-				System.out.println("Error: Expr " + str + " 's operands must both be primitive integers\n");
+				System.out.println("Error: Line " + lineError + ": Expr " + str + " 's operands must both be primitive integers\n");
 	        	System.exit(1);
 			}
 
@@ -86,30 +86,17 @@ import java.util.*;
 				(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions))) ||	//opLeft not primitive OR
 				(opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions))))	//opRight not primitive
 			{
-				System.out.println("Error: Cond " + str + " 's operands must both be primitive integers\n");
+				System.out.println("Error: Line " + lineError + ": Cond " + str + " 's operands must both be primitive integers\n");
 	        	System.exit(1);
 			}
 		}
 
-/*	
-		private void printScopes(){
-			for(int i=0; i<scopesLocal.size(); i++){
-				System.out.println("  Scope: " + (i+1));
-				
-				for(int j=0; j< scopesLocal.get(i).size(); j++){
-					scopesLocal.get(i).get(j).print();
-				}
-				System.out.println();
-			}
-		}
-*/		
-		
+
 		//////////////////////////////////////
 		
         @Override
 		public void outAProgram(AProgram node){
            symtable.exit();
-
            //quadManager.printQuads();
 		}
         
@@ -179,6 +166,7 @@ import java.util.*;
 	    {
 	        initialize();
 	        dataTypeMode = 0;
+	        lineError = node.getId().getLast().getLine();
 	    }
 
         @Override
@@ -201,6 +189,8 @@ import java.util.*;
 	    @Override
 	    public void caseAHeader(AHeader node)
 	    {
+	    	lineError = node.getId().getLine();
+	    	
 	    	initialize();
 	        
 	        funname = new Key(node.getId().getText());														//Functions' id name	        
@@ -219,7 +209,7 @@ import java.util.*;
     				Node nd = symtable.lookup(funname);
     				
     	    		if(nd.defined == true){
-                        System.out.println("Error: Function " + funname.name + " is being  redefined\n");
+                        System.out.println("Error: Line " + lineError + ": Function " + funname.name + " is being  redefined\n");
                         System.exit(1);
     				}
     	    		
@@ -235,12 +225,12 @@ import java.util.*;
     				Node nd = symtable.lookup(funname);
     				
     	    		if(nd.defined == true){
-	    				System.out.println("Error: Function " + funname.name + " has been defined before, yet it is being redeclared\n");
+	    				System.out.println("Error: Line " + lineError + ": Function " + funname.name + " has been defined before, yet it is being redeclared\n");
 	                    System.exit(1);
     	    		}
     	    		
     	    		else{
-	    				System.out.println("Error: Function " + funname.name + " has been declared again before\n");
+	    				System.out.println("Error: Line " + lineError + ": Function " + funname.name + " has been declared again before\n");
 	                    System.exit(1);
     	    		}
     	    	}
@@ -258,7 +248,7 @@ import java.util.*;
 	        dataTypeMode = 0;
 
             if(headerMode == 0 && symtable.scope == 0 && !retvalue.equals("nothing")){
-				System.out.println("Error: Main Function " + funname.name + " must only return \"nothing\"\n");
+				System.out.println("Error: Line " + lineError + ": Main Function " + funname.name + " must only return \"nothing\"\n");
                 System.exit(1);
             }
 	        
@@ -269,7 +259,7 @@ import java.util.*;
             	params = null;
             
             else if(headerMode == 0 && symtable.scope == 0){
-				System.out.println("Error: Main Function " + funname.name + " can not have parameters\n");
+				System.out.println("Error: Line " + lineError + ": Main Function " + funname.name + " can not have parameters\n");
                 System.exit(1);
             }
             
@@ -287,7 +277,7 @@ import java.util.*;
                 e.apply(this);
 
                 if(reference == false && arraylist != null){
-                	System.out.println("Error: Function's " + funname.name + " array parameter must be passed by reference\n");
+                	System.out.println("Error: Line " + lineError + ": Function's " + funname.name + " array parameter must be passed by reference\n");
                     System.exit(0);
                 }
                 
@@ -297,7 +287,7 @@ import java.util.*;
 
                     if(headerMode == 0){
                         if(1 == symtable.SearchKey(key)){
-                            System.out.println("Error: variable " + key.name + " has been declared before in this scope\n");
+                            System.out.println("Error: Line " + lineError + ": variable " + key.name + " has been declared before in this scope\n");
                             System.exit(0);
                         }
                         symtable.insert(key, datatype, reference, arraylist, null, null, null);
@@ -415,8 +405,10 @@ import java.util.*;
         @Override
         public void outANoneStmtexpr(ANoneStmtexpr node)
         {
+        	lineError = node.getSemicolon().getLine();
         	quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));
         }
+
 
         @Override
 	    public void outAAssignmentStmtexpr(AAssignmentStmtexpr node)
@@ -425,12 +417,12 @@ import java.util.*;
         	TypeCheck opLeft = typeCheck.removeLast();
 	        
         	if(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions))){
-        		System.out.println("Error: Assignment: Left Value must be of type t where t can't be an Array\n");
+        		System.out.println("Error: Line " + lineError + ": Assignment: Left Value must be of type t where t can't be an Array\n");
 	        	System.exit(1);
         	}
         	
         	if(!opLeft.type.equals(opRight.type) || (opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions)))){
-        		System.out.println("Error: Assignment: Left Value and Right Value are of different types\n");
+        		System.out.println("Error: Line " + lineError + ": Assignment: Left Value and Right Value are of different types\n");
 	        	System.exit(1);
         	}	
 	    
@@ -512,17 +504,17 @@ import java.util.*;
 	        Node nd = funcDefinition.getLast();
 
 	        if(nd.retvalue.equals("nothing")){
-        		System.out.println("Error: Function must not return an expression\n");
+        		System.out.println("Error: Line " + lineError + ": Function must not return an expression\n");
 	        	System.exit(1);
 	        }
 	        
 	        if(!tp.type.equals(nd.retvalue)){
-        		System.out.println("Error: Function must return " + nd.retvalue + ", not " + tp.type);
+        		System.out.println("Error: Line " + lineError + ": Function must return " + nd.retvalue + ", not " + tp.type);
 	        	System.exit(1);
 	        }
 	        
 			if((tp.dimensions > 0 && (tp.indices == null || (tp.indices.size() != tp.dimensions)))){
-		        System.out.println("Error: Function " + nd.name.name + " must not retrurn an array\n");
+		        System.out.println("Error: Line " + lineError + ": Function " + nd.name.name + " must not retrurn an array\n");
 	        	System.exit(1);
 		}
 	        
@@ -543,7 +535,7 @@ import java.util.*;
 	        Node nd = funcDefinition.getLast();
 
 	        if(!nd.retvalue.equals("nothing")){
-        		System.out.println("Error: Function must return an expression\n");
+        		System.out.println("Error: Line " + lineError + ": Function must return an expression\n");
 	        	System.exit(1);
 	        }
 	        
@@ -722,14 +714,14 @@ import java.util.*;
         	if(value.indices != null){																		//In case the given input is array	 											
         		
         		if(value.dimensions == 0){																	//In case the corresponding variable is declared as a primitive type
-           			System.out.println("Error: Variable " + value.idname + " : is primitive, yet, it's been treated as an array\n");
+           			System.out.println("Error: Line " + lineError + ": Variable " + value.idname + " : is primitive, yet, it's been treated as an array\n");
             		System.exit(1);
         		}        	
         		
         		else{																						//In case the corresponding variable is declared as an array			
         		
         			if(value.indices.size() > value.dimensions){
-		        		System.out.println("Error: Variable " + value.idname + " : Array is being given too many indices\n");
+		        		System.out.println("Error: Line " + lineError + ": Variable " + value.idname + " : Array is being given too many indices\n");
 		        		System.exit(1);
 	        		}
         		
@@ -747,7 +739,7 @@ import java.util.*;
 			        		if(!index.equals("int") && !index.equals("char")){				//Then index is been given a number -- so i can perform an index-bound check
 
 			        			if(Integer.parseInt(index) < 0 || (declindex != 0 && declindex <= Integer.parseInt(index))){
-				        			System.out.println("Error: Variable " + value.idname + " : index out of bound\n");
+				        			System.out.println("Error: Line " + lineError + ": Variable " + value.idname + " : index out of bound\n");
 				            		System.exit(1);
 				        		}
 				        	}
@@ -824,6 +816,7 @@ import java.util.*;
         @Override
         public void outAConcharStmtexpr(AConcharStmtexpr node)
         {
+        	lineError = node.getConchar().getLine();
         	typeCheck.addLast(new TypeCheck("char", null, null, null, 0));
         	
         	quadManager.stack.addLast(new IRelement("char", node.getConchar().getText(), null, null, null));
@@ -832,6 +825,7 @@ import java.util.*;
         @Override
         public void outANumStmtexpr(ANumStmtexpr node)
         {
+        	lineError = node.getNumber().getLine();
         	typeCheck.addLast(new TypeCheck("int", null, node.getNumber().getText(), null, 0));
         	
         	quadManager.stack.addLast(new IRelement("int", node.getNumber().getText(), null, null, null));
@@ -840,11 +834,13 @@ import java.util.*;
         @Override
         public void outAIdStmtexpr(AIdStmtexpr node)
         {
+        	lineError = node.getId().getLine();
+
         	Key key = new Key(node.getId().getText());        	
         	Node n = symtable.lookup(key);
 
         	if(n == null){
-        		System.out.println("Error: Variable " + key.name + " has not been declared before\n");
+        		System.out.println("Error: Line " + lineError + ": Variable " + key.name + " has not been declared before\n");
         		System.exit(1);
         	}
         	
@@ -857,11 +853,11 @@ import java.util.*;
         	
         	quadManager.stack.addLast(new IRelement(n.type, node.getId().getText(), null, null, null));
         }
-        
-        	
+
         @Override
         public void outAStrStmtexpr(AStrStmtexpr node)
-        {      	
+        {    
+        	lineError = node.getString().getLine();
         	typeCheck.addLast(new TypeCheck("char", null, null, null, 1));		//String's type is char[]
         
         	quadManager.stack.addLast(new IRelement("char", node.getString().getText(), null, null, null));					//FIXFIXFIXFIXI
@@ -875,7 +871,7 @@ import java.util.*;
 			TypeCheck leftId = typeCheck.removeLast();					//leftId is the array's id -- it could be also a string
 
 			if(!rightExpr.type.equals("int")){ 							//Must check if right value is an integer
-        		System.out.println("Error: Variable " + leftId.idname + " Type " +   rightExpr.type + " .. Array index is not int\n");
+        		System.out.println("Error: Line " + lineError + ": Variable " + leftId.idname + " Type " +   rightExpr.type + " .. Array index is not int\n");
         		System.exit(1);
 			}
 																		//Right expr is integer but it may not be primitive - it could be an array
@@ -884,7 +880,7 @@ import java.util.*;
 				indices = rightExpr.indices.size();
 			
 			if(rightExpr.dimensions != indices){						//It is primitive only when the number of given indices equals the number of indices with which it was declared
-        		System.out.println("Error: Variable " + leftId.idname + " Type " +   rightExpr.type + " .. Array index is not a primitive integer type\n");
+        		System.out.println("Error: Line " + lineError + ": Variable " + leftId.idname + " Type " +   rightExpr.type + " .. Array index is not a primitive integer type\n");
         		System.exit(1);
 			}
 		
@@ -908,7 +904,8 @@ import java.util.*;
         @Override
         public void caseAFuncallStmtexpr(AFuncallStmtexpr node)
         {
-            inAFuncallStmtexpr(node);
+            node.getId().getLine();
+            
             if(node.getId() != null)
             {
                 node.getId().apply(this);
@@ -918,12 +915,12 @@ import java.util.*;
         	Node n = symtable.lookup(key);
 
         	if(n == null){
-        		System.out.println("Error: Function " + key.name + " has not been declared before\n");
+        		System.out.println("Error: Line " + lineError + ": Function " + key.name + " has not been declared before\n");
         		System.exit(1);
         	}
         	
         	if(n.retvalue == null){
-        		System.out.println("Error: " + key.name + " is not a function\n");
+        		System.out.println("Error: Line " + lineError + ": " + key.name + " is not a function\n");
         		System.exit(1);
         	}
 
@@ -949,13 +946,13 @@ import java.util.*;
                 /**********************************/
                 if(n.params != null){
 	                if(args.size() != n.params.size()){
-	                	System.out.println("Error: Function " + n.name.name + ": different amount of arguments than expected\n");
+	                	System.out.println("Error: Line " + lineError + ": Function " + n.name.name + ": different amount of arguments than expected\n");
 	            		System.exit(1);
 	                }
                 }
                 
                 else if(!args.isEmpty()){					//Function has no parameters, yet it is given arguments 
-                	System.out.println("Error: Function " + n.name.name + ": has no parameters, yet it is given arguments\n");
+                	System.out.println("Error: Line " + lineError + ": Function " + n.name.name + ": has no parameters, yet it is given arguments\n");
             		System.exit(1);
                 }
                 
@@ -964,12 +961,12 @@ import java.util.*;
                 for(int i=0; i<args.size(); i++){
                 	
                 	if(!(n.params.get(i).type.equals(args.get(i).type))){
-                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected");
+                		System.out.println("Error: Line " + lineError + ": Function " + n.name.name + ": argument of different type than expected");
                 		System.exit(1);
                 	}
                 	
                 	if(n.params.get(i).reference == true && (args.get(i).idname == null && args.get(i).dimensions == 0)){           //Not an id or a string
-                		System.out.println("Error: Function " + n.name.name + ": the " + (i+1) + "-(th/st/rd/nd) parameter expected an Lvalue");
+                		System.out.println("Error: Line " + lineError + ": Function " + n.name.name + ": the " + (i+1) + "-(th/st/rd/nd) parameter expected an Lvalue");
                 		System.exit(1);
                 	}
                 	
@@ -985,7 +982,7 @@ import java.util.*;
                 		paramDimension = n.params.get(i).arraylist.size();
                 	
                 	if(paramDimension != argDimension){
-                		System.out.println("Error: Function " + n.name.name + ": argument of different type than expected");
+                		System.out.println("Error: Line " + lineError + ": Function " + n.name.name + ": argument of different type than expected");
                 		System.exit(1);
                 	}
                 	
@@ -1000,7 +997,7 @@ import java.util.*;
 	                		for(int x=0; x<paramDimension; j++, x++){
 
 	                			if(n.params.get(i).arraylist.get(x) != 0 && !myNode.arraylist.get(j).equals(n.params.get(i).arraylist.get(x))){
-					        		System.out.println("Error: Function " + n.name.name + ": expected an array argument of size " + n.params.get(i).arraylist.get(x) + " instead of " + myNode.arraylist.get(j));
+					        		System.out.println("Error: Line " + lineError + ": Function " + n.name.name + ": expected an array argument of size " + n.params.get(i).arraylist.get(x) + " instead of " + myNode.arraylist.get(j));
 					        		System.exit(1);
 	                			}
 	                		}
@@ -1022,8 +1019,6 @@ import java.util.*;
         	
                 quadManager.genQuad("call", "_", "_", n.name.name);
             }
-            
-            outAFuncallStmtexpr(node);
         }
 
 
