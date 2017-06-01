@@ -97,7 +97,6 @@ import java.util.*;
         @Override
 		public void outAProgram(AProgram node){
            symtable.exit();
-           //quadManager.printQuads();
 		}
         
         @Override
@@ -114,7 +113,7 @@ import java.util.*;
 	        Node nd = funcDefinition.removeLast();
 
 	        if(!nd.retvalue.equals("nothing") && returned == false){									//if function is not supposed to return 'nothing', yet returned value is false
-        		System.out.println("Error: Line " + lineError + " Function must have a return statement\n");
+        		System.out.println("Error: Line " + lineError + ": Function must have a return statement\n");
 	        	System.exit(1);
 	        }
 	        
@@ -133,23 +132,23 @@ import java.util.*;
 
 	        int i,j;
 	        
-/*
+
 	        for(i=quadManager.quads.size()-1; !quadManager.quads.get(i).opcode.equals("unit"); i--){;}
 	        
 	        int size = quadManager.quads.size() - i;
 	        
 	        for(j=i, i=0; i<size; i++){
-	        	quadManager.quads.get(j).print();
+	        	
+	        	System.out.printf("%d ", (quadcounter+1)); quadManager.quads.get(j).print();
+	        	
 	        	assemblyManager.createAssembly(quadManager.quads.get(j), ++quadcounter, scopesLocal, quadManager.temps, params);
 	        	quadManager.quads.remove(j);
 	        }
 
-*/
-	        
-
-	        
 	        quadManager.clearTemps();
     	    scopesLocal.removeLast();
+    	    
+	        /********************************************/
     	    
             symtable.alteredExit(lineError);
 	    }
@@ -1013,7 +1012,7 @@ import java.util.*;
                 typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, 0));				//Add the return type on stack
                 
                 String newtemp = quadManager.newtemp(n.retvalue);
-                quadManager.genQuad("par", "RET", newtemp, "_");
+                quadManager.genQuad("par", newtemp, "RET", "_");
                 
                 quadManager.stack.addLast(new IRelement(null, newtemp, new LinkedList<>(), null, null));		//NOT READY
         	

@@ -74,7 +74,7 @@ public class SymbolTable {
 				if(node.scope == scope){
 					
 					if(node.defined != null && node.defined == false){											//Found an undefined function
-						System.out.println("Error: Line " + lineError + " Function " + node.name.name + " never matches with a definiton\n");
+						System.out.println("Error: Line " + lineError + ": Function " + node.name.name + " never matches with a definiton\n");
 	                    System.exit(1);
 					}
 					
