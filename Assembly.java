@@ -317,19 +317,30 @@ public class Assembly{
 		
 	public int findOffsetParam(String a, LinkedList<Param> params){
 	
-		int offset = 4*SizeOfInt;
+		int offset = 4*SizeOfInt;				//Other fields above ebp in AR
+		int numChars=0;
 		
 		for(int i=0; i<params.size(); i++){
 			Param pm = params.get(params.size()-1-i);
+			
 			if(pm.idname.name.equals(a)){
+				if(pm.type.equals("int") && numChars != 0)
+					offset += SizeOfInt-numChars;			//padding
+				
 				return offset;
 			}
 
-			if(pm.type.equals("int")){
+			if(pm.type.equals("int") || pm.reference == true){
+				
+				if(numChars != 0){
+					offset += SizeOfInt-numChars;			//padding
+					numChars = 0;
+				}
 				offset += SizeOfInt;
 			}
 			
 			else if(pm.type.equals("char")){
+				numChars = (numChars+1)%4;
 				offset += SizeOfChar;
 			}
 		}
@@ -337,22 +348,32 @@ public class Assembly{
 		return offset;
 	}
 
-	
 	public int findSizeParams(LinkedList<Param> params){
 		
 		int offset = 0;
+		int numChars=0;
 		
 		for(int i=0; i<params.size(); i++){
 			Param pm = params.get(params.size()-1-i);
 
-			if(pm.type.equals("int")){
+			if(pm.type.equals("int") || pm.reference == true){
+				
+				if(numChars != 0){
+					offset += SizeOfInt-numChars;			//padding
+					numChars = 0;
+				}
+				
 				offset += SizeOfInt;
 			}
 			
 			else if(pm.type.equals("char")){
+				numChars = (numChars+1)%4;
 				offset += SizeOfChar;
 			}
 		}
+		
+		if(numChars != 0)
+			offset += SizeOfInt-numChars;			//padding
 		
 		return offset;
 	}
@@ -361,8 +382,8 @@ public class Assembly{
 		
 		int offset = 0;
 		int curscope = temps.scope;
-		int lastType=0;
-
+		int numChars=0;
+		
 		for(int i=0; i<scopesLocal.get(curscope-1).size(); i++){						//Find out local variables's size
 			Node myNode = scopesLocal.get(curscope-1).get(i);
 			String type = myNode.type;
@@ -375,13 +396,17 @@ public class Assembly{
 			}
 			
 			if(type.equals("int")){
+				
+				if(numChars != 0){
+					offset += SizeOfInt-numChars;			//padding
+					numChars = 0;
+				}
 				offset += SizeOfInt*arraysize;
-				lastType = SizeOfInt;
 			}
 			
 			else if(type.equals("char")){
+				numChars = (numChars+arraysize)%4;
 				offset += SizeOfChar*arraysize;
-				lastType = SizeOfChar;
 			}
 		}
 		
@@ -389,17 +414,24 @@ public class Assembly{
 			Temp temp = temps.temps.get(i);
 
 			if(temp.type.equals("int")){
+				
+				if(numChars != 0){
+					offset += SizeOfInt-numChars;			//padding
+					numChars = 0;
+				}
 				offset += SizeOfInt;
-				lastType = SizeOfInt;
 			}
 			
 			else if(temp.type.equals("char")){
+				numChars = (numChars+1)%4;
 				offset += SizeOfChar;
-				lastType = SizeOfChar;
 			}
 		}
 		
-		return offset-lastType;
+		if(numChars != 0)
+			offset += SizeOfInt-numChars;			//padding
+		
+		return offset-SizeOfInt;
 	}
 	
 	public int findOffset(String a, LinkedList<LinkedList<Node>> scopesLocal, ScopeTemp temps){
@@ -407,6 +439,8 @@ public class Assembly{
 		//Figure out whether is is a local variable or a temporary one
 		//Temporary variables begin with '$'
 		int offset = SizeOfInt;
+		
+		int numChars=0;
 		
 		if(a.charAt(0) == '$'){			//Temporary
 			
@@ -424,10 +458,16 @@ public class Assembly{
 				}
 				
 				if(type.equals("int")){
+
+					if(numChars != 0){
+						offset += SizeOfInt-numChars;			//padding
+						numChars = 0;
+					}
 					offset += SizeOfInt*arraysize;
 				}
 				
 				else if(type.equals("char")){
+					numChars = (numChars+arraysize)%4;
 					offset += SizeOfChar*arraysize;
 				}
 			}
@@ -437,15 +477,25 @@ public class Assembly{
 
 				if(!temp.tempname.equals(a)){
 					if(temp.type.equals("int")){
+						
+						if(numChars != 0){
+							offset += SizeOfInt-numChars;		//padding
+							numChars = 0;
+						}	
 						offset += SizeOfInt;
 					}
 					
 					else if(temp.type.equals("char")){
+						numChars = (numChars+1)%4;
 						offset += SizeOfChar;
 					}
 				}
 				
-				else return offset;
+				else {
+					if(temp.type.equals("int") && numChars != 0)
+						offset += SizeOfInt-numChars;			//padding
+					return offset;
+				}
 			}
 			
 		}
@@ -470,15 +520,25 @@ public class Assembly{
 				
 				if(!nd.name.name.equals(a)){
 					if(nd.type.equals("int")){
+						
+						if(numChars != 0){
+							offset += SizeOfInt-numChars;			//padding
+							numChars = 0;
+						}
 						offset += SizeOfInt*arraysize;
 					}
 					
 					else if(nd.type.equals("char")){
+						numChars = (numChars+arraysize)%4;
 						offset += SizeOfChar*arraysize;
 					}
 				}
 				
-				else return offset;
+				else {
+					if(nd.type.equals("int") && numChars != 0)
+						offset += SizeOfInt-numChars;			//padding
+					return offset;
+				}
 			}
 		}
 		
@@ -681,9 +741,11 @@ public class Assembly{
 	            
 	            
 	        case ":-":
-	        	
-		        writer.append("				jmp "); label("_".concat(quad.dest));
-		        
+				
+	        	load("eax", quad.op1, scopesLocal, temps, params);
+	        	size = 3*SizeOfInt;
+	        	writer.append("				mov DWORD PTR [ebp+".concat(size.toString().concat("], eax\n"))); 
+	
 	            break;
 	            
 	        
@@ -725,13 +787,7 @@ public class Assembly{
 	            
 	        	
 	        case "ret":
-	            /*
-	        	nd = symtable.lookup(new Key(quad.dest));
-	        	scope = nd.scope;
-	        	writer.append("				jmp _".concat(quad.dest));
-	        	writer.append("_".concat(scope.toString()));
-	        	*/
-	        	
+
 	        	writer.append("				ret\n");
 	        	break;
 	        	
