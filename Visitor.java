@@ -264,6 +264,13 @@ import java.util.*;
             
             if(symtable.scope == 0){
             	symtable.insertLibfuncs();
+            	try{
+            		writer.append("_".concat(funname.name.concat("_0\n\n")));
+            	}
+               	catch(Exception e){
+        			System.out.println(e.getMessage());
+        			System.exit(1);
+        		}
             }
             
             
@@ -799,7 +806,7 @@ import java.util.*;
                     myNewTemp = quadManager.places.getFirst();
                 }
                 
-                finalTemp = quadManager.newtemp(value.type);                //!!
+                finalTemp = quadManager.newtemp(value.type);
                 quadManager.genQuad("array", base, myNewTemp, finalTemp);
                 
                 
