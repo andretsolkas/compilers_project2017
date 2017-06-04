@@ -136,7 +136,7 @@ import java.util.*;
 	        for(i=quadManager.quads.size()-1; !quadManager.quads.get(i).opcode.equals("unit"); i--){;}
 	        
 	        int size = quadManager.quads.size() - i;
-	        
+     
 	        for(j=i, i=0; i<size; i++){
 	        	
 	        	System.out.printf("%d ", (quadcounter+1)); quadManager.quads.get(j).print();
@@ -265,7 +265,8 @@ import java.util.*;
             if(symtable.scope == 0){
             	symtable.insertLibfuncs();
             	try{
-            		writer.append("_".concat(funname.name.concat("_0\n\n")));
+            		writer.append("_".concat(funname.name.concat("_0\n")));
+            		assemblyManager.main = new String(funname.name);
             	}
                	catch(Exception e){
         			System.out.println(e.getMessage());
@@ -688,7 +689,7 @@ import java.util.*;
         public void outAModStmtexpr(AModStmtexpr node)
         {
         	typeCheckerExpr("Mod");
-        	quadGenExpr("mod");
+        	quadGenExpr("%");
         }
         /*******************************************************/
         
@@ -1018,10 +1019,13 @@ import java.util.*;
 
                 typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, 0));				//Add the return type on stack
                 
-                String newtemp = quadManager.newtemp(n.retvalue);
-                quadManager.genQuad("par", newtemp, "RET", "_");
+                if(!n.retvalue.equals("nothing")){
+	                String newtemp = quadManager.newtemp(n.retvalue);
+	                quadManager.genQuad("par", newtemp, "RET", "_");
+	                quadManager.stack.addLast(new IRelement(null, newtemp, new LinkedList<>(), null, null));
+                }
                 
-                quadManager.stack.addLast(new IRelement(null, newtemp, new LinkedList<>(), null, null));		//NOT READY
+                else quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));		//NOT READY
         	
                 quadManager.genQuad("call", "_", "_", n.name.name);
             }
