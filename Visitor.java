@@ -809,7 +809,8 @@ import java.util.*;
                 
                 finalTemp = quadManager.newtemp(value.type);
                 quadManager.genQuad("array", base, myNewTemp, finalTemp);
-                
+		String str = quadManager.temps.temps.getLast().str;
+		str = str.concat("*");
                 
                 if(value.indices.size() == value.dimensions){
                     finalTemp = "[".concat(finalTemp.concat("]"));
