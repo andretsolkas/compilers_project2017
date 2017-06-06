@@ -61,12 +61,12 @@ public class QuadManager{
 			stack.get(i).dest = new String(nextquad.toString());
 		}
 	}
-	
+
 	public void clearTemps(){
 		temps.temps = new LinkedList<Temp>();
 	}
-	
-	
+
+
 	public void printQuads(){
 
 		for(int i=0; i<quads.size(); i++){
@@ -75,9 +75,11 @@ public class QuadManager{
 			quads.get(i).print();
 		}
 	}
+
 	
 	public void printTemps(){
 		
 		temps.print();
 	}
+	
 }

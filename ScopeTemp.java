@@ -16,6 +16,7 @@ public class ScopeTemp{
 	public Temp findElement(String a){
 		
 		for(int i=0; i<temps.size(); i++){
+			
 			if(temps.get(i).tempname.equals(a)){
 				return temps.get(i);
 			}

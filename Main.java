@@ -25,7 +25,7 @@ public class Main{
 		System.exit(1);
 	}
 	
-		File file = new File("myAssembly.txt");
+		File file = new File("myAssembly.s");
 		
 		try{
 			file.createNewFile();
