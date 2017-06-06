@@ -217,9 +217,15 @@ public class Assembly{
 			
 
 			else if(a.charAt(0) == '$'){										//temporary variable -- by value
-				Integer offset = findOffset(a, scopesLocal, temps);
-				writer.append("		lea ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
-
+				
+				if(a.charAt(a.length() == '*'){			//Then temp holds already a reference
+					writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
+				}
+				
+				else{
+					Integer offset = findOffset(a, scopesLocal, temps);
+					writer.append("		lea ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
+				}
 			}
 				
 			else{
