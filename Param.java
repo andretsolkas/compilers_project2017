@@ -7,6 +7,7 @@ public class Param {
 	Key idname;
 	boolean reference;
 	LinkedList <Integer> arraylist;
+	int offset;
 	
 	
 	public Param(String tp, Key name, boolean ref, LinkedList <Integer> arlist)
@@ -30,11 +31,17 @@ public class Param {
 			}
 		}
 		else arraylist = null;
+	
+	
+		offset = 0;
+	
 	}
 	
 	public void print(){
 		int i;
 		System.out.printf("Id: %s, ", idname.name);
+		
+		System.out.printf("Offset: %d ", offset);
 		
 		System.out.printf("Type: %s", type);
 		

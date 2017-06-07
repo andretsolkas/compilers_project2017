@@ -8,6 +8,15 @@ public class SymbolTable {
 	Hashtable <Key, Node> hashtable;
 	LinkedList <Node> list;
 
+	int SizeOfInt = 4;
+	int SizeOfChar = 1;
+
+	int paramoffset = 3*SizeOfInt;
+	
+	boolean param;
+	
+	LinkedList<Struct> offsets = new LinkedList<Struct>();
+	
 	public SymbolTable(){
 		hashtable = new Hashtable <>();
 		list = new LinkedList <>();
@@ -24,20 +33,69 @@ public class SymbolTable {
 		
 		Node newNode, node = hashtable.get(name);
 
+		int ofs;
+		if(type != null){
+			
+			if(param != true){			//not a function
+				findOffset(type, arraylist, ref);
+				ofs = offsets.getLast().offset;
+			}
+			else{
+				paramoffset += 4;
+				ofs = paramoffset;
+			}
+		}
+		else ofs = -1;
+			
 		if(node == null){                                                       //id 's first appearance in the hash table
-			newNode = new Node(name, type, scope, ref, params, arraylist, retvalue, defined, null);
+			newNode = new Node(name, type, scope, ref, params, arraylist, retvalue, defined, ofs, param, null);
 			hashtable.put(name, newNode);
 		}
 		
 		else{                                                                   //id will shadow an already existing one
-			newNode = new Node(name, type, scope, ref, params, arraylist, retvalue, defined, node);
+			newNode = new Node(name, type, scope, ref, params, arraylist, retvalue, defined, ofs, param, node);
 			hashtable.replace(name, newNode);
 		}
 		
 		list.addLast(newNode);
-		//hashtable.get(name).print();
+		hashtable.get(name).print();
 	}
 	
+	
+	private void findOffset(String type, LinkedList<Integer> arraylist, Boolean reference){
+		
+		Struct struct = offsets.getLast();
+		
+		int arraysize = 1;
+		if(arraylist != null){
+			for(int j=0; j<arraylist.size(); j++){
+				arraysize *= arraylist.get(j);								//None of these values will be zero
+			}
+		}
+
+		if(reference == true){
+			if(struct.numChars != 0){
+				struct.offset += SizeOfInt-struct.numChars;			//padding
+				struct.numChars = 0;
+			}
+			struct.offset += SizeOfInt;
+		}
+		else if(type.equals("int")){
+			
+			if(struct.numChars != 0){
+				struct.offset += SizeOfInt-struct.numChars;			//padding
+				struct.numChars = 0;
+			}
+			struct.offset += SizeOfInt*arraysize;
+		}
+		
+		else if(type.equals("char")){
+			struct.numChars = (struct.numChars+arraysize)%4;
+			struct.offset += SizeOfChar*arraysize;
+		}
+		
+	}
+
 	
 	public Node lookup(Key name){
 		return hashtable.get(name);

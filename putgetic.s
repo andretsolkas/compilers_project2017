@@ -41,7 +41,7 @@ _putc_0:
     ret
 
 ###################################
-    
+
 _geti_0:
 
     push ebp
@@ -76,12 +76,12 @@ _geti_0:
 
 
 ###################################
-    
+
 _getc_0:
 
     push ebp
     mov ebp, esp
-    sub esp, 1
+    sub esp, 4
 
     lea esi, DWORD PTR [ebp-1]                  #Load Local Variable's Address
     push esi
@@ -97,7 +97,7 @@ _getc_0:
     mov BYTE PTR [esi], al
 
 
-    movzx eax, BYTE PTR al
+    movzx eax, BYTE PTR [ebp-1]
     push eax
 
     mov eax, OFFSET FLAT:fmt_gc

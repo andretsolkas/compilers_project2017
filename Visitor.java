@@ -11,13 +11,14 @@ import java.util.*;
 		
 		SymbolTable symtable;
 		QuadManager quadManager;
-		
-		LinkedList<LinkedList<Node>> scopesLocal;
 
 		int quadcounter;
 		int lineError;
 		int dataTypeMode;														//0 if parameter, 1 if return_value
 		int headerMode;															//0 if fun definition, 1 if fun declaration
+		
+		int SizeOfInt = 4;
+		int SizeOfChar = 1;
 		
 		LinkedList<TypeCheck> typeCheck = new LinkedList<>();					//Using it as a stack
 		LinkedList<Node> funcDefinition = new LinkedList<>();					//Using it as a stack
@@ -41,8 +42,6 @@ import java.util.*;
 			symtable = new SymbolTable();
 			quadManager = new QuadManager(symtable);
 			assemblyManager = new Assembly(wr, symtable);
-			
-			scopesLocal = new LinkedList<>();
 			
 			quadcounter = 0;
 			lineError = 0;
@@ -103,7 +102,7 @@ import java.util.*;
 		public void inAFuncdefLocalDef(AFuncdefLocalDef node)
 	    {
 	        headerMode = 0;
-	        scopesLocal.addLast(new LinkedList<Node>());
+	        symtable.offsets.addLast(new Struct(0,0));
 	        symtable.enter();
 	    }
 
@@ -125,13 +124,38 @@ import java.util.*;
 	        
 	        
 	        /*****************ASSEMBLY*******************/
+
+	        symtable.offsets.removeLast();
 	        
 	        LinkedList<Param> params = nd.params;
 	
+			int offset = 3*SizeOfInt;							//Skip other fields above ebp in AR
+			
+			if(params != null){
+				//System.out.println("\n\n");
+				int x;
+				for(int i=0; i<nd.params.size(); i++){
+					x = params.size()-1-i;
+					offset += SizeOfInt;
+					params.get(x).offset = offset;
+					//params.get(x).print();
+				}
+				//System.out.println("\n\n");
+			}
+
+	        assemblyManager.parsize = offset-3*SizeOfInt;
+	        
+	        assemblyManager.varsize = quadManager.offset;
+	        if(quadManager.numChars != 0){
+	        	assemblyManager.varsize += SizeOfInt-quadManager.numChars;			//padding
+	        }
+
 	        assemblyManager.np = quadManager.temps.scope;
 
+	        //System.out.println("paramsize = " + assemblyManager.parsize);
+	        //System.out.println("loc Varsize " + assemblyManager.varsize);
+
 	        int i,j;
-	        
 
 	        for(i=quadManager.quads.size()-1; !quadManager.quads.get(i).opcode.equals("unit"); i--){;}
 	        
@@ -140,13 +164,12 @@ import java.util.*;
 	        for(j=i, i=0; i<size; i++){
 	        	
 	        	System.out.printf("%d ", (quadcounter+1)); quadManager.quads.get(j).print();
-	        	
-	        	assemblyManager.createAssembly(quadManager.quads.get(j), ++quadcounter, scopesLocal, quadManager.temps, params);
+	        	assemblyManager.createAssembly(quadManager.quads.get(j), ++quadcounter, quadManager.temps, params);
 	        	quadManager.quads.remove(j);
+
 	        }
 
 	        quadManager.clearTemps();
-    	    scopesLocal.removeLast();
     	    
 	        /********************************************/
     	    
@@ -181,7 +204,6 @@ import java.util.*;
                 }
                 
 	    		symtable.insert(key, datatype, false, arraylist, null, null, null);
-	    		scopesLocal.get(symtable.scope-1).addLast(symtable.lookup(key));
 	    	}
 	    }
 
@@ -288,6 +310,7 @@ import java.util.*;
                     System.exit(0);
                 }
                 
+                symtable.param = true;
                 for(int i=0; i<idlist.size(); i++){															//Insert all parameter-variables into the symbol table
 
                     key = idlist.get(i);
@@ -297,13 +320,17 @@ import java.util.*;
                             System.out.println("Error: Line " + lineError + ": variable " + key.name + " has been declared before in this scope\n");
                             System.exit(0);
                         }
+                        
                         symtable.insert(key, datatype, reference, arraylist, null, null, null);
+
                     }
 
                     param = new Param(datatype, key, reference, arraylist);												//Add a parameter into the parameter list 
                     params.add(param);
             	
             	}
+                symtable.param = false;
+            	symtable.paramoffset = 3*SizeOfInt;
                 
             	arraylist = new LinkedList<>();
                 idlist = new LinkedList<>();			 																//Initialize id list 
@@ -449,6 +476,8 @@ import java.util.*;
         	int i;
         	
         	quadManager.temps.scope = symtable.scope;
+        	quadManager.numChars = symtable.offsets.getLast().numChars;
+        	quadManager.offset = symtable.offsets.getLast().offset;
         	
          	quadManager.genQuad("unit", funcDefinition.getLast().name.name, "_", "_");  
          	
@@ -775,16 +804,16 @@ import java.util.*;
                     
                         String temp = n.arraylist.getLast().toString();
                         factors.addFirst(temp);
-                    
+          
                         for(int i=n.arraylist.size()-1; i>1; i--){
-
+ 
                             String newVar = quadManager.newtemp("int");
                             factors.addFirst(newVar);
 
-                            quadManager.genQuad("*", n.arraylist.get(-i).toString(), temp, newVar);
+                            quadManager.genQuad("*", n.arraylist.get(i).toString(), temp, newVar);
                             temp = newVar;
                         }
-                    
+
                         for(int i=0; i<quadManager.places.size()-1; i++){
                             String myTemp = quadManager.newtemp("int");
                             quadManager.genQuad("*", quadManager.places.get(i), factors.get(i), myTemp);
@@ -807,11 +836,10 @@ import java.util.*;
                     myNewTemp = quadManager.places.getFirst();
                 }
                 
-                finalTemp = quadManager.newtemp(value.type);
+                finalTemp = quadManager.newtemp("int").concat("*");
                 quadManager.genQuad("array", base, myNewTemp, finalTemp);
-		String str = quadManager.temps.temps.getLast().str;
-		str = str.concat("*");
-                
+        		quadManager.temps.temps.getLast().tempname = finalTemp;
+
                 if(value.indices.size() == value.dimensions){
                     finalTemp = "[".concat(finalTemp.concat("]"));
                 }
@@ -1100,6 +1128,7 @@ import java.util.*;
         }
 
 /**************************************************************/
+        
         @Override
         public void outAEqualCond(AEqualCond node)
         {

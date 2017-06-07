@@ -4,10 +4,15 @@ import java.util.LinkedList;
 public class QuadManager{
 
 	int quadnum = 1;
-	Integer temp = 0;;
+	Integer temp = 0;
 	
 	ScopeTemp temps;
 	SymbolTable symtable;
+	
+	int offset;
+	int numChars;
+	int SizeOfInt = 4;
+	int SizeOfChar = 1;
 	
 	LinkedList<IRelement> stack = new LinkedList<>();
 	LinkedList<String> places = new LinkedList<>();             //It will never be null. 
@@ -39,7 +44,25 @@ public class QuadManager{
 		String str, tmp = "$";
 		
 		str = tmp.concat(temp.toString());
-		temps.temps.addLast(new Temp(str, type));
+	
+		if(type.equals("int")){
+			
+			if(numChars != 0){
+				offset += SizeOfInt-numChars;		//padding
+				numChars = 0;
+			}	
+			offset += SizeOfInt;
+		}
+		
+		else if(type.equals("char")){
+			numChars = (numChars+1)%4;
+			offset += SizeOfChar;
+		}
+		
+		
+		
+		
+		temps.temps.addLast(new Temp(str, type, offset));
 	
 		return str;
 	}

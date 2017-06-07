@@ -11,11 +11,13 @@ public class Node {
 	LinkedList <Integer> arraylist;						//In case it's an array
 	String retvalue;									//Return Value
 	Boolean defined;									//In case of function - True if it's been defined, false if not
-
+	boolean par;
+	int offset;
+	
 	Node prevNode;
 
 	
-	public Node(Key idName, String tp, int sp, Boolean ref, LinkedList <Param> pm, LinkedList <Integer> arlist, String ret, Boolean def, Node prevnode){
+	public Node(Key idName, String tp, int sp, Boolean ref, LinkedList <Param> pm, LinkedList <Integer> arlist, String ret, Boolean def, int of, boolean param, Node prevnode){
 		
 		name = new Key(idName.name);
 		
@@ -58,6 +60,9 @@ public class Node {
 		}
 		else defined = null;
 		
+		offset = of;
+		
+		par = param;
 		prevNode = prevnode;
 		
 	}
@@ -76,6 +81,10 @@ public class Node {
 		System.out.println("Return Value = " + retvalue);
 		
 		System.out.println("Defined = " + defined);
+		
+		System.out.println("Offset = " + offset);
+		
+		System.out.println("Is Param = " + par);
 		
 		int i;
 		
