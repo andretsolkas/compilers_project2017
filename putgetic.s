@@ -10,7 +10,7 @@ _puti_0:
         mov eax, OFFSET FLAT:fmt_pi             # Put the argument of printf() on the stack
         push eax
 
-        call printf                             # Has two parameters
+        call printf                             # Has two 'parameters'
         add esp, 8                              # Clean parameters
 
 
@@ -32,13 +32,37 @@ _putc_0:
     mov eax, OFFSET FLAT:fmt_pc                 # Put the argument of printf() on the stack
     push eax
 
-    call printf                                 # Has two parameters
+    call printf                                 # Has two 'parameters'
     add esp, 8                                  # Clean parameters
 
 
     mov esp, ebp
     pop ebp
     ret
+
+
+    ###################################
+
+_puts_0:
+
+    push ebp
+    mov ebp, esp
+
+
+    mov ebx, [ebp+12]                           # puts parameter - skip EPC and RV address
+    push ebx
+
+    mov eax, OFFSET FLAT:fmt_ps                 # Put the argument of printf() on the stack
+    push eax
+
+    call printf                                 # Has two 'parameters'
+    add esp, 8                                  # Clean parameters
+
+
+    mov esp, ebp
+    pop ebp
+    ret
+
 
 ###################################
 
@@ -115,7 +139,7 @@ _getc_0:
 .data
         fmt_pi: .asciz  "Output: %d\n"
         fmt_pc: .asciz  "Output: %c\n"
-        #puts
+        fmt_ps: .asciz	"%s"
         fmt_gi: .asciz  "Your integer input is %d\n"
         fmt_gc: .asciz  "Your char input is %c\n"
         #gets

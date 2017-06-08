@@ -39,7 +39,7 @@ public class QuadManager{
 	}
 	
 	
-	public String newtemp(String type){
+	public String newtemp(String type, int len, String strname){
 		temp++;
 		String str, tmp = "$";
 		
@@ -55,14 +55,19 @@ public class QuadManager{
 		}
 		
 		else if(type.equals("char")){
-			numChars = (numChars+1)%4;
-			offset += SizeOfChar;
+			
+			if(len != 0){							//String temp
+				numChars = (numChars+len)%4;
+				offset += SizeOfChar*len;
+			}
+			
+			else{
+				numChars = (numChars+1)%4;
+				offset += SizeOfChar;
+			}
 		}
-		
-		
-		
-		
-		temps.temps.addLast(new Temp(str, type, offset));
+
+		temps.temps.addLast(new Temp(str, type, offset, len, strname));
 	
 		return str;
 	}

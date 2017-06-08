@@ -224,21 +224,18 @@ public class Assembly{
 				
 				load(R, mystr, temps, params);
 			}
-			
-			else if(a.charAt(0) == '"'){										// a is a string
-				writer.append("		lea ".concat(R).concat(", BYTE PTR a			#Load Address\n"));
-			}
-			
 
 			else if(a.charAt(0) == '$'){										//temporary variable -- by value
 				
 				Temp tmp = temps.findElement(a);
 				Integer offset = tmp.offset;
-
-				if(a.endsWith("*")){			//Then temp holds already a reference
-
+				
+				if(tmp.strname != null)				//It's a string
+					writer.append("		lea ".concat(R).concat(", RWORD PTR [ebp-".concat(offset.toString().concat("]			#Load String's Address\n"))));
+				
+				else if(a.endsWith("*"))			//Then temp holds already a reference
 					writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
-				}
+				
 				else writer.append("		lea ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
 			}
 				
@@ -598,9 +595,52 @@ public class Assembly{
 	        	
 	        	else{
 
-	        		loadAddr("esi", quad.op1, temps, params);
-	        		writer.append("		push esi				#Push Address\n");
-	        	}        	
+	        		tmp = temps.findElement(quad.op1);
+	        		if(tmp != null && tmp.strname != null){			//It's a string
+	        			
+	        			Integer offset = tmp.offset;
+	        			String value;
+	        			
+	        			for(int x=1; x<tmp.strlen; x++){
+	        				
+	        				if(tmp.strname.charAt(x) == '\\'){
+	        					
+	        					if(tmp.strname.charAt(x+1) == 'x'){
+	        						value = tmp.strname.substring(x, x+3);
+	        						
+	        						value = "\'".concat(value.concat("\'"));
+	        						value = mySloppyFun(value);
+	        						x += 3;
+	        					}
+	        					
+	        					else{ 
+	        						value = new String(tmp.strname.substring(x, x+2));
+	        						value = "\'".concat(value.concat("\'"));
+	        						value = mySloppyFun(value);
+	        						x++;
+	        					}
+	        				}
+	        				
+	        				else{
+		        				Integer n = (int)tmp.strname.charAt(x);	
+		        				value = n.toString();
+	        				}
+	        				
+	        				writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], ".concat(value.concat("\n")))));
+	        				offset -= 1;
+	        			}
+	        		
+	        			writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], 0\n")));
+	        			offset = tmp.offset;
+	        			writer.append("		lea  esi, DWORD PTR [ebp-".concat(offset.toString().concat("]\n")));
+	        			writer.append("		push esi				#Push String Address\n");
+	        		}
+	        		
+	        		else{
+		        		loadAddr("esi", quad.op1, temps, params);
+		        		writer.append("		push esi				#Push Address\n");
+	        		}       
+	        	} 	
 
 	        	par = false;
 	        	
