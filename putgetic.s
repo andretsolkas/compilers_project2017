@@ -136,8 +136,57 @@ _getc_0:
     ret
 ###################################
 
+_gets_0:
+
+
+
+
+
+
+
+
+
+
+###################################
+_strlen_0:
+		
+		push ebp
+		mov ebp, esp
+		sub esp, 8
+
+		mov DWORD PTR [ebp-4], 0
+
+_len_3:	mov eax, DWORD PTR [ebp-4]
+		mov ecx, DWORD PTR [ebp+12]
+		add eax, ecx
+		mov DWORD PTR [ebp-8], eax
+
+		mov edi, DWORD PTR [ebp-8]
+		movzx eax, BYTE PTR [edi]
+		mov edx, 0
+		cmp eax, edx
+		jne _len_6
+
+		jmp _len_9
+
+_len_6:	mov eax, DWORD PTR [ebp-4]
+		add eax, 1
+		mov DWORD PTR [ebp-4], eax
+
+		jmp _len_3
+
+_len_9:	mov eax, DWORD PTR [ebp-4]
+		mov esi, DWORD PTR [ebp+8]
+		mov DWORD PTR [esi], eax
+
+		mov esp, ebp
+		pop ebp
+		ret
+
+###################################
+
 .data
-        fmt_pi: .asciz  "Output: %d\n"
+        fmt_pi: .asciz  "%d\n"
         fmt_pc: .asciz  "Output: %c\n"
         fmt_ps: .asciz	"%s"
         fmt_gi: .asciz  "Your integer input is %d\n"

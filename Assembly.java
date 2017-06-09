@@ -55,8 +55,7 @@ public class Assembly{
 		Integer size = 2*SizeOfInt;
 		String of = size.toString(); 
 		int nnp = np-1;
-		
-		System.out.println("\nnp: " + nnp + " nx: " + nx);
+
 		try{
 			if(nnp < nx){
 				writer.append("		push ebp			#Update Access Link\n");
@@ -98,14 +97,13 @@ public class Assembly{
 				str[a.length()-2] = '\0';
 				
 				String mystr = new String(str);
-				
 				load("edi", mystr, temps, params);
 
 				Temp tmp = temps.findElement(mystr.trim());
 				
 				if(tmp.type.equals("int"))
 					writer.append("		mov ".concat(R).concat(", DWORD PTR [edi]\n"));
-				else writer.append("		mov al, BYTE PTR [edi]\n");
+				else writer.append("		movzx ".concat(R).concat(", BYTE PTR [edi]\n"));
 
 			}
 			
@@ -113,10 +111,7 @@ public class Assembly{
 			else if(a.charAt(0) == '\''){								// a is a character
 
 				String str = mySloppyFun(a);
-
-				if(par == true)
-					writer.append("		movzx ".concat(R).concat(", BYTE PTR ").concat(str).concat("			#Load Value\n"));
-				else writer.append("		mov al".concat(", BYTE PTR ").concat(str).concat("			#Load Value\n"));
+				writer.append("		mov ".concat(R).concat(", ").concat(str).concat("			#Load Value\n"));
 			}
 			
 
@@ -125,18 +120,17 @@ public class Assembly{
 				Temp tmp = temps.findElement(a);
 				Integer offset = tmp.offset;
 				
-				if(tmp.type.equals("int"))
+				if(tmp.type.equals("int") || tmp.tempname.endsWith("*"))
 					writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
 
-				else if(par == true)
+				else
 					writer.append("		movzx ".concat(R).concat(", BYTE PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
 				
-				else writer.append("		mov al".concat(", BYTE PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
-			}
+                }
 				
 			else{	
 					Node myNode = symtable.lookup(new Key(a));	//It won't be null
-					Integer offset = myNode.offset;;
+					Integer offset = myNode.offset;
 
 					if(myNode.scope == temps.scope){		//LOCAL
 		
@@ -147,10 +141,8 @@ public class Assembly{
 								if(myNode.type.equals("int"))
 									writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp+".concat(offset.toString().concat("]			#Load Value\n"))));
 								
-								else if(par == true)
+								else
 									writer.append("		movzx ".concat(R).concat(", BYTE PTR [ebp+".concat(offset.toString().concat("]			#Load Value\n"))));
-								
-								else writer.append("		mov al".concat(", BYTE PTR [ebp+".concat(offset.toString().concat("]			#Load Value\n"))));
 							}
 						
 							else{																	//LOCAL PARAMETER - BY REFERENCE
@@ -164,10 +156,8 @@ public class Assembly{
 							if(myNode.type.equals("int"))
 								writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
 							
-							else if(par == true)
+							else
 								writer.append("		movzx ".concat(R).concat(", BYTE PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
-							
-							else writer.append("		mov al".concat(", BYTE PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
 						}
 					}
 					else{									//NON LOCAL
@@ -180,10 +170,8 @@ public class Assembly{
 								if(myNode.type.equals("int"))
 									writer.append("		mov ".concat(R).concat(", DWORD PTR [esi+".concat(offset.toString().concat("]			#Load Value\n"))));
 								
-								else if(par == true)
-									writer.append("		movzx ".concat(R).concat(", BYTE PTR [esi+".concat(offset.toString().concat("]			#Load Value\n"))));
-								
-								else writer.append("		mov al".concat(", BYTE PTR [esi+".concat(offset.toString().concat("]			#Load Value\n"))));
+								else
+									writer.append("		movzx ".concat(R).concat(", BYTE PTR [esi+".concat(offset.toString().concat("]			#Load Value\n"))));					
 							}
 						
 							else{																	//LOCAL PARAMETER - BY REFERENCE
@@ -196,10 +184,8 @@ public class Assembly{
 							if(myNode.type.equals("int"))
 								writer.append("		mov ".concat(R).concat(", DWORD PTR [esi-".concat(offset.toString().concat("]			#Load Value\n"))));
 							
-							else if(par == true)
+							else 
 								writer.append("		movzx ".concat(R).concat(", BYTE PTR [esi-".concat(offset.toString().concat("]			#Load Value\n"))));
-							
-							else writer.append("		mov al".concat(", BYTE PTR [esi-".concat(offset.toString().concat("]			#Load Value\n"))));
 						}
 					}
 			}
@@ -301,7 +287,7 @@ public class Assembly{
 				
 				if(tmp.type.equals("int"))
 					writer.append("		mov DWORD PTR [edi], ".concat(R).concat("\n"));
-				else writer.append("		mov BYTE PTR [edi], al\n");
+				else writer.append("		mov BYTE PTR [edi], ".concat(R.substring(1, 2).concat("l")).concat("\n"));
 			}
 			
 
@@ -310,10 +296,10 @@ public class Assembly{
 				Temp tmp = temps.findElement(a);
 				Integer offset = tmp.offset;
 				
-				if(tmp.type.equals("int")){
+				if(tmp.type.equals("int") || tmp.tempname.endsWith("*")){
 					writer.append("		mov DWORD PTR [ebp-".concat(offset.toString().concat("], ".concat(R).concat("			#Store Value\n"))));
 				}
-				else writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], al".concat("			#Store Value\n"))));
+				else writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], ".concat(R.substring(1, 2).concat("l")).concat("			#Store Value\n"))));
 			}
 				
 			else{
@@ -328,7 +314,7 @@ public class Assembly{
 									
 								if(myNode.type.equals("int"))
 									writer.append("		mov DWORD PTR [ebp+".concat(offset.toString().concat("], ".concat(R).concat("			#Store Value\n"))));
-								else writer.append("		mov BYTE PTR [ebp+".concat(offset.toString().concat("], al".concat("			#Store Value\n"))));
+								else writer.append("		mov BYTE PTR [ebp+".concat(offset.toString().concat("], ".concat(R.substring(1, 2).concat("l")).concat("			#Store Value\n"))));
 							}
 						
 							else{																	//LOCAL PARAMETER - BY REFERENCE
@@ -340,7 +326,7 @@ public class Assembly{
 						else{																		//LOCAL VARIABLE			
 							if(myNode.type.equals("int"))
 								writer.append("		mov DWORD PTR [ebp-".concat(offset.toString().concat("], ".concat(R).concat("			#Store Value\n"))));
-							else writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], al".concat("			#Store Value\n"))));
+							else writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], ".concat(R.substring(1, 2).concat("l")).concat("			#Store Value\n"))));
 						}
 					}
 					else{									//NON LOCAL
@@ -352,7 +338,7 @@ public class Assembly{
 									
 								if(myNode.type.equals("int"))
 									writer.append("		mov DWORD PTR [esi+".concat(offset.toString().concat("], ".concat(R).concat("			#Store Value\n"))));
-								else writer.append("		mov BYTE PTR [esi+".concat(offset.toString().concat("], al".concat("			#Store Value\n"))));
+								else writer.append("		mov BYTE PTR [esi+".concat(offset.toString().concat("], ".concat(R.substring(1, 2).concat("l")).concat("			#Store Value\n"))));
 							}
 						
 							else{																	//LOCAL PARAMETER - BY REFERENCE
@@ -363,7 +349,7 @@ public class Assembly{
 						else{																		//NON LOCAL VARIABLE
 							if(myNode.type.equals("int"))
 								writer.append("		mov DWORD PTR [esi-".concat(offset.toString().concat("], ".concat(R).concat("			#Store Value\n"))));
-							else writer.append("		mov BYTE PTR [esi-".concat(offset.toString().concat("], al".concat("			#Store Value\n"))));
+							else writer.append("		mov BYTE PTR [esi-".concat(offset.toString().concat("], ".concat(R.substring(1, 2).concat("l")).concat("			#Store Value\n"))));
 						}
 					}
 			}
@@ -372,25 +358,7 @@ public class Assembly{
 			System.out.println(e.getMessage());
 			System.exit(1);
 		}
-	}
-		
-
-/*
-	private Param findParam(String a, LinkedList<Param> params){
-		
-		if(params!=null){
-			Param pm;
-			for(int i=0; i<params.size(); i++){
-				pm = params.get(i);
-				if(pm.idname.name.equals(a))
-					return pm;
-			}
-		}
-		return null;
-	}
-*/	
-	
-	
+	}	
 	
 	/**************************************************************************************************************************************/
 	public void createAssembly(Quad quad, Integer i, ScopeTemp temps, LinkedList<Param> params){
@@ -400,7 +368,8 @@ public class Assembly{
 			Integer scope;
 			Node nd;
 			String type;
-
+            Integer size;
+            
 				writer.append("\n_".concat(i.toString().concat(":")));
 			
 			
@@ -415,23 +384,58 @@ public class Assembly{
 	            
 	
 	        case "array":
-        	
-        		Temp tmp = temps.findElement(quad.dest);
-        		type = tmp.type;
-	        	
-	        	Integer size;
-	        	if(type.equals("int"))
-	        		size = SizeOfInt;
-	        	else size = SizeOfChar;
+                
+                Temp tmp = temps.findElement(quad.dest);
+	        	if(tmp.strname != null){            //It's a string
+                    String value;
+                    int x = Integer.parseInt(quad.op2)+1;
+                    if(tmp.strname.charAt(x) == '\\'){
 
-	        	
-	    		load("eax", quad.op2, temps, params);
-	        	writer.append("		mov ecx, ".concat(size.toString().concat("\n")));
-	        	writer.append("		imul ecx\n");
-	        	loadAddr("ecx", quad.op1, temps, params);
-	        	writer.append("		add eax, ecx\n");
-	        	store("eax", quad.dest, temps, params);
+                        if(tmp.strname.charAt(x+1) == 'x'){
+                            value = tmp.strname.substring(x, x+3);
 
+                            value = "\'".concat(value.concat("\'"));
+                            value = mySloppyFun(value);
+                        }
+
+                        else{ 
+                            value = tmp.strname.substring(x, x+2);
+                            value = "\'".concat(value.concat("\'"));
+                            value = mySloppyFun(value);
+                        }
+                    }
+
+                    else{
+                        Integer n = (int)tmp.strname.charAt(x);	
+                        value = n.toString();
+                    }
+                    Integer offset = tmp.offset;
+                    writer.append("		mov BYTE PTR [ebp-".concat(offset.toString()).concat("], ".concat(value.concat("\n"))));
+                }
+                
+                else{
+                    type = "";
+                    nd = symtable.lookup(new Key(quad.op1));
+                    if(nd != null)
+                        type = nd.type;
+                    else{
+                        tmp = temps.findElement(quad.op1);
+                        if(tmp != null){
+                            type = tmp.type;
+                        }    
+                    }
+
+                    if(type.equals("int"))
+                        size = SizeOfInt;
+                    else size = SizeOfChar;
+
+                    load("eax", quad.op2, temps, params);
+                    writer.append("		mov ecx, ".concat(size.toString().concat("\n")));
+                    writer.append("		imul ecx\n");
+                    loadAddr("ecx", quad.op1, temps, params);
+                    writer.append("		add eax, ecx\n");
+                    store("eax", quad.dest, temps, params);
+                }
 	            break;
 	
 	            
@@ -575,7 +579,7 @@ public class Assembly{
 	        	
 	        	if(nd.retvalue.equals("int"))
 	        		writer.append("		mov DWORD PTR [esi], eax\n");
-	        	else	writer.append("		mov BYTE PTR [esi], al\n");
+	        	else	writer.append("		mov BYTE PTR [esi], eax\n");
 	            
 	        	break;
 	            
@@ -736,11 +740,6 @@ public class Assembly{
 		}
 	
 	}
-	
-	
-	
-	
-	
 	
 	/****************************************************/
 	

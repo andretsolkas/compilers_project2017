@@ -81,7 +81,7 @@ import java.util.*;
 			TypeCheck opRight = typeCheck.removeLast();				//opLeft and opRight must be primitive integers
 			TypeCheck opLeft = typeCheck.removeLast();
 
-			if(!(opLeft.type.equals("int") && opRight.type.equals("int")) || 											//Not Both Integers OR
+			if((!(opLeft.type.equals("int") && opRight.type.equals("int")) && !(opLeft.type.equals("char") && opRight.type.equals("char"))) || 											//Not Both Integers OR
 				(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions))) ||	//opLeft not primitive OR
 				(opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions))))	//opRight not primitive
 			{
@@ -152,9 +152,7 @@ import java.util.*;
 
 	        assemblyManager.np = quadManager.temps.scope;
 
-	        System.out.println("loc Varsize " + assemblyManager.varsize);
-
-	        int i,j;
+            int i,j;
 	        Quad quad;
 	        LinkedList<Quad> parquads = new LinkedList<Quad>();
 	        
@@ -861,11 +859,14 @@ import java.util.*;
                     myNewTemp = quadManager.places.getFirst();
                 }
                 
-                finalTemp = quadManager.newtemp("int", 0 , null).concat("*");
+                if(base.startsWith("\""))       //it's a string
+                    finalTemp = quadManager.newtemp("char", base.length()-1, base).concat("*");
+                else finalTemp = quadManager.newtemp(id.type, -1, null).concat("*");
+                
                 quadManager.genQuad("array", base, myNewTemp, finalTemp);
         		quadManager.temps.temps.getLast().tempname = finalTemp;
-
-                if(value.indices.size() == value.dimensions){
+                
+                if(value.indices.size() == value.dimensions && !base.startsWith("\"")){
                     finalTemp = "[".concat(finalTemp.concat("]"));
                 }
                 quadManager.stack.addLast(new IRelement(value.type, finalTemp, null, null, null));
@@ -1232,18 +1233,5 @@ import java.util.*;
         
         	quadManager.stack.addLast(new IRelement(null, null, null, trueStack, falseStack));
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
 
 }
