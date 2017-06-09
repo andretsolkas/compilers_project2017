@@ -7,6 +7,8 @@ public class Assembly{
 	int SizeOfChar = 1;
 	String main;
 	String current_fun;
+	int parsize;
+	int varsize;
 	int np = 0;
 	boolean par;
 	FileWriter writer;
@@ -31,14 +33,14 @@ public class Assembly{
 		
 		Node node = symtable.lookup(new Key(a));			//At this point node will never be null
 
-		int np = node.scope;
+		int na = node.scope;
 		Integer size = 2*SizeOfInt;
 		String of = size.toString();
 
 		try{
 			writer.append("		mov esi, DWORD PTR [ebp+".concat(of).concat("]			#Get Activation Record\n"));
 			
-			for(int i=0; i < np-np-1; i++){	
+			for(int i=0; i < np-na-1; i++){	
 				writer.append("		mov esi, DWORD PTR [esi+".concat(of).concat("]			#Get Activation Record\n"));
 			}
 		}
@@ -52,21 +54,24 @@ public class Assembly{
 		
 		Integer size = 2*SizeOfInt;
 		String of = size.toString(); 
-		
+		int nnp = np-1;
+
 		try{
-			if(np < nx){
+			if(nnp < nx){
 				writer.append("		push ebp			#Update Access Link\n");
 			}
 			
-			else if(np == nx){
+			else if(nnp == nx){
 				writer.append("		push DWORD PTR [ebp+".concat(of).concat("]			#Update Access Link\n"));
 			}
 			
 			else{
 				writer.append("		mov esi, DWORD PTR [ebp+".concat(of).concat("]			#Update Access Link\n"));
-				for(int i=0; i < np-nx; i++){
-					writer.append("		push DWORD PTR [esi+".concat(of).concat("]\n"));
+				for(int i=0; i < nnp-nx; i++){
+					writer.append("		mov esi, DWORD PTR [esi+".concat(of).concat("]\n"));
 				}
+				
+				writer.append("		push DWORD PTR [esi]\n");
 			}
 		}
 		catch(Exception e){
@@ -75,7 +80,7 @@ public class Assembly{
 		}
 	}
 
-	public void load(String R, String a, LinkedList<LinkedList<Node>> scopesLocal, ScopeTemp temps, LinkedList<Param> params){
+	public void load(String R, String a, ScopeTemp temps, LinkedList<Param> params){
 		
 		try{
 			a = a.trim();
@@ -92,53 +97,52 @@ public class Assembly{
 				str[a.length()-2] = '\0';
 				
 				String mystr = new String(str);
+				load("edi", mystr, temps, params);
+
+				Temp tmp = temps.findElement(mystr.trim());
 				
-				load(R, mystr, scopesLocal, temps, params);
+				if(tmp.type.equals("int"))
+					writer.append("		mov ".concat(R).concat(", DWORD PTR [edi]\n"));
+				else writer.append("		movzx ".concat(R).concat(", BYTE PTR [edi]\n"));
+
 			}
 			
 			
 			else if(a.charAt(0) == '\''){								// a is a character
 
 				String str = mySloppyFun(a);
-
-				if(par == true)
-					writer.append("		movzx ".concat(R).concat(", BYTE PTR ").concat(str).concat("			#Load Value\n"));
-				else writer.append("		mov al".concat(", BYTE PTR ").concat(str).concat("			#Load Value\n"));
+				writer.append("		mov ".concat(R).concat(", ").concat(str).concat("			#Load Value\n"));
 			}
 			
 
 			else if(a.charAt(0) == '$'){										//temporary variable -- by value
-				Integer offset = findOffset(a, scopesLocal, temps);
+				
 				Temp tmp = temps.findElement(a);
-
-				if(tmp.type.equals("int"))
+				Integer offset = tmp.offset;
+				
+				if(tmp.type.equals("int") || tmp.tempname.endsWith("*"))
 					writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
 
-				else if(par == true)
+				else
 					writer.append("		movzx ".concat(R).concat(", BYTE PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
 				
-				else writer.append("		mov al".concat(", BYTE PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
-			}
+                }
 				
 			else{	
 					Node myNode = symtable.lookup(new Key(a));	//It won't be null
-					Integer offset;
-					
+					Integer offset = myNode.offset;
+
 					if(myNode.scope == temps.scope){		//LOCAL
 		
-						if(isParam(a, params)){
-							
-							offset = findOffsetParam(a, params);
+						if(myNode.par == true){
 							
 							if(myNode.reference == false){											//LOCAL PARAMETER - BY VALUE
 									
 								if(myNode.type.equals("int"))
 									writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp+".concat(offset.toString().concat("]			#Load Value\n"))));
 								
-								else if(par == true)
-									writer.append("		movzx ".concat(R).concat(", BYTE PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
-								
-								else writer.append("		mov al".concat(", BYTE PTR [ebp+".concat(offset.toString().concat("]			#Load Value\n"))));
+								else
+									writer.append("		movzx ".concat(R).concat(", BYTE PTR [ebp+".concat(offset.toString().concat("]			#Load Value\n"))));
 							}
 						
 							else{																	//LOCAL PARAMETER - BY REFERENCE
@@ -148,32 +152,26 @@ public class Assembly{
 						}
 
 						else{																		//LOCAL VARIABLE
-							offset = findOffset(a, scopesLocal, temps);			
+
 							if(myNode.type.equals("int"))
 								writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
 							
-							else if(par == true)
+							else
 								writer.append("		movzx ".concat(R).concat(", BYTE PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
-							
-							else writer.append("		mov al".concat(", BYTE PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
 						}
 					}
 					else{									//NON LOCAL
 						getAR(a);
 						
-						if(isParam(a, params)){
-
-							offset = findOffsetParam(a, params);
+						if(myNode.par == true){	
 							
 							if(myNode.reference == false){											//LOCAL PARAMETER - BY VALUE
 									
 								if(myNode.type.equals("int"))
 									writer.append("		mov ".concat(R).concat(", DWORD PTR [esi+".concat(offset.toString().concat("]			#Load Value\n"))));
 								
-								else if(par == true)
-									writer.append("		movzx ".concat(R).concat(", BYTE PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
-								
-								else writer.append("		mov al".concat(", BYTE PTR [esi+".concat(offset.toString().concat("]			#Load Value\n"))));
+								else
+									writer.append("		movzx ".concat(R).concat(", BYTE PTR [esi+".concat(offset.toString().concat("]			#Load Value\n"))));					
 							}
 						
 							else{																	//LOCAL PARAMETER - BY REFERENCE
@@ -182,15 +180,12 @@ public class Assembly{
 							}
 						}	
 						else{																		//NON LOCAL VARIABLE
-							offset = findOffset(a, scopesLocal, temps);
 							
 							if(myNode.type.equals("int"))
 								writer.append("		mov ".concat(R).concat(", DWORD PTR [esi-".concat(offset.toString().concat("]			#Load Value\n"))));
 							
-							else if(par == true)
-								writer.append("		movzx ".concat(R).concat(", BYTE PTR [ebp-".concat(offset.toString().concat("]			#Load Value\n"))));
-							
-							else writer.append("		mov al".concat(", BYTE PTR [esi-".concat(offset.toString().concat("]			#Load Value\n"))));
+							else 
+								writer.append("		movzx ".concat(R).concat(", BYTE PTR [esi-".concat(offset.toString().concat("]			#Load Value\n"))));
 						}
 					}
 			}
@@ -201,75 +196,67 @@ public class Assembly{
 		}
 	}
 	
-	public void loadAddr(String R, String a, LinkedList<LinkedList<Node>> scopesLocal, ScopeTemp temps, LinkedList<Param> params){	
+	public void loadAddr(String R, String a, ScopeTemp temps, LinkedList<Param> params){	
 		try{
 			a = a.trim();
-			
+
 			if(a.charAt(0) == '['){												//array element
-				char[] str = new char[a.length()-2];
+				char[] str = new char[a.length()+1];
+				
 				a.getChars(1, a.length()-1, str, 0);
-				load(R, str.toString(), scopesLocal, temps, params);
+				str[a.length()-2] = '\0';
+				
+				String mystr = new String(str);
+				
+				load(R, mystr, temps, params);
 			}
-			
-			else if(a.charAt(0) == '"'){										// a is a string
-				writer.append("		lea ".concat(R).concat(", BYTE PTR a			#Load Address\n"));
-			}
-			
 
 			else if(a.charAt(0) == '$'){										//temporary variable -- by value
 				
-				if(a.charAt(a.length() == '*'){			//Then temp holds already a reference
-					writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
-				}
+				Temp tmp = temps.findElement(a);
+				Integer offset = tmp.offset;
 				
-				else{
-					Integer offset = findOffset(a, scopesLocal, temps);
-					writer.append("		lea ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
-				}
+				if(tmp.strname != null)				//It's a string
+					writer.append("		lea ".concat(R).concat(", RWORD PTR [ebp-".concat(offset.toString().concat("]			#Load String's Address\n"))));
+				
+				else if(a.endsWith("*"))			//Then temp holds already a reference
+					writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
+				
+				else writer.append("		lea ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
 			}
 				
 			else{
 					Node myNode = symtable.lookup(new Key(a));	//It won't be null
-					Integer offset;
+					Integer offset = myNode.offset;
 					
 					if(myNode.scope == temps.scope){		//LOCAL
 		
-						if(isParam(a, params)){
+						if(myNode.par == true){
 							
-							offset = findOffsetParam(a, params);
-							
-							if(myNode.reference == false){											//LOCAL PARAMETER - BY VALUE
+							if(myNode.reference == false)											//LOCAL PARAMETER - BY VALUE
 								writer.append("		lea ".concat(R).concat(", DWORD PTR [ebp+".concat(offset.toString().concat("]			#Load Address\n"))));
-							}
 						
-							else{																	//LOCAL PARAMETER - BY REFERENCE
+							else																	//LOCAL PARAMETER - BY REFERENCE
 								writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp+".concat(offset.toString().concat("]			#Load Address\n")))); 
-							}
 						}
 
-						else{																		//LOCAL VARIABLE
-							offset = findOffset(a, scopesLocal, temps);			
-							writer.append("		lea ".concat(R).concat(", DWORD PTR [ebp+".concat(offset.toString().concat("]			#Load Address\n"))));
+						else{																			//LOCAL VARIABLE
+							writer.append("		lea ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
 						}
 					}
 					else{									//NON LOCAL
 						getAR(a);
 						
-						if(isParam(a, params)){
-
-							offset = findOffsetParam(a, params);
+						if(myNode.par == true){
 							
-							if(myNode.reference == false){											//LOCAL PARAMETER - BY VALUE
+							if(myNode.reference == false)											//LOCAL PARAMETER - BY VALUE
 								writer.append("		lea ".concat(R).concat(", DWORD PTR [esi+".concat(offset.toString().concat("]			#Load Address\n"))));
-							}
 						
-							else{																	//LOCAL PARAMETER - BY REFERENCE
+							else																	//LOCAL PARAMETER - BY REFERENCE
 								writer.append("		mov ".concat(R).concat(", DWORD PTR [esi+".concat(offset.toString().concat("]			#Load Address\n")))); 
-							}
 						}	
-						else{																		//NON LOCAL VARIABLE
-							offset = findOffset(a, scopesLocal, temps);
-								writer.append("		lea ".concat(R).concat(", DWORD PTR [esi-".concat(offset.toString().concat("]			#Load Address\n"))));
+						else{																		//NON LOCAL VARIABLE		
+							writer.append("		lea ".concat(R).concat(", DWORD PTR [esi-".concat(offset.toString().concat("]			#Load Address\n"))));
 						}
 					}
 			}
@@ -280,42 +267,54 @@ public class Assembly{
 		}
 	}
 	
-	public void store(String R, String a, LinkedList<LinkedList<Node>> scopesLocal, ScopeTemp temps, LinkedList<Param> params){
+	
+	public void store(String R, String a, ScopeTemp temps, LinkedList<Param> params){
 		
 		try{
 			a = a.trim();
 			
 			if(a.charAt(0) == '['){								//array element
-				char[] str = new char[a.length()-2];
+				char[] str = new char[a.length()+1];
+				
 				a.getChars(1, a.length()-1, str, 0);
+				str[a.length()-2] = '\0';
+				
+				String mystr = new String(str);
+				
+				load("edi", mystr,temps, params);
+
+				Temp tmp = temps.findElement(mystr.trim());
+				
+				if(tmp.type.equals("int"))
+					writer.append("		mov DWORD PTR [edi], ".concat(R).concat("\n"));
+				else writer.append("		mov BYTE PTR [edi], ".concat(R.substring(1, 2).concat("l")).concat("\n"));
 			}
 			
 
 			else if(a.charAt(0) == '$'){										//temporary variable -- by value
-				Integer offset = findOffset(a, scopesLocal, temps);
+				
 				Temp tmp = temps.findElement(a);
-
-				if(tmp.type.equals("int")){
+				Integer offset = tmp.offset;
+				
+				if(tmp.type.equals("int") || tmp.tempname.endsWith("*")){
 					writer.append("		mov DWORD PTR [ebp-".concat(offset.toString().concat("], ".concat(R).concat("			#Store Value\n"))));
 				}
-				else writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], al".concat("			#Store Value\n"))));
+				else writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], ".concat(R.substring(1, 2).concat("l")).concat("			#Store Value\n"))));
 			}
 				
 			else{
 					Node myNode = symtable.lookup(new Key(a));	//It won't be null
-					Integer offset;
+					Integer offset = myNode.offset;;
 					
 					if(myNode.scope == temps.scope){		//LOCAL
 		
-						if(isParam(a, params)){
-							
-							offset = findOffsetParam(a, params);
+						if(myNode.par == true){
 							
 							if(myNode.reference == false){											//LOCAL PARAMETER - BY VALUE
 									
 								if(myNode.type.equals("int"))
 									writer.append("		mov DWORD PTR [ebp+".concat(offset.toString().concat("], ".concat(R).concat("			#Store Value\n"))));
-								else writer.append("		mov BYTE PTR [ebp+".concat(offset.toString().concat("], al".concat("			#Store Value\n"))));
+								else writer.append("		mov BYTE PTR [ebp+".concat(offset.toString().concat("], ".concat(R.substring(1, 2).concat("l")).concat("			#Store Value\n"))));
 							}
 						
 							else{																	//LOCAL PARAMETER - BY REFERENCE
@@ -324,25 +323,22 @@ public class Assembly{
 							}
 						}
 
-						else{																		//LOCAL VARIABLE
-							offset = findOffset(a, scopesLocal, temps);			
+						else{																		//LOCAL VARIABLE			
 							if(myNode.type.equals("int"))
 								writer.append("		mov DWORD PTR [ebp-".concat(offset.toString().concat("], ".concat(R).concat("			#Store Value\n"))));
-							else writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], al".concat("			#Store Value\n"))));
+							else writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], ".concat(R.substring(1, 2).concat("l")).concat("			#Store Value\n"))));
 						}
 					}
 					else{									//NON LOCAL
 						getAR(a);
 						
-						if(isParam(a, params)){
-
-							offset = findOffsetParam(a, params);
+						if(myNode.par == true){
 							
 							if(myNode.reference == false){											//LOCAL PARAMETER - BY VALUE
 									
 								if(myNode.type.equals("int"))
 									writer.append("		mov DWORD PTR [esi+".concat(offset.toString().concat("], ".concat(R).concat("			#Store Value\n"))));
-								else writer.append("		mov BYTE PTR [esi+".concat(offset.toString().concat("], al".concat("			#Store Value\n"))));
+								else writer.append("		mov BYTE PTR [esi+".concat(offset.toString().concat("], ".concat(R.substring(1, 2).concat("l")).concat("			#Store Value\n"))));
 							}
 						
 							else{																	//LOCAL PARAMETER - BY REFERENCE
@@ -351,10 +347,9 @@ public class Assembly{
 							}
 						}	
 						else{																		//NON LOCAL VARIABLE
-							offset = findOffset(a, scopesLocal, temps);
 							if(myNode.type.equals("int"))
 								writer.append("		mov DWORD PTR [esi-".concat(offset.toString().concat("], ".concat(R).concat("			#Store Value\n"))));
-							else writer.append("		mov BYTE PTR [esi-".concat(offset.toString().concat("], al".concat("			#Store Value\n"))));
+							else writer.append("		mov BYTE PTR [esi-".concat(offset.toString().concat("], ".concat(R.substring(1, 2).concat("l")).concat("			#Store Value\n"))));
 						}
 					}
 			}
@@ -363,233 +358,18 @@ public class Assembly{
 			System.out.println(e.getMessage());
 			System.exit(1);
 		}
-	}
-		
-	public int findOffsetParam(String a, LinkedList<Param> params){
-	
-		int offset = 4*SizeOfInt;							//Skip other fields above ebp in AR
-		
-		if(params == null)
-			return 0;
-		
-		for(int i=0; i<params.size(); i++){
-			Param pm = params.get(params.size()-1-i);
-			
-			if(pm.idname.name.equals(a))
-				return offset;
-			offset += SizeOfInt;
-		}
-		return offset;
-	}
-
-	public int findSizeParams(LinkedList<Param> params){
-		
-		if(params == null)
-			return 0;
-		
-		return SizeOfInt*params.size();
-	}
-
-	public int findSize(LinkedList<LinkedList<Node>> scopesLocal, ScopeTemp temps){
-		
-		int offset = 0;
-		int curscope = temps.scope;
-		int numChars=0;
-		
-		for(int i=0; i<scopesLocal.get(curscope-1).size(); i++){						//Find out local variables's size
-			Node myNode = scopesLocal.get(curscope-1).get(i);
-			String type = myNode.type;
-			
-			int arraysize = 1;
-			if(myNode.arraylist != null){
-				for(int j=0; j<myNode.arraylist.size(); j++){
-					arraysize *= myNode.arraylist.get(j);								//None of these values will be zero
-				}
-			}
-			
-			if(type.equals("int")){
-				
-				if(numChars != 0){
-					offset += SizeOfInt-numChars;			//padding
-					numChars = 0;
-				}
-				offset += SizeOfInt*arraysize;
-			}
-			
-			else if(type.equals("char")){
-				numChars = (numChars+arraysize)%4;
-				offset += SizeOfChar*arraysize;
-			}
-		}
-		
-		for(int i=0; i<temps.temps.size(); i++){
-			Temp temp = temps.temps.get(i);
-
-			if(temp.type.equals("int")){
-				
-				if(numChars != 0){
-					offset += SizeOfInt-numChars;			//padding
-					numChars = 0;
-				}
-				offset += SizeOfInt;
-			}
-			
-			else if(temp.type.equals("char")){
-				numChars = (numChars+1)%4;
-				offset += SizeOfChar;
-			}
-		}
-		
-		if(numChars != 0)
-			offset += SizeOfInt-numChars;			//padding
-		
-		return offset;
-	}
-	
-	public int findOffset(String a, LinkedList<LinkedList<Node>> scopesLocal, ScopeTemp temps){
-		
-		//Figure out whether is is a local variable or a temporary one
-		//Temporary variables begin with '$'
-		int offset = 0;
-		int numChars=0;
-		
-		if(a.charAt(0) == '$'){			//Temporary
-			
-			int curscope = temps.scope;
-			
-			for(int i=0; i<scopesLocal.get(curscope-1).size(); i++){						//Find out local variables's size
-				Node myNode = scopesLocal.get(curscope-1).get(i);
-				String type = myNode.type;
-				
-				int arraysize = 1;
-				if(myNode.arraylist != null){
-					for(int j=0; j<myNode.arraylist.size(); j++){
-						arraysize *= myNode.arraylist.get(j);					//None of these values will be zero
-					}
-				}
-				
-				if(type.equals("int")){
-
-					if(numChars != 0){
-						offset += SizeOfInt-numChars;			//padding
-						numChars = 0;
-					}
-					offset += SizeOfInt*arraysize;
-				}
-				
-				else if(type.equals("char")){
-					numChars = (numChars+arraysize)%4;
-					offset += SizeOfChar*arraysize;
-				}
-			}
-			
-			for(int i=0; i<temps.temps.size(); i++){
-				Temp temp = temps.temps.get(i);
-
-				if(!temp.tempname.equals(a)){
-					if(temp.type.equals("int")){
-						
-						if(numChars != 0){
-							offset += SizeOfInt-numChars;		//padding
-							numChars = 0;
-						}	
-						offset += SizeOfInt;
-					}
-					
-					else if(temp.type.equals("char")){
-						numChars = (numChars+1)%4;
-						offset += SizeOfChar;
-					}
-				}
-				
-				else {
-					if(temp.type.equals("int") && numChars != 0)
-						offset += SizeOfInt-numChars;			//padding
-					
-					if(temp.type.equals("int"))
-						offset += SizeOfInt;
-					else offset += SizeOfChar;
-					
-					return offset;
-				}
-			}
-			
-		}
-		
-		else{							//Local			
-			Node myNode = symtable.lookup(new Key(a));				//myNode will not be null at this point
-			
-			int curscope = myNode.scope;
-			
-			LinkedList<Node> nodes = scopesLocal.get(curscope-1);
-			
-			for(int i=0; i<nodes.size(); i++){
-				
-				Node nd = nodes.get(i);
-				
-				int arraysize = 1;
-				if(nd.arraylist != null){
-					for(int j=0; j<nd.arraylist.size(); j++){
-						arraysize *= nd.arraylist.get(j);					//None of these values will be zero
-					}
-				}
-				
-				if(!nd.name.name.equals(a)){
-					if(nd.type.equals("int")){
-						
-						if(numChars != 0){
-							offset += SizeOfInt-numChars;			//padding
-							numChars = 0;
-						}
-						offset += SizeOfInt*arraysize;
-					}
-					
-					else if(nd.type.equals("char")){
-						numChars = (numChars+arraysize)%4;
-						offset += SizeOfChar*arraysize;
-					}
-				}
-				
-				else {
-					if(nd.type.equals("int") && numChars != 0)
-						offset += SizeOfInt-numChars;				//padding
-					
-					if(nd.type.equals("int"))
-						offset += SizeOfInt;
-					else offset += SizeOfChar;
-					
-					return offset;
-				}
-			}
-		}
-		
-		return offset;
-	}
-
-	private boolean isParam(String a, LinkedList<Param> params){
-		
-		if(params!=null){
-			
-			for(int i=0; i<params.size(); i++){
-				if(params.get(i).idname.name.equals(a))
-					return true;
-			}
-		}
-		return false;
-	}
-	
-	
-	
+	}	
 	
 	/**************************************************************************************************************************************/
-	public void createAssembly(Quad quad, Integer i, LinkedList<LinkedList<Node>> scopesLocal, ScopeTemp temps, LinkedList<Param> params){
+	public void createAssembly(Quad quad, Integer i, ScopeTemp temps, LinkedList<Param> params){
 		
 		try{	
 			
 			Integer scope;
 			Node nd;
 			String type;
-
+            Integer size;
+            
 				writer.append("\n_".concat(i.toString().concat(":")));
 			
 			
@@ -597,37 +377,65 @@ public class Assembly{
 	        
 			case "<-":
 
-	        	load("eax", quad.op1, scopesLocal, temps, params);
-	        	store("eax", quad.dest, scopesLocal, temps, params);
+	        	load("eax", quad.op1, temps, params);
+	        	store("eax", quad.dest, temps, params);
 			
 	            break;
 	            
 	
 	        case "array":
-	        	
-	        	if(quad.op1.charAt(0) == '$'){
-	        		Temp tmp = temps.findElement(quad.op1);
-	        		type = tmp.type;
-	        	}
-	        	
-	        	else{
-	        		nd = symtable.lookup(new Key(quad.op1));
-	        		type = nd.type;
-	        	}
-	        	
-	        	Integer size;
-	        	if(type.equals("int"))
-	        		size = SizeOfInt;
-	        	else size = SizeOfChar;
-	        	
-	        	
-	    		load("eax", quad.op2, scopesLocal, temps, params);
-	        	writer.append("		mov ecx, ".concat(size.toString().concat("\n")));
-	        	writer.append("		imul ecx\n");
-	        	loadAddr("ecx", quad.op1, scopesLocal, temps, params);
-	        	writer.append("		add eax, ecx\n");
-	        	store("eax", quad.dest, scopesLocal, temps, params);
-	            	
+                
+                Temp tmp = temps.findElement(quad.dest);
+	        	if(tmp.strname != null){            //It's a string
+                    String value;
+                    int x = Integer.parseInt(quad.op2)+1;
+                    if(tmp.strname.charAt(x) == '\\'){
+
+                        if(tmp.strname.charAt(x+1) == 'x'){
+                            value = tmp.strname.substring(x, x+3);
+
+                            value = "\'".concat(value.concat("\'"));
+                            value = mySloppyFun(value);
+                        }
+
+                        else{ 
+                            value = tmp.strname.substring(x, x+2);
+                            value = "\'".concat(value.concat("\'"));
+                            value = mySloppyFun(value);
+                        }
+                    }
+
+                    else{
+                        Integer n = (int)tmp.strname.charAt(x);	
+                        value = n.toString();
+                    }
+                    Integer offset = tmp.offset;
+                    writer.append("		mov BYTE PTR [ebp-".concat(offset.toString()).concat("], ".concat(value.concat("\n"))));
+                }
+                
+                else{
+                    type = "";
+                    nd = symtable.lookup(new Key(quad.op1));
+                    if(nd != null)
+                        type = nd.type;
+                    else{
+                        tmp = temps.findElement(quad.op1);
+                        if(tmp != null){
+                            type = tmp.type;
+                        }    
+                    }
+
+                    if(type.equals("int"))
+                        size = SizeOfInt;
+                    else size = SizeOfChar;
+
+                    load("eax", quad.op2, temps, params);
+                    writer.append("		mov ecx, ".concat(size.toString().concat("\n")));
+                    writer.append("		imul ecx\n");
+                    loadAddr("ecx", quad.op1, temps, params);
+                    writer.append("		add eax, ecx\n");
+                    store("eax", quad.dest, temps, params);
+                }
 	            break;
 	
 	            
@@ -638,51 +446,51 @@ public class Assembly{
 	            
 	        case "+":
 
-        		load("eax", quad.op1, scopesLocal, temps, params);
-        		load("ecx", quad.op2, scopesLocal, temps, params);
+        		load("eax", quad.op1, temps, params);
+        		load("ecx", quad.op2, temps, params);
         		writer.append("		add eax, ecx\n");
-        		store("eax", quad.dest, scopesLocal, temps, params);
+        		store("eax", quad.dest, temps, params);
 	            break;
 	        
 
 	        case "-":
 
-        		load("eax", quad.op1, scopesLocal, temps, params);
-        		load("ecx", quad.op2, scopesLocal, temps, params);
+        		load("eax", quad.op1, temps, params);
+        		load("ecx", quad.op2, temps, params);
         		writer.append("		sub eax, ecx\n");
-        		store("eax", quad.dest, scopesLocal, temps, params);
+        		store("eax", quad.dest, temps, params);
 
 	            break;
 	
 	
 	        case "*":
 
-        		load("eax", quad.op1, scopesLocal, temps, params);
-        		load("ebx", quad.op2, scopesLocal, temps, params);
+        		load("eax", quad.op1, temps, params);
+        		load("ebx", quad.op2, temps, params);
         		writer.append("		imul eax, ebx\n");
-        		store("eax", quad.dest, scopesLocal, temps, params);
+        		store("eax", quad.dest, temps, params);
 
 	            break;
 	            
 	        
 	        case "/":
 
-        		load("eax", quad.op1, scopesLocal, temps, params);
+        		load("eax", quad.op1, temps, params);
         		writer.append("		cdq\n");
-        		load("ebx", quad.op2, scopesLocal, temps, params);
+        		load("ebx", quad.op2, temps, params);
         		writer.append("		idiv ebx\n");
-        		store("eax", quad.dest, scopesLocal, temps, params);
+        		store("eax", quad.dest, temps, params);
         	
 	            break;
 	        
 	            
 	        case "%":
 
-        		load("eax", quad.op1, scopesLocal, temps, params);
+        		load("eax", quad.op1, temps, params);
         		writer.append("		cdq\n");
-        		load("ebx", quad.op2, scopesLocal, temps, params);
+        		load("ebx", quad.op2, temps, params);
         		writer.append("		idiv ebx\n");
-        		store("edx", quad.dest, scopesLocal, temps, params);
+        		store("edx", quad.dest, temps, params);
 	        	
 	            break;
 	            
@@ -694,8 +502,8 @@ public class Assembly{
 	            
 	        case "=":
 
-	        	load("eax", quad.op1, scopesLocal, temps, params);
-	        	load("edx", quad.op2, scopesLocal, temps, params);
+	        	load("eax", quad.op1, temps, params);
+	        	load("edx", quad.op2, temps, params);
 	        	writer.append("		cmp eax, edx\n");
 	        	writer.append("		je "); label("_".concat(quad.dest));
 	
@@ -703,8 +511,8 @@ public class Assembly{
 	        
 	        case "#":
 	            
-	        	load("eax", quad.op1, scopesLocal, temps, params);
-	        	load("edx", quad.op2, scopesLocal, temps, params);
+	        	load("eax", quad.op1, temps, params);
+	        	load("edx", quad.op2, temps, params);
 	        	writer.append("		cmp eax, edx\n");
 	        	writer.append("		jne "); label("_".concat(quad.dest));
 	        	
@@ -713,8 +521,8 @@ public class Assembly{
 	            
 	        case "<":
 
-	        	load("eax", quad.op1, scopesLocal, temps, params);
-	        	load("edx", quad.op2, scopesLocal, temps, params);
+	        	load("eax", quad.op1, temps, params);
+	        	load("edx", quad.op2, temps, params);
 	        	writer.append("		cmp eax, edx\n");
 	        	writer.append("		jl "); label("_".concat(quad.dest));
 
@@ -722,8 +530,8 @@ public class Assembly{
 	        
 	        case ">":
 	            
-	        	load("eax", quad.op1, scopesLocal, temps, params);
-	        	load("edx", quad.op2, scopesLocal, temps, params);
+	        	load("eax", quad.op1, temps, params);
+	        	load("edx", quad.op2, temps, params);
 	        	writer.append("		cmp eax, edx\n");
 	        	writer.append("		jg "); label("_".concat(quad.dest));
 
@@ -731,8 +539,8 @@ public class Assembly{
 	            
 	        case "<=":
 	            
-	        	load("eax", quad.op1, scopesLocal, temps, params);
-	        	load("edx", quad.op2, scopesLocal, temps, params);
+	        	load("eax", quad.op1, temps, params);
+	        	load("edx", quad.op2, temps, params);
 	        	writer.append("		cmp eax, edx\n");
 	        	writer.append("		jle "); label("_".concat(quad.dest));
 	        	
@@ -740,8 +548,8 @@ public class Assembly{
 	        
 	        case ">=":
 
-	        	load("eax", quad.op1, scopesLocal, temps, params);
-	        	load("edx", quad.op2, scopesLocal, temps, params);
+	        	load("eax", quad.op1, temps, params);
+	        	load("edx", quad.op2, temps, params);
 	        	writer.append("		cmp eax, edx\n");
 	        	writer.append("		 jge "); label("_".concat(quad.dest));
         	
@@ -762,7 +570,7 @@ public class Assembly{
 	            
 	        case ":-":
 				
-	        	load("eax", quad.op1, scopesLocal, temps, params);
+	        	load("eax", quad.op1, temps, params);
 	        	size = 3*SizeOfInt;
 	        	
 	        	writer.append("		mov esi, DWORD PTR [ebp+".concat(size.toString().concat("]\n"))); 
@@ -771,7 +579,7 @@ public class Assembly{
 	        	
 	        	if(nd.retvalue.equals("int"))
 	        		writer.append("		mov DWORD PTR [esi], eax\n");
-	        	else	writer.append("		mov BYTE PTR [esi], al\n");
+	        	else	writer.append("		mov BYTE PTR [esi], eax\n");
 	            
 	        	break;
 	            
@@ -785,15 +593,58 @@ public class Assembly{
 	        	
 	        	if(quad.op2.equals("V")){
 	        		
-	        		load("eax", quad.op1, scopesLocal, temps, params);
+	        		load("eax", quad.op1, temps, params);
 	        		writer.append("		push eax				#Push Parameter\n");
 	        	}
 	        	
 	        	else{
 
-	        		loadAddr("esi", quad.op1, scopesLocal, temps, params);
-	        		writer.append("		push esi				#Push Return Value Address\n");
-	        	}        	
+	        		tmp = temps.findElement(quad.op1);
+	        		if(tmp != null && tmp.strname != null){			//It's a string
+	        			
+	        			Integer offset = tmp.offset;
+	        			String value;
+	        			
+	        			for(int x=1; x<tmp.strlen; x++){
+	        				
+	        				if(tmp.strname.charAt(x) == '\\'){
+	        					
+	        					if(tmp.strname.charAt(x+1) == 'x'){
+	        						value = tmp.strname.substring(x, x+3);
+	        						
+	        						value = "\'".concat(value.concat("\'"));
+	        						value = mySloppyFun(value);
+	        						x += 3;
+	        					}
+	        					
+	        					else{ 
+	        						value = new String(tmp.strname.substring(x, x+2));
+	        						value = "\'".concat(value.concat("\'"));
+	        						value = mySloppyFun(value);
+	        						x++;
+	        					}
+	        				}
+	        				
+	        				else{
+		        				Integer n = (int)tmp.strname.charAt(x);	
+		        				value = n.toString();
+	        				}
+	        				
+	        				writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], ".concat(value.concat("\n")))));
+	        				offset -= 1;
+	        			}
+	        		
+	        			writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], 0\n")));
+	        			offset = tmp.offset;
+	        			writer.append("		lea  esi, DWORD PTR [ebp-".concat(offset.toString().concat("]\n")));
+	        			writer.append("		push esi				#Push String Address\n");
+	        		}
+	        		
+	        		else{
+		        		loadAddr("esi", quad.op1, temps, params);
+		        		writer.append("		push esi				#Push Address\n");
+	        		}       
+	        	} 	
 
 	        	par = false;
 	        	
@@ -807,13 +658,15 @@ public class Assembly{
 	        	scope = nd.scope;
 	        	Integer offset;
 	        	Integer ofs = SizeOfInt;
-	        	size = findSizeParams(nd.params);
-	        	//System.out.println(size);
-	        	
+
 	        	if(nd.retvalue.equals("nothing")){
 	        		writer.append("		sub esp, ".concat(ofs.toString()));
 	         		writer.append("				#Skip the address of returned value\n");
 	        	}
+	        	
+	        	size = 0;;
+	        	if(nd.params != null)
+	        		size = SizeOfInt*nd.params.size();
 	        	
 	        	if(nd.scope != 0 || nd.name.name.equals(main)){						//If it is a library function -> no access link field
 	        		updateAL(nd.scope);
@@ -848,7 +701,7 @@ public class Assembly{
         		
         		name(name);
         		
-        		size = findSize(scopesLocal, temps);
+        		size = varsize;
 	        	writer.append("		push ebp\n");
 	        	writer.append("		mov ebp, esp\n");
 	        	writer.append("		sub esp, ".concat(size.toString().concat("				#Allocate memory for all local variables\n")));
@@ -887,11 +740,6 @@ public class Assembly{
 		}
 	
 	}
-	
-	
-	
-	
-	
 	
 	/****************************************************/
 	
