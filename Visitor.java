@@ -85,7 +85,7 @@ import java.util.*;
 				(opLeft.dimensions > 0 && (opLeft.indices == null || (opLeft.indices.size() != opLeft.dimensions))) ||	//opLeft not primitive OR
 				(opRight.dimensions > 0 && (opRight.indices == null || (opRight.indices.size() != opRight.dimensions))))	//opRight not primitive
 			{
-				System.out.println("Error: Line " + lineError + ": Cond " + str + " 's operands must both be primitive integers\n");
+				System.out.println("Error: Line " + lineError + ": Cond " + str + " 's operands must both be primitive integers or primitive chars\n");
 	        	System.exit(1);
 			}
 		}
