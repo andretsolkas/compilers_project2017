@@ -21,13 +21,12 @@ Helpers
 	
 	lterminator = (lf | cr | cr lf);
 	
+	white_space = (sp | ht | ff | lterminator)*;
 
 	nonempty = ([all - [lf + [cr + ['$' + [sp + [ht + ff]]]]]]);	
 	
 	comment = ([all - [lf + [cr + '$']]] [all - [lf + cr]]*);
-	line_comment = '$' comment? nonempty comment? lterminator?;
-
-	white_space = (sp | ht | ff | lterminator)*;
+	line_comment = '$' comment? nonempty comment? lterminator? | '$' white_space lterminator;
 	    
 	a = [all - '$'];
 	middle = ('$'? a)*;
