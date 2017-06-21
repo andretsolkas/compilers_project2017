@@ -12,7 +12,7 @@ Helpers
 	all = [0 .. 0xffff];
 	letter = [['a'..'z'] + ['A'..'Z']];
 	digit = ['0'..'9'];
-	hex_digit = (digit | 'a' | 'b' | 'c' | 'd' | 'e' | 'f');
+	hex_digit = (digit | 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'A' | 'B' | 'C' | 'D' | 'E' | 'F');
 	hex_num = 'x' hex_digit hex_digit;
 	
 

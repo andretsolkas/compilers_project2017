@@ -217,7 +217,7 @@ public class Assembly{
 				Integer offset = tmp.offset;
 				
 				if(tmp.strname != null)				//It's a string
-					writer.append("		lea ".concat(R).concat(", RWORD PTR [ebp-".concat(offset.toString().concat("]			#Load String's Address\n"))));
+					writer.append("		lea ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load String's Address\n"))));
 				
 				else if(a.endsWith("*"))			//Then temp holds already a reference
 					writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
@@ -384,58 +384,70 @@ public class Assembly{
 	            
 	
 	        case "array":
-                
-                Temp tmp = temps.findElement(quad.dest);
-	        	if(tmp.strname != null){            //It's a string
-                    String value;
-                    int x = Integer.parseInt(quad.op2)+1;
-                    if(tmp.strname.charAt(x) == '\\'){
+	        	
+	        	Temp tmp;
 
-                        if(tmp.strname.charAt(x+1) == 'x'){
-                            value = tmp.strname.substring(x, x+3);
+	        	tmp = temps.findElement(quad.op1);
+        		if(tmp != null && tmp.strname != null){			//It's a string
 
-                            value = "\'".concat(value.concat("\'"));
-                            value = mySloppyFun(value);
-                        }
+	        			Integer offset = tmp.offset;
+	        			String value = null;
+	        			
+	        			for(int x=1; x<tmp.strlen; x++){
+	        				
+	        				if(tmp.strname.charAt(x) == '\\'){
+        					
+        					if(tmp.strname.charAt(x+1) == 'x'){
+        						value = tmp.strname.substring(x, x+3);
+        						
+        						value = "\'".concat(value.concat("\'"));
+        						value = mySloppyFun(value);
+        						x += 3;
+        					}
+        					
+        					else{ 
+        						value = new String(tmp.strname.substring(x, x+2));
+        						value = "\'".concat(value.concat("\'"));
+        						value = mySloppyFun(value);
+        						x++;
+        					}
+        				}
+        				
+        				else{
+	        				Integer n = (int)tmp.strname.charAt(x);	
+	        				value = n.toString();
+        				}
+        				
+        				writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], ".concat(value.concat("\n")))));
+        				offset -= 1;
+        			}
+        		
+        			writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], 0\n")));
+        		}
+	        	
 
-                        else{ 
-                            value = tmp.strname.substring(x, x+2);
-                            value = "\'".concat(value.concat("\'"));
-                            value = mySloppyFun(value);
-                        }
-                    }
-
-                    else{
-                        Integer n = (int)tmp.strname.charAt(x);	
-                        value = n.toString();
-                    }
-                    Integer offset = tmp.offset;
-                    writer.append("		mov BYTE PTR [ebp-".concat(offset.toString()).concat("], ".concat(value.concat("\n"))));
-                }
-                
+                type = "";
+                nd = symtable.lookup(new Key(quad.op1));
+                if(nd != null)
+                    type = nd.type;
                 else{
-                    type = "";
-                    nd = symtable.lookup(new Key(quad.op1));
-                    if(nd != null)
-                        type = nd.type;
-                    else{
-                        tmp = temps.findElement(quad.op1);
-                        if(tmp != null){
-                            type = tmp.type;
-                        }    
-                    }
-
-                    if(type.equals("int"))
-                        size = SizeOfInt;
-                    else size = SizeOfChar;
-
-                    load("eax", quad.op2, temps, params);
-                    writer.append("		mov ecx, ".concat(size.toString().concat("\n")));
-                    writer.append("		imul ecx\n");
-                    loadAddr("ecx", quad.op1, temps, params);
-                    writer.append("		add eax, ecx\n");
-                    store("eax", quad.dest, temps, params);
+                    tmp = temps.findElement(quad.op1);
+                    if(tmp != null){
+                        type = tmp.type;
+                    }    
                 }
+
+                if(type.equals("int"))
+                    size = SizeOfInt;
+                else size = SizeOfChar;
+
+                load("eax", quad.op2, temps, params);
+                writer.append("		mov ecx, ".concat(size.toString().concat("\n")));
+                writer.append("		imul ecx\n");
+                loadAddr("ecx", quad.op1, temps, params);
+                writer.append("		add eax, ecx\n");
+                store("eax", quad.dest, temps, params);
+	                
 	            break;
 	
 	            

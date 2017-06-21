@@ -54,5 +54,36 @@ public class Param {
 		}
 		//System.out.printf("\n");
 	}
+
+	
+	public boolean differ(Param pm){
+		
+		if(!type.equals(pm.type))
+			return true;
+		
+		if(!idname.name.equals(pm.idname.name))
+			return true;
+		
+		if(reference != pm.reference)
+			return true;
+		
+		if(arraylist != null && pm.arraylist != null){
+			if(arraylist.size() != pm.arraylist.size())
+				return true;
+			
+			else{
+				for(int i=0; i<arraylist.size(); i++){
+					if(arraylist.get(i).intValue() != pm.arraylist.get(i).intValue()){
+						return true;
+					}
+				}
+			}
+		}
+		
+		else if(!(arraylist == null && pm.arraylist == null))
+			return true;
+	
+		return false;
+	}
 	
 }
