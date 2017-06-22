@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ "$1" = "-o" ]
+if [ $1 = "-o" ]
 then
 	outfile=$2
 	fullfile=$3
@@ -10,6 +10,11 @@ else
 fi
 
 java Main ${fullfile}
+
+if [ $? -eq 1 ]
+then  exit
+fi
+
 filename="${fullfile##*/}"
 extension="${filename##*.}"
 filename="${filename%.*}"

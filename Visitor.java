@@ -335,7 +335,7 @@ import java.util.*;
 
                 if(reference == false && arraylist != null){
                 	System.out.println("Error: Line " + lineError + ": Function's " + funname.name + " array parameter must be passed by reference\n");
-                    System.exit(0);
+                    System.exit(1);
                 }
                 
                 
@@ -346,7 +346,7 @@ import java.util.*;
                     if(headerMode == 0){
                         if(1 == symtable.SearchKey(key)){
                             System.out.println("Error: Line " + lineError + ": variable " + key.name + " has been declared before in this scope\n");
-                            System.exit(0);
+                            System.exit(1);
                         }
                         
                         symtable.insert(key, datatype, reference, arraylist, null, null, null);
@@ -399,7 +399,7 @@ import java.util.*;
     			
     			if(err == true){
                 	System.out.println("Error: Line " + lineError + ": Function's " + funname.name + " definition does not match it's given declaration\n");
-                    System.exit(0);
+                    System.exit(1);
     			}
     			
     			symtable.increase_scope();
