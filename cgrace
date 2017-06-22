@@ -12,7 +12,8 @@ fi
 java Main ${fullfile}
 
 if [ $? -eq 1 ]
-then  exit
+then	rm "myAssembly.s"
+		exit
 fi
 
 filename="${fullfile##*/}"
@@ -22,7 +23,7 @@ filename="${filename%.*}"
 gcc -m32 -c myAssembly.s -o ${filename}.o
 gcc -m32 -o ${outfile} ${filename}.o -L./myLib -lgrace
 
-rm "myAssembly.s"
+#rm "myAssembly.s"
 rm ${filename}.o
 
 #echo "${filename} is compiled"

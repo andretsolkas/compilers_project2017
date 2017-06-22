@@ -71,7 +71,7 @@ public class Assembly{
 					writer.append("		mov esi, DWORD PTR [esi+".concat(of).concat("]\n"));
 				}
 				
-				writer.append("		push DWORD PTR [esi]\n");
+				writer.append("		push esi\n");
 			}
 		}
 		catch(Exception e){
