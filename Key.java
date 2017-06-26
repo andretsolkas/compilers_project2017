@@ -1,32 +1,23 @@
+class Key {
+    final String name;
 
-public class Key {
-	String name;
-	
-	public Key(String str){
-		
-		name = new String(str);
-	}
+    Key(String str) {
+        name = str;
+    }
 
-	public String getKey(){
-		return name;
-	}
-
-	
     @Override
-	public int hashCode(){
-		int hashkey=0;
-		for(int i=0; i<name.length(); i++)
-			hashkey += (int)name.charAt(i);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
-		return hashkey;
-	}
+        Key key = (Key) o;
 
-	@Override
-	public boolean equals(Object o){
-		
-		Key key = (Key) o;
-		return name.equals(key.name);
-	}
+        return name != null ? name.equals(key.name) : key.name == null;
+    }
 
+    @Override
+    public int hashCode() {
+        return name != null ? name.hashCode() : 0;
+    }
 }
 

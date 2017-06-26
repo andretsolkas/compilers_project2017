@@ -1,12 +1,11 @@
+class Struct {
 
-public class Struct {
-
-	int offset;
-	int numChars;
+    int offset;
+    int numChars;
 
 
-	public Struct(int of, int num){
-		offset = of;
-		numChars = num;
-	}
+    Struct() {
+        offset = 0;
+        numChars = 0;
+    }
 }
