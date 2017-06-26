@@ -1,3 +1,9 @@
+.intel_syntax noprefix
+
+.text
+
+.globl	_puti_0
+
 _puti_0:
 
         push ebp
@@ -19,6 +25,8 @@ _puti_0:
         ret
 
 ###################################
+
+.globl	_putc_0
 
 _putc_0:
 
@@ -43,6 +51,8 @@ _putc_0:
 
     ###################################
 
+.globl	_puts_0
+
 _puts_0:
 
     push ebp
@@ -65,6 +75,8 @@ _puts_0:
 
 
 ###################################
+
+.globl	_geti_0
 
 _geti_0:
 
@@ -101,6 +113,8 @@ _geti_0:
 
 ###################################
 
+.globl	_getc_0
+
 _getc_0:
 
     push ebp
@@ -135,6 +149,8 @@ _getc_0:
     pop ebp
     ret
 ###################################
+
+.globl	_gets_0
 
 _gets_0:
                 push ebp
@@ -226,6 +242,9 @@ end_gets_0:
 
 
 ###################################
+
+.globl	_strlen_0
+
 _strlen_0:
 		push ebp
 		mov ebp, esp
@@ -262,6 +281,7 @@ _len_9:	mov eax, DWORD PTR [ebp-4]
 
 ###################################
 
+.globl	_strcmp_0
 
 _strcmp_0:
 
@@ -393,6 +413,8 @@ end_strcmp_0:
 
 ###################################
 
+.globl	_strcpy_0
+
 _strcpy_0:
 		push ebp
 		mov ebp, esp
@@ -452,6 +474,8 @@ end_strcpy_0:
 		ret
 
 ###################################
+
+.globl	_strcat_0
 
 _strcat_0:
 		push ebp
@@ -532,6 +556,7 @@ end_strcat_0:
 
 ###################################
 
+.globl	_abs_0
 
 _abs_0:
 		push ebp
@@ -570,6 +595,8 @@ end_abs_0:
 
 ###################################
 
+.globl	_ord_0
+
 _ord_0:
 	push ebp
     mov ebp, esp
@@ -584,6 +611,7 @@ _ord_0:
 
 ###################################
 
+.globl	_chr_0
 
 _chr_0:
         push ebp
@@ -602,11 +630,11 @@ _chr_0:
 ###################################
 
 .data
-        fmt_pi: .asciz  "%d\n"
-        fmt_pc: .asciz  "%c\n"
+        fmt_pi: .asciz  "%d"
+        fmt_pc: .asciz  "%c"
         fmt_ps: .asciz	"%s"
-        fmt_gi: .asciz  "%d\n"
-        fmt_gc: .asciz  "%c\n"
+        fmt_gi: .asciz  "%d"
+        fmt_gc: .asciz  "%c"
         
         scanf_fmt_gi: .asciz  "%d"
         scanf_fmt_gc: .asciz  "%c"

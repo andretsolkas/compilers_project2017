@@ -1,7 +1,7 @@
  #!/bin/bash
 
-java -jar sablecc.jar ./parser.sable
+java -jar ./myParser/sablecc.jar ./myParser/parser.sable -d .
 
 make
 
-echo -e "\n\n\nCompiled\n\n\nExecute example:\n	java Main ./examples/hello.grace\n"
+echo -e "\n\n\nCompiled\nExecute the compiler example:\n	./cgrace -o a.out ./examples/hello.grace\n"

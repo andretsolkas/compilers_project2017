@@ -71,7 +71,7 @@ public class Assembly{
 					writer.append("		mov esi, DWORD PTR [esi+".concat(of).concat("]\n"));
 				}
 				
-				writer.append("		push DWORD PTR [esi]\n");
+				writer.append("		push esi\n");
 			}
 		}
 		catch(Exception e){
@@ -217,7 +217,7 @@ public class Assembly{
 				Integer offset = tmp.offset;
 				
 				if(tmp.strname != null)				//It's a string
-					writer.append("		lea ".concat(R).concat(", RWORD PTR [ebp-".concat(offset.toString().concat("]			#Load String's Address\n"))));
+					writer.append("		lea ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load String's Address\n"))));
 				
 				else if(a.endsWith("*"))			//Then temp holds already a reference
 					writer.append("		mov ".concat(R).concat(", DWORD PTR [ebp-".concat(offset.toString().concat("]			#Load Address\n"))));
@@ -375,6 +375,10 @@ public class Assembly{
 			
 			switch(quad.opcode) {
 	        
+			case "nop":
+				
+				break;
+			
 			case "<-":
 
 	        	load("eax", quad.op1, temps, params);
@@ -384,58 +388,70 @@ public class Assembly{
 	            
 	
 	        case "array":
-                
-                Temp tmp = temps.findElement(quad.dest);
-	        	if(tmp.strname != null){            //It's a string
-                    String value;
-                    int x = Integer.parseInt(quad.op2)+1;
-                    if(tmp.strname.charAt(x) == '\\'){
+	        	
+	        	Temp tmp;
 
-                        if(tmp.strname.charAt(x+1) == 'x'){
-                            value = tmp.strname.substring(x, x+3);
+	        	tmp = temps.findElement(quad.op1);
+        		if(tmp != null && tmp.strname != null){			//It's a string
 
-                            value = "\'".concat(value.concat("\'"));
-                            value = mySloppyFun(value);
-                        }
+	        			Integer offset = tmp.offset;
+	        			String value = null;
+	        			
+	        			for(int x=1; x<tmp.strlen; x++){
+	        				
+	        				if(tmp.strname.charAt(x) == '\\'){
+        					
+        					if(tmp.strname.charAt(x+1) == 'x'){
+        						value = tmp.strname.substring(x, x+3);
+        						
+        						value = "\'".concat(value.concat("\'"));
+        						value = mySloppyFun(value);
+        						x += 3;
+        					}
+        					
+        					else{ 
+        						value = new String(tmp.strname.substring(x, x+2));
+        						value = "\'".concat(value.concat("\'"));
+        						value = mySloppyFun(value);
+        						x++;
+        					}
+        				}
+        				
+        				else{
+	        				Integer n = (int)tmp.strname.charAt(x);	
+	        				value = n.toString();
+        				}
+        				
+        				writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], ".concat(value.concat("\n")))));
+        				offset -= 1;
+        			}
+        		
+        			writer.append("		mov BYTE PTR [ebp-".concat(offset.toString().concat("], 0\n")));
+        		}
+	        	
 
-                        else{ 
-                            value = tmp.strname.substring(x, x+2);
-                            value = "\'".concat(value.concat("\'"));
-                            value = mySloppyFun(value);
-                        }
-                    }
-
-                    else{
-                        Integer n = (int)tmp.strname.charAt(x);	
-                        value = n.toString();
-                    }
-                    Integer offset = tmp.offset;
-                    writer.append("		mov BYTE PTR [ebp-".concat(offset.toString()).concat("], ".concat(value.concat("\n"))));
-                }
-                
+                type = "";
+                nd = symtable.lookup(new Key(quad.op1));
+                if(nd != null)
+                    type = nd.type;
                 else{
-                    type = "";
-                    nd = symtable.lookup(new Key(quad.op1));
-                    if(nd != null)
-                        type = nd.type;
-                    else{
-                        tmp = temps.findElement(quad.op1);
-                        if(tmp != null){
-                            type = tmp.type;
-                        }    
-                    }
-
-                    if(type.equals("int"))
-                        size = SizeOfInt;
-                    else size = SizeOfChar;
-
-                    load("eax", quad.op2, temps, params);
-                    writer.append("		mov ecx, ".concat(size.toString().concat("\n")));
-                    writer.append("		imul ecx\n");
-                    loadAddr("ecx", quad.op1, temps, params);
-                    writer.append("		add eax, ecx\n");
-                    store("eax", quad.dest, temps, params);
+                    tmp = temps.findElement(quad.op1);
+                    if(tmp != null){
+                        type = tmp.type;
+                    }    
                 }
+
+                if(type.equals("int"))
+                    size = SizeOfInt;
+                else size = SizeOfChar;
+
+                load("eax", quad.op2, temps, params);
+                writer.append("		mov ecx, ".concat(size.toString().concat("\n")));
+                writer.append("		imul ecx\n");
+                loadAddr("ecx", quad.op1, temps, params);
+                writer.append("		add eax, ecx\n");
+                store("eax", quad.dest, temps, params);
+	                
 	            break;
 	
 	            
@@ -820,37 +836,37 @@ public class Assembly{
 			str = n.toString();
 		}
 
-		else if(a.charAt(1) == 'x'){
+		else if(a.charAt(1) == '\\' && a.charAt(2) == 'x'){
 
 			int d1,d2;
 			
-			if(a.charAt(1) == 'a')
+			if(a.charAt(3) == 'a' || a.charAt(3) == 'A')
 				d1 = 10;
-			else if(a.charAt(1) == 'b')
+			else if(a.charAt(3) == 'b' || a.charAt(3) == 'B')
 				d1 = 11;
-			else if(a.charAt(1) == 'c')
+			else if(a.charAt(3) == 'c' || a.charAt(3) == 'C')
 				d1 = 12;
-			else if(a.charAt(1) == 'd')
+			else if(a.charAt(3) == 'd' || a.charAt(3) == 'D')
 				d1 = 13;
-			else if(a.charAt(1) == 'e')
+			else if(a.charAt(3) == 'e' || a.charAt(3) == 'E')
 				d1 = 14;
-			else if(a.charAt(1) == 'f')
+			else if(a.charAt(3) == 'f' || a.charAt(3) == 'F')
 				d1 = 15;
-			else d1 = (int)a.charAt(1);
+			else d1 = (int)a.charAt(3);
 			
-			if(a.charAt(2) == 'a')
+			if(a.charAt(4) == 'a' || a.charAt(4) == 'A')
 				d2 = 10;
-			else if(a.charAt(2) == 'b')
+			else if(a.charAt(4) == 'b' || a.charAt(4) == 'B')
 				d2 = 11;
-			else if(a.charAt(2) == 'c')
+			else if(a.charAt(4) == 'c' || a.charAt(4) == 'C')
 				d2 = 12;
-			else if(a.charAt(2) == 'd')
+			else if(a.charAt(4) == 'd' || a.charAt(4) == 'D')
 				d2 = 13;
-			else if(a.charAt(2) == 'e')
+			else if(a.charAt(4) == 'e' || a.charAt(4) == 'E')
 				d2 = 14;
-			else if(a.charAt(2) == 'f')
+			else if(a.charAt(4) == 'f' || a.charAt(4) == 'F')
 				d2 = 15;
-			else d2 = (int)a.charAt(2);
+			else d2 = (int)a.charAt(4);
 			
 			Integer hex = d1*16 + d2;
 			str = hex.toString();

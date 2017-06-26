@@ -45,7 +45,7 @@ public class QuadManager{
 		
 		str = tmp.concat(temp.toString());
 	
-		if(type.equals("int")){
+		if(type.equals("int") || len == -1){
 			
 			if(numChars != 0){
 				offset += SizeOfInt-numChars;		//padding

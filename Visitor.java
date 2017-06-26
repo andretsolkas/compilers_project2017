@@ -5,6 +5,7 @@ import java.util.*;
 
 	class Visitor extends DepthFirstAdapter
 	{
+		boolean optimizer = false;
 		FileWriter writer;
 		
 		Assembly assemblyManager;
@@ -156,10 +157,14 @@ import java.util.*;
 	        Quad quad;
 	        LinkedList<Quad> parquads = new LinkedList<Quad>();
 	        
-	        for(i=quadManager.quads.size()-1; !quadManager.quads.get(i).opcode.equals("unit"); i--){;}
-	        
+	        for(i=quadManager.quads.size()-1; !quadManager.quads.get(i).opcode.equals("unit"); i--){}
+
+	        if (optimizer) {
+	        	mini_optimize(quadManager.quads);
+	        }
 	        int size = quadManager.quads.size() - i;
 
+	        //quadManager.temps.print();
 	        for(j=i, i=0; i<size; i++){
 	        	
 	        	quad = quadManager.quads.get(j);
@@ -176,7 +181,7 @@ import java.util.*;
 	        		
 	        		while(parquads.size() > 0){
 	        			quad = parquads.removeLast();
-	        			System.out.printf("%d: ", (quadcounter+1)); quad.print();
+	        			//System.out.printf("%d: ", (quadcounter+1)); quad.print();
 	        			assemblyManager.createAssembly(quad, ++quadcounter, quadManager.temps, params);
 	        		}
 	        		
@@ -184,7 +189,7 @@ import java.util.*;
 	        		continue;
 	        	}
 	        	
-	        	System.out.printf("%d: ", (quadcounter+1)); quad.print();
+	        	//System.out.printf("%d: ", (quadcounter+1)); quad.print();
 	        	assemblyManager.createAssembly(quad, ++quadcounter, quadManager.temps, params);
 	        	quadManager.quads.remove(j);
 
@@ -198,7 +203,60 @@ import java.util.*;
 	    }
         
         
-        @Override
+
+        private void mini_optimize(LinkedList<Quad> parquads) {
+        	condition_jump(parquads);
+
+        	/*
+        	boolean flag;
+        	do {
+        		flag = constant_propagation(parquads);
+        		flag |= copy_propagation(parquads);
+        		flag |= constant_folding(parquads);
+        	} while (flag);
+        
+        	// They will be implemented in another lifetime
+        	
+        	*/
+        }
+        
+        
+        private void condition_jump(LinkedList<Quad> parquads) {
+			for (int i=0; i<parquads.size()-1; i++) {
+				Quad quad = parquads.get(i);
+				Quad next = parquads.get(i+1);
+				boolean flag=true;
+				switch (quad.opcode) {
+				case ">":
+					quad.opcode="<=";
+					break;
+				case "<=":
+					quad.opcode=">";
+					break;
+				case "<":
+					quad.opcode=">=";
+					break;
+				case ">=":
+					quad.opcode="<";
+					break;
+				case "=":
+					quad.opcode="#";
+					break;
+				case "#":
+					quad.opcode="=";
+					break;
+				default:
+					flag = false;
+					break;
+				}
+				if (flag) {
+					quad.dest=next.dest;
+					next.opcode="nop";
+				}
+			}
+		}
+
+		@Override
 	    public void inAFuncdeclLocalDef(AFuncdeclLocalDef node)
 	    {
 	        headerMode = 1;
@@ -241,6 +299,7 @@ import java.util.*;
 	        }
 
 	        /*************************************************/
+	        Node declnode = null;
 	        
 	    	if(headerMode == 0){																			//If function definition
 	    		
@@ -255,7 +314,10 @@ import java.util.*;
                         System.exit(1);
     				}
     	    		
-    	    		else nd.defined = true;
+    	    		else{
+    	    			nd.defined = true;
+    	    			declnode = nd;
+    	    		}	
     	    	}
     			
     			symtable.increase_scope();
@@ -330,7 +392,7 @@ import java.util.*;
 
                 if(reference == false && arraylist != null){
                 	System.out.println("Error: Line " + lineError + ": Function's " + funname.name + " array parameter must be passed by reference\n");
-                    System.exit(0);
+                    System.exit(1);
                 }
                 
                 
@@ -341,7 +403,7 @@ import java.util.*;
                     if(headerMode == 0){
                         if(1 == symtable.SearchKey(key)){
                             System.out.println("Error: Line " + lineError + ": variable " + key.name + " has been declared before in this scope\n");
-                            System.exit(0);
+                            System.exit(1);
                         }
                         
                         symtable.insert(key, datatype, reference, arraylist, null, null, null);
@@ -368,6 +430,34 @@ import java.util.*;
     			symtable.insert(funname, null, null, null, params, true, retvalue);
     			funcDefinition.addLast(symtable.lookup(funname));
 
+    			boolean err=false;
+    			
+    			if(declnode != null){					//Check if definition matches declaration
+    				
+        			if(declnode.params != null && params != null){
+	        			if(declnode.params.size() != params.size())
+	    					err=true;
+	    					
+	    				else{  
+		    				for(int i=0; i<params.size(); i++){
+		    					if(params.get(i).differ(declnode.params.get(i)) ==  true){
+		    						err=true;
+		    					}
+		    				}
+	    				}
+	    			}
+    			
+	    			else if(!(declnode.params == null && params == null))
+	    				err = true;
+    			
+    				if(!declnode.retvalue.equals(retvalue))
+    					err = true;
+    			}
+    			
+    			if(err == true){
+                	System.out.println("Error: Line " + lineError + ": Function's " + funname.name + " definition does not match it's given declaration\n");
+                    System.exit(1);
+    			}
     			
     			symtable.increase_scope();
     		}
@@ -487,7 +577,7 @@ import java.util.*;
         	IRelement left = quadManager.stack.removeLast();
 	    
         	quadManager.genQuad("<-", right.place, "_", left.place);
-        	
+
         	quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));
 
 	    }
@@ -507,9 +597,8 @@ import java.util.*;
             if(node.getStmtexpr().size() > 0){
 	            	
 	        	for(i=0; i<node.getStmtexpr().size()-1; i++){
-	                
+	        		
 	            	node.getStmtexpr().get(i).apply(this);
-	            	
 	            	irel = quadManager.stack.removeLast();
 	                quadManager.backpatch(irel.next, quadManager.nextQuad());
 	            }
@@ -751,6 +840,12 @@ import java.util.*;
         {
  
         	TypeCheck value = typeCheck.getLast();
+        	
+        	if(!value.type.equals("int")){
+        		System.out.println("Error: Line " + lineError + ": Negation on string/char-literals is not permitted\n");
+        		System.exit(1);
+        	}
+        	
         	if(value.num != null){
         		String newstr = "-";
         		value.num = new String(newstr.concat(value.num));
@@ -780,7 +875,10 @@ import java.util.*;
         		else{																						//In case the corresponding variable is declared as an array			
         		
         			if(value.indices.size() > value.dimensions){
-		        		System.out.println("Error: Line " + lineError + ": Variable " + value.idname + " : Array is being given too many indices\n");
+		        		if(value.idname != null)
+		        			System.out.println("Error: Line " + lineError + ": Variable " + value.idname + " : Array is being given too many indices\n");
+		        		else System.out.println("Error: Line " + lineError + ": Variable string : Array is being given too many indices\n");
+		        		
 		        		System.exit(1);
 	        		}
         		
@@ -804,6 +902,18 @@ import java.util.*;
 				        	}
 			        	}
 		        	}
+        			
+        			
+        			else if(value.type.equals("char") && value.dimensions == 1){		//String case
+        				String index = value.indices.getFirst();
+        				
+        				if(!index.equals("int") && !index.equals("char")){
+        					if(Integer.parseInt(index) < 0){
+			        			System.out.println("Error: Line " + lineError + ": string index out of bound\n");
+			            		System.exit(1);
+        					}
+        				}
+        			}
 		        }
         	
                 //Array - quadManager.places list will not be empty
@@ -856,21 +966,39 @@ import java.util.*;
                 }
                 
                 else{                       //String case -- //It will be a one-dimensional array
-                    myNewTemp = quadManager.places.getFirst();
+                    
+                	myNewTemp = quadManager.places.getFirst();
+                
+                	if(myNewTemp.charAt(0) != '$'){
+                		if(Integer.parseInt(myNewTemp) >= base.length()-1){
+		        			System.out.println("Error: Line " + lineError + ": Variable " + myNewTemp + " : index out of bound\n");
+		            		System.exit(1);
+                		}
+                	}
                 }
                 
-                if(base.startsWith("\""))       //it's a string
-                    finalTemp = quadManager.newtemp("char", base.length()-1, base).concat("*");
+                String newtemp = base;
+                
+                if(base.startsWith("\"")){       //it's a string
+                    
+                    newtemp = quadManager.newtemp("char", base.length()-1, base);
+                    finalTemp = quadManager.newtemp("char", -1, null).concat("*");
+                }
+                
                 else finalTemp = quadManager.newtemp(id.type, -1, null).concat("*");
                 
-                quadManager.genQuad("array", base, myNewTemp, finalTemp);
+                	
+                quadManager.genQuad("array", newtemp, myNewTemp, finalTemp);
         		quadManager.temps.temps.getLast().tempname = finalTemp;
-                
-                if(value.indices.size() == value.dimensions && !base.startsWith("\"")){
+
+                if(value.indices.size() == value.dimensions){
                     finalTemp = "[".concat(finalTemp.concat("]"));
                 }
+                
                 quadManager.stack.addLast(new IRelement(value.type, finalTemp, null, null, null));
+                
                 quadManager.places = new LinkedList<>();
+                
             }
         }
                 
@@ -1058,7 +1186,7 @@ import java.util.*;
 
 	                		for(int x=0; x<paramDimension; j++, x++){
 
-	                			if(n.params.get(i).arraylist.get(x) != 0 && !myNode.arraylist.get(j).equals(n.params.get(i).arraylist.get(x))){
+	                			if(x!=0 && /*n.params.get(i).arraylist.get(x) != 0 && */!myNode.arraylist.get(j).equals(n.params.get(i).arraylist.get(x))){
 					        		System.out.println("Error: Line " + lineError + ": Function " + n.name.name + ": expected an array argument of size " + n.params.get(i).arraylist.get(x) + " instead of " + myNode.arraylist.get(j));
 					        		System.exit(1);
 	                			}
@@ -1078,15 +1206,16 @@ import java.util.*;
                 }
 
                 typeCheck.addLast(new TypeCheck(n.retvalue, null, null, null, 0));				//Add the return type on stack
-                
+
                 if(!n.retvalue.equals("nothing")){
 	                String newtemp = quadManager.newtemp(n.retvalue, 0, null);
 	                quadManager.genQuad("par", newtemp, "RET", "_");
-	                quadManager.stack.addLast(new IRelement(null, newtemp, new LinkedList<>(), null, null));
+	                quadManager.stack.addLast(new IRelement(n.retvalue, newtemp, new LinkedList<>(), null, null));
                 }
                 
+                
                 else quadManager.stack.addLast(new IRelement(null, null, new LinkedList<>(), null, null));		//NOT READY
-        	
+
                 quadManager.genQuad("call", "_", "_", n.name.name);
             }
         }
@@ -1206,7 +1335,7 @@ import java.util.*;
         
         public void quadGenExpr(String opcode){
         	
-    		IRelement right = quadManager.stack.removeLast();
+    		IRelement right = quadManager.stack.removeLast();	
         	IRelement left = quadManager.stack.removeLast();
         	
         	String newTemp = quadManager.newtemp(left.type, 0, null);
