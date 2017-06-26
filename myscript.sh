@@ -1,6 +1,6 @@
  #!/bin/bash
 
-java -jar sablecc.jar ./myParser/parser.sable
+java -jar ./myParser/sablecc.jar ./myParser/parser.sable -d .
 
 make
 

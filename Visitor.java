@@ -5,6 +5,7 @@ import java.util.*;
 
 	class Visitor extends DepthFirstAdapter
 	{
+		boolean optimizer = false;
 		FileWriter writer;
 		
 		Assembly assemblyManager;
@@ -156,8 +157,11 @@ import java.util.*;
 	        Quad quad;
 	        LinkedList<Quad> parquads = new LinkedList<Quad>();
 	        
-	        for(i=quadManager.quads.size()-1; !quadManager.quads.get(i).opcode.equals("unit"); i--){;}
-	        
+	        for(i=quadManager.quads.size()-1; !quadManager.quads.get(i).opcode.equals("unit"); i--){}
+
+	        if (optimizer) {
+	        	mini_optimize(quadManager.quads);
+	        }
 	        int size = quadManager.quads.size() - i;
 
 	        //quadManager.temps.print();
@@ -199,7 +203,60 @@ import java.util.*;
 	    }
         
         
-        @Override
+
+        private void mini_optimize(LinkedList<Quad> parquads) {
+        	condition_jump(parquads);
+
+        	/*
+        	boolean flag;
+        	do {
+        		flag = constant_propagation(parquads);
+        		flag |= copy_propagation(parquads);
+        		flag |= constant_folding(parquads);
+        	} while (flag);
+        
+        	// They will be implemented in another lifetime
+        	
+        	*/
+        }
+        
+        
+        private void condition_jump(LinkedList<Quad> parquads) {
+			for (int i=0; i<parquads.size()-1; i++) {
+				Quad quad = parquads.get(i);
+				Quad next = parquads.get(i+1);
+				boolean flag=true;
+				switch (quad.opcode) {
+				case ">":
+					quad.opcode="<=";
+					break;
+				case "<=":
+					quad.opcode=">";
+					break;
+				case "<":
+					quad.opcode=">=";
+					break;
+				case ">=":
+					quad.opcode="<";
+					break;
+				case "=":
+					quad.opcode="#";
+					break;
+				case "#":
+					quad.opcode="=";
+					break;
+				default:
+					flag = false;
+					break;
+				}
+				if (flag) {
+					quad.dest=next.dest;
+					next.opcode="nop";
+				}
+			}
+		}
+
+		@Override
 	    public void inAFuncdeclLocalDef(AFuncdeclLocalDef node)
 	    {
 	        headerMode = 1;

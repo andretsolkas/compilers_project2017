@@ -2,7 +2,6 @@
 import compiler.parser.*;
 import compiler.lexer.*;
 import compiler.node.*;
-//import compiler.analysis.*;
 import java.io.*;
 
 
@@ -12,6 +11,9 @@ public class Main{
         
 		Start tree = null;
 	
+		
+			
+		
 		try {
 			
 			File file = new File("myAssembly.s");
@@ -23,8 +25,10 @@ public class Main{
 	
 			file.createNewFile();
 			FileWriter writer = new FileWriter(file);
-			
-	        tree.apply(new Visitor(writer));
+
+			Visitor visitor = new Visitor(writer);
+			visitor.optimizer = (args.length == 2) && args[1].equals("-f");
+	        tree.apply(visitor);
 			
 			writer.close();
 		}

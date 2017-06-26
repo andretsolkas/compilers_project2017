@@ -630,11 +630,11 @@ _chr_0:
 ###################################
 
 .data
-        fmt_pi: .asciz  "%d\n"
-        fmt_pc: .asciz  "%c\n"
+        fmt_pi: .asciz  "%d"
+        fmt_pc: .asciz  "%c"
         fmt_ps: .asciz	"%s"
-        fmt_gi: .asciz  "%d\n"
-        fmt_gc: .asciz  "%c\n"
+        fmt_gi: .asciz  "%d"
+        fmt_gc: .asciz  "%c"
         
         scanf_fmt_gi: .asciz  "%d"
         scanf_fmt_gc: .asciz  "%c"

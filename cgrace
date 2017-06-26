@@ -9,7 +9,7 @@ else
 	fullfile=$1
 fi
 
-java Main ${fullfile}
+java Main ${fullfile} $4
 
 if [ $? -eq 1 ]
 then	rm "myAssembly.s"

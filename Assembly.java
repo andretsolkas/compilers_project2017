@@ -375,6 +375,10 @@ public class Assembly{
 			
 			switch(quad.opcode) {
 	        
+			case "nop":
+				
+				break;
+			
 			case "<-":
 
 	        	load("eax", quad.op1, temps, params);
@@ -832,37 +836,37 @@ public class Assembly{
 			str = n.toString();
 		}
 
-		else if(a.charAt(1) == 'x'){
+		else if(a.charAt(1) == '\\' && a.charAt(2) == 'x'){
 
 			int d1,d2;
 			
-			if(a.charAt(1) == 'a')
+			if(a.charAt(3) == 'a' || a.charAt(3) == 'A')
 				d1 = 10;
-			else if(a.charAt(1) == 'b')
+			else if(a.charAt(3) == 'b' || a.charAt(3) == 'B')
 				d1 = 11;
-			else if(a.charAt(1) == 'c')
+			else if(a.charAt(3) == 'c' || a.charAt(3) == 'C')
 				d1 = 12;
-			else if(a.charAt(1) == 'd')
+			else if(a.charAt(3) == 'd' || a.charAt(3) == 'D')
 				d1 = 13;
-			else if(a.charAt(1) == 'e')
+			else if(a.charAt(3) == 'e' || a.charAt(3) == 'E')
 				d1 = 14;
-			else if(a.charAt(1) == 'f')
+			else if(a.charAt(3) == 'f' || a.charAt(3) == 'F')
 				d1 = 15;
-			else d1 = (int)a.charAt(1);
+			else d1 = (int)a.charAt(3);
 			
-			if(a.charAt(2) == 'a')
+			if(a.charAt(4) == 'a' || a.charAt(4) == 'A')
 				d2 = 10;
-			else if(a.charAt(2) == 'b')
+			else if(a.charAt(4) == 'b' || a.charAt(4) == 'B')
 				d2 = 11;
-			else if(a.charAt(2) == 'c')
+			else if(a.charAt(4) == 'c' || a.charAt(4) == 'C')
 				d2 = 12;
-			else if(a.charAt(2) == 'd')
+			else if(a.charAt(4) == 'd' || a.charAt(4) == 'D')
 				d2 = 13;
-			else if(a.charAt(2) == 'e')
+			else if(a.charAt(4) == 'e' || a.charAt(4) == 'E')
 				d2 = 14;
-			else if(a.charAt(2) == 'f')
+			else if(a.charAt(4) == 'f' || a.charAt(4) == 'F')
 				d2 = 15;
-			else d2 = (int)a.charAt(2);
+			else d2 = (int)a.charAt(4);
 			
 			Integer hex = d1*16 + d2;
 			str = hex.toString();
