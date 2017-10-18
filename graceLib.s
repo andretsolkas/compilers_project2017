@@ -97,15 +97,6 @@ _geti_0:
     mov eax, DWORD PTR [ebp-4]
     mov DWORD PTR [esi], eax
 
-    push eax
-
-    mov eax, OFFSET FLAT:fmt_gi
-    push eax
-
-    call printf
-    add esp, 8
-
-
     mov esp, ebp
     pop ebp
     ret
@@ -133,17 +124,6 @@ _getc_0:
     mov esi, DWORD PTR [ebp+8]                  #Load getc's return value address
     mov al, BYTE PTR [ebp-1]
     mov BYTE PTR [esi], al
-
-
-    movzx eax, BYTE PTR [ebp-1]
-    push eax
-
-    mov eax, OFFSET FLAT:fmt_gc
-    push eax
-
-    call printf
-    add esp, 8
-
 
     mov esp, ebp
     pop ebp

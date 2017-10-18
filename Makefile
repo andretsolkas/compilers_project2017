@@ -1,7 +1,7 @@
 
 JCC = javac
 
-default: Main.class Visitor.class SymbolTable.class Node.class Key.class Quad.class QuadManager.class IRelement.class Assembly.class ScopeTemp.class Temp.class
+default: Main.class Visitor.class SymbolTable.class Node.class Key.class Quad.class QuadManager.class IRelement.class Assembly.class ScopeTemp.class Temp.class MiniOptimizer.class
 
 Main.class: Main.java
 	$(JCC) Main.java
@@ -21,10 +21,8 @@ Key.class: Key.java
 QuadManager.class: QuadManager.java
 	$(JCC) QuadManager.java
 
-
 Quad.class: Quad.java
 	$(JCC) Quad.java
-
 
 IRelement.class: IRelement.java
 	$(JCC) IRelement.java
@@ -38,6 +36,8 @@ ScopeTemp.class: ScopeTemp.java
 Temp.class: Temp.java
 	$(JCC) Temp.java
 
+MiniOptimizer.class: MiniOptimizer.java
+	$(JCC) MiniOptimizer.java
 
 clean:
-	$(RM) *.class
+	rm -rf *.class compiler myAssembly.s
